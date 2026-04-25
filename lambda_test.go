@@ -212,7 +212,6 @@ func BenchmarkAtomic(b *testing.B) {
 
 func BenchmarkLock(b *testing.B) {
 
-	calcHash()
 	c := atomic.Int64{}
 	b.RunParallel(func(pb *testing.PB) {
 		for pb.Next() {
