@@ -1,0 +1,31 @@
+package expr
+
+import (
+	"strings"
+	"time"
+)
+
+var newStringBuilder ScriptFunc = func(ctx *Context, args ...Val) any {
+	cap := 32
+	if len(args) > 0 {
+		c := int(NumberOf(args[0].Val(ctx)))
+		if c > 0 {
+			cap = c
+		}
+	}
+	sb := &strings.Builder{}
+	sb.Grow(cap)
+	return sb
+}
+
+var nowTimeMillsec ScriptFunc = func(ctx *Context, args ...Val) any {
+	return float64(time.Now().Nanosecond() / 1e6)
+}
+
+var timeFromUnix ScriptFunc = func(ctx *Context, args ...Val) any {
+	return time.Unix(int64(NumberOf(args[0].Val(ctx))), 0)
+}
+
+var fieldFunc = FuncDefine1(func(a string) []string {
+	return strings.Fields(a)
+})

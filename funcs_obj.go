@@ -1,0 +1,876 @@
+package expr
+
+import (
+	"crypto/md5"
+	"encoding/hex"
+	"encoding/json"
+	"fmt"
+	"net/url"
+	"reflect"
+	"regexp"
+	"slices"
+	"strings"
+	"sync/atomic"
+	"time"
+	"unsafe"
+)
+
+type Type unsafe.Pointer
+
+type typeI struct {
+	T, D unsafe.Pointer
+}
+
+func TypeOf(v interface{}) Type {
+	return Type((*typeI)(unsafe.Pointer(&v)).T)
+}
+
+type SelfFunc func(ctx *Context, self any, args ...Val) any
+
+func getFrom(ctx *Context, vs []Val, index int) any {
+	if index >= len(vs) {
+		return nil
+	}
+	return vs[index].Val(ctx)
+}
+
+//var (
+//	optType = reflect.TypeOf(&Options{})
+//)
+//
+//func getFrom2[T any](ctx *Context, vs []Val, index int) (res T) {
+//	if index >= len(vs) {
+//		return res
+//	}
+//	v := vs[index].Val(ctx)
+//	if reflect.TypeOf(res) == optType {
+//		o, _ := v.(map[string]any)
+//		opt := NewOptions(o)
+//		res = any(opt).(T)
+//		return res
+//	}
+//	res, _ = v.(T)
+//	return res
+//}
+
+func typeOf[T any]() string {
+	var t T
+	s := reflect.TypeOf(t)
+	if s == nil {
+		return "any"
+	}
+
+	return s.String()
+}
+
+var (
+	allTypeFuncs_ = map[string]bool{
+		"catch":       true,
+		"type":        true,
+		"string":      true,
+		"unwrap":      true,
+		"boolean":     true,
+		"number":      true,
+		"bool":        true,
+		"to_json_obj": true,
+		"to_json_str": true,
+		"recover":     true,
+		"recovers":    true,
+		"recoverd":    true,
+		"cost":        true,
+		"_debug":      true,
+		"_test":       true,
+		"is_empty":    true,
+		"set_to":      true,
+		"seto":        true,
+		"benchmark":   true,
+		"defer":       true,
+		"go":          true,
+		"repeat":      true,
+		"repeats":     true,
+		"for":         true,
+
+		//"has_prefix":  true,
+		//"has_suffix":  true,
+		//"contains":    true,
+	}
+)
+
+func (e *Env) SetFuncForAllTypes(fun string) {
+	e.allTypeFuncs[fun] = true
+}
+func SelfDefine0[S any, R any](e *Env, name string, f func(ctx *Context, self S) R, opt ...selfDefineOptFunc) {
+	fn := func(ctx *Context, self any, args ...Val) any {
+
+		sl, _ := self.(S)
+		return f(ctx, sl)
+	}
+	RegisterObjFunc[S](e, name, fn, 0, fmt.Sprintf("%s()%v  ", name, typeOf[R]())+newOpts(opt).doc)
+
+}
+
+//	func SelfDefine0WithOpt[S any, R any](name string, f func(ctx *Context, self S, opt *Options) R) {
+//		fn := func(ctx *Context, self any, args ...Val) any {
+//
+//			sl, _ := self.(S)
+//			o, _ := getFrom(ctx, args, 0).(map[string]any)
+//			return f(ctx, sl, NewOptions(o))
+//		}
+//		RegisterObjFunc[S](name, fn, 0, fmt.Sprintf("%s()%v", name, typeOf[R]()))
+//
+// }
+type selfDefineOpt struct {
+	doc string
+}
+
+type selfDefineOptFunc func(opt *selfDefineOpt)
+
+func WithDoc(doc string) func(c *selfDefineOpt) {
+	return func(c *selfDefineOpt) {
+		c.doc = doc
+	}
+}
+
+func newOpts(f []selfDefineOptFunc) *selfDefineOpt {
+	opt := &selfDefineOpt{}
+	for _, f := range f {
+		f(opt)
+	}
+	return opt
+}
+
+func SelfDefine1[A any, S any, R any](e *Env, name string, f func(ctx *Context, self S, a A) R, opt ...selfDefineOptFunc) {
+	fn := func(ctx *Context, self any, args ...Val) any {
+
+		a, _ := getFrom(ctx, args, 0).(A)
+		sl, _ := self.(S)
+		return f(ctx, sl, a)
+	}
+	doc := fmt.Sprintf("%s( %v)%v  ", name, typeOf[A](), typeOf[R]()) + newOpts(opt).doc
+	RegisterObjFunc[S](e, name, fn, 1, doc)
+}
+
+//func SelfDefine1WithOpt[A any, S any, R any](name string, f func(ctx *Context, self S, a A, opt *Options) R) {
+//	fn := func(ctx *Context, self any, args ...Val) any {
+//
+//		a, _ := getFrom(ctx, args, 0).(A)
+//		sl, _ := self.(S)
+//		o, _ := getFrom(ctx, args, 1).(map[string]any)
+//		return f(ctx, sl, a, NewOptions(o))
+//	}
+//	doc := fmt.Sprintf("%s( %v)%v", name, typeOf[A](), typeOf[R]())
+//	RegisterObjFunc[S](name, fn, 1, doc)
+//}
+
+func SelfDefine2[A, B any, S any, R any](e *Env, name string, f func(ctx *Context, self S, a A, b B) R, opt ...selfDefineOptFunc) {
+	fn := func(ctx *Context, self any, args ...Val) any {
+		//if len(args) != 2 {
+		//	return newErrorf("func %s expects 1 arg, got %d", name, len(args))
+		//}
+		a, _ := getFrom(ctx, args, 0).(A)
+		b, _ := getFrom(ctx, args, 1).(B)
+		sl, _ := self.(S)
+		return f(ctx, sl, a, b)
+	}
+	RegisterObjFunc[S](e, name, fn, 2, fmt.Sprintf("%s( %v, %v)%v  ", name, typeOf[A](), typeOf[B](), typeOf[R]())+newOpts(opt).doc)
+}
+
+//
+//func SelfDefine2WithOpt[A, B any, S any, R any](name string, f func(ctx *Context, self S, a A, b B, opt *Options) R) {
+//	fn := func(ctx *Context, self any, args ...Val) any {
+//		//if len(args) != 2 {
+//		//	return newErrorf("func %s expects 1 arg, got %d", name, len(args))
+//		//}
+//		a, _ := getFrom(ctx, args, 0).(A)
+//		b, _ := getFrom(ctx, args, 1).(B)
+//		sl, _ := self.(S)
+//		o, _ := getFrom(ctx, args, 2).(map[string]any)
+//		return f(ctx, sl, a, b, NewOptions(o))
+//	}
+//	RegisterObjFunc[S](name, fn, 2, fmt.Sprintf("%s( %v, %v)%v", name, typeOf[A](), typeOf[B](), typeOf[R]()))
+//}
+
+func SelfDefine3[A, B, C any, S any, R any](e *Env, name string, f func(ctx *Context, self S, a A, b B, c C) R, opt ...selfDefineOptFunc) {
+	fn := func(ctx *Context, self any, args ...Val) any {
+		//if len(args) != 3 {
+		//	return newErrorf("func %s expects 1 arg, got %d", name, len(args))
+		//}
+		a, _ := getFrom(ctx, args, 0).(A)
+		b, _ := getFrom(ctx, args, 1).(B)
+		c, _ := getFrom(ctx, args, 2).(C)
+		sl, _ := self.(S)
+		return f(ctx, sl, a, b, c)
+	}
+	RegisterObjFunc[S](e, name, fn, 3, fmt.Sprintf("%s( %v, %v,%v )%v  ", name, typeOf[A](), typeOf[B](), typeOf[C](), typeOf[R]())+newOpts(opt).doc)
+}
+
+//func SelfDefine3WithOpt[A, B, C any, S any, R any](name string, f func(ctx *Context, self S, a A, b B, c C, opt *Options) R) {
+//	fn := func(ctx *Context, self any, args ...Val) any {
+//		//if len(args) != 3 {
+//		//	return newErrorf("func %s expects 1 arg, got %d", name, len(args))
+//		//}
+//		a, _ := getFrom(ctx, args, 0).(A)
+//		b, _ := getFrom(ctx, args, 1).(B)
+//		c, _ := getFrom(ctx, args, 2).(C)
+//		sl, _ := self.(S)
+//		o, _ := getFrom(ctx, args, 3).(map[string]any)
+//		return f(ctx, sl, a, b, c, NewOptions(o))
+//	}
+//	RegisterObjFunc[S](name, fn, 3, fmt.Sprintf("%s( %v, %v)%v", name, typeOf[A](), typeOf[B](), typeOf[R]()))
+//}
+
+func SelfDefine4[A, B, C, D any, S any, R any](e *Env, name string, f func(ctx *Context, self S, a A, b B, c C, d D) R, opt ...selfDefineOptFunc) {
+	fn := func(ctx *Context, self any, args ...Val) any {
+		//if len(args) != 4 {
+		//	return newErrorf("func %s expects 1 arg, got %d", name, len(args))
+		//}
+		a, _ := getFrom(ctx, args, 0).(A)
+		b, _ := getFrom(ctx, args, 1).(B)
+		c, _ := getFrom(ctx, args, 2).(C)
+		d, _ := getFrom(ctx, args, 3).(D)
+		sl, _ := self.(S)
+		return f(ctx, sl, a, b, c, d)
+	}
+	RegisterObjFunc[S](e, name, fn, 4, fmt.Sprintf("%s( %v, %v)%v  ", name, typeOf[A](), typeOf[B](), typeOf[R]())+newOpts(opt).doc)
+}
+
+//func SelfDefine4WithOpt[A, B, C, D any, S any, R any](name string, f func(ctx *Context, self S, a A, b B, c C, d D, opt *Options) R) {
+//	fn := func(ctx *Context, self any, args ...Val) any {
+//		//if len(args) != 4 {
+//		//	return newErrorf("func %s expects 1 arg, got %d", name, len(args))
+//		//}
+//		a, _ := getFrom(ctx, args, 0).(A)
+//		b, _ := getFrom(ctx, args, 1).(B)
+//		c, _ := getFrom(ctx, args, 2).(C)
+//		d, _ := getFrom(ctx, args, 3).(D)
+//		sl, _ := self.(S)
+//		o, _ := getFrom(ctx, args, 4).(map[string]any)
+//		return f(ctx, sl, a, b, c, d, NewOptions(o))
+//	}
+//	RegisterObjFunc[S](name, fn, 4, fmt.Sprintf("%s( %v, %v)%v", name, typeOf[A](), typeOf[B](), typeOf[R]()))
+//}
+
+func SelfDefineN[S any, R any](e *Env, name string, f SelfFunc) {
+
+	RegisterObjFunc[S](e, name, f, -1, fmt.Sprintf("%s(...)%v", name, typeOf[R]()))
+
+}
+
+// redis.get('/api/v1/xx',const {timeout:5000})
+type objectFunc struct {
+	typeI   string
+	argsNum int
+	name    string
+	fun     SelfFunc
+	doc     string
+}
+
+// var objFuncMap = map[Type]map[string]*objectFunc{}
+var objFuncMap = newTypeMap(4096)
+
+func RegisterObjFunc[T any](e *Env, name string, fun SelfFunc, argsNum int, doc string) {
+	if e.allTypeFuncs[name] {
+		panic("func is already defined for all types, please rename func name :" + name)
+	}
+	var o T
+	ty := TypeOf(o)
+	rt := reflect.TypeOf(o)
+	//fm := objFuncMap[ty]
+	fm := objFuncMap.get(ty)
+	if fm == nil {
+		//fm = map[string]*objectFunc{}
+		fm = newFuncMap(32)
+		//objFuncMap[ty] = fm
+		objFuncMap.put(ty, fm)
+	}
+	//fm[name] = &objectFunc{rt.String(), argsNum, name, fun, doc}
+	fm.put(calcHash(name), name, &objectFunc{rt.String(), argsNum, name, fun, doc})
+}
+
+type objFuncVal struct {
+	funcName    string
+	funNameHash uint64
+	args        []Val
+}
+
+func (o *objFuncVal) Set(c *Context, val any) {
+
+}
+
+func (o *objFuncVal) Val(c *Context) any {
+	return nil
+}
+
+func init() {
+	//SelfDefine1("write", func(ctx *Context, self *strings.Builder, str any) *strings.Builder {
+	//	self.WriteString(StringOf(str))
+	//	return self
+	//})
+	//defer func() {
+	//	recover()
+	//}()
+	SelfDefineN[*strings.Builder, *strings.Builder](DefaultEnv, "write", func(ctx *Context, self any, args ...Val) any {
+		sb := self.(*strings.Builder)
+		for _, arg := range args {
+			sb.WriteString(StringOf(arg.Val(ctx)))
+		}
+		return sb
+	})
+	//SelfDefine0("string", func(ctx *Context, self *strings.Builder) string {
+	//	return self.String()
+	//})
+	DefaultEnv.RegisterFunc("str_builder", func(ctx *Context, args ...Val) any {
+		return new(strings.Builder)
+	}, 0)
+
+	SelfDefine1(DefaultEnv, "has_prefix", func(ctx *Context, self string, str string) bool {
+		return strings.HasPrefix(self, str)
+	})
+	SelfDefine1(DefaultEnv, "has_suffix", func(ctx *Context, self string, str string) bool {
+		return strings.HasSuffix(self, str)
+	})
+
+	SelfDefine1(DefaultEnv, "has", func(ctx *Context, self string, s string) bool {
+		return strings.Contains(self, s)
+	})
+	SelfDefine1(DefaultEnv, "contains", func(ctx *Context, self string, s string) bool {
+		return strings.Contains(self, s)
+	})
+
+	SelfDefine0(DefaultEnv, "trim_space", func(ctx *Context, self string) string {
+		return strings.TrimSpace(self)
+	})
+
+	SelfDefine1(DefaultEnv, "trim", func(ctx *Context, self string, cutset string) string {
+		return strings.Trim(self, cutset)
+	})
+
+	SelfDefine1(DefaultEnv, "trim_left", func(ctx *Context, self string, cutset string) string {
+		return strings.TrimLeft(self, cutset)
+	})
+
+	SelfDefine1(DefaultEnv, "trim_right", func(ctx *Context, self string, cutset string) string {
+		return strings.TrimRight(self, cutset)
+	})
+	SelfDefine1(DefaultEnv, "trim_prefix", func(ctx *Context, self string, cutset string) string {
+		return strings.TrimPrefix(self, cutset)
+	})
+
+	SelfDefine1(DefaultEnv, "trim_suffix", func(ctx *Context, self string, cutset string) string {
+		return strings.TrimSuffix(self, cutset)
+	})
+
+	SelfDefine2(DefaultEnv, "slice", func(ctx *Context, self []any, a, b float64) any {
+		aa := int(a)
+		bb := int(b)
+		if len(self) < bb || aa > bb || aa < 0 {
+			return nil
+		}
+		return self[aa:bb]
+	})
+	SelfDefine2(DefaultEnv, "slice", func(ctx *Context, self string, a, b float64) string {
+		aa := int(a)
+		bb := int(b)
+		if len(self) < bb || aa > bb || aa < 0 {
+			return ""
+		}
+		return self[aa:bb]
+	})
+	SelfDefine2(DefaultEnv, "slice", func(ctx *Context, self []byte, a, b float64) []byte {
+		aa := int(a)
+		bb := int(b)
+		if len(self) < bb || aa > bb || aa < 0 {
+			return nil
+		}
+		return self[aa:bb]
+	})
+
+	SelfDefine0(DefaultEnv, "len", func(ctx *Context, self string) float64 {
+		return float64(len(self))
+	})
+	SelfDefine0(DefaultEnv, "len", func(ctx *Context, self []any) float64 {
+		return float64(len(self))
+	})
+
+	//SelfDefine0("string", func(ctx *Context, self []byte) string {
+	//	return ToString(self)
+	//})
+	//SelfDefine0("string", func(ctx *Context, self bool) string {
+	//	return strconv.FormatBool(self)
+	//})
+
+	//SelfDefine0("string", func(ctx *Context, self float64) string {
+	//	return strconv.FormatFloat(self, 'f', -1, 64)
+	//})
+
+	SelfDefine0(DefaultEnv, "bytes", func(ctx *Context, self []byte) []byte {
+		return self
+	})
+	//SelfDefine0("string", func(ctx *Context, self string) string {
+	//	return self
+	//})
+	SelfDefine0(DefaultEnv, "bytes", func(ctx *Context, self string) []byte {
+		return ToBytes(self)
+	})
+
+	SelfDefine0(DefaultEnv, "md5", func(ctx *Context, self string) []byte {
+		h := md5.New()
+		h.Write(ToBytes(self))
+
+		return h.Sum(nil)
+	})
+	SelfDefine0(DefaultEnv, "hex", func(ctx *Context, self string) string {
+		return hex.EncodeToString(ToBytes(self))
+	})
+	SelfDefine0(DefaultEnv, "hex", func(ctx *Context, self []byte) string {
+		return hex.EncodeToString(self)
+	})
+	SelfDefine2(DefaultEnv, "split", func(ctx *Context, self string, sep string, n float64) any {
+		res := strings.SplitN(self, sep, int(n))
+		vs := make([]any, len(res))
+		for i, v := range res {
+			vs[i] = v
+		}
+		return vs
+	})
+	SelfDefine0(DefaultEnv, "to_upper", func(ctx *Context, self string) any {
+		return strings.ToUpper(self)
+	})
+	SelfDefine0(DefaultEnv, "to_lower", func(ctx *Context, self string) any {
+		return strings.ToLower(self)
+	})
+
+	SelfDefine2(DefaultEnv, "replace", func(ctx *Context, self string, a string, b string) string {
+		return strings.Replace(self, a, b, -1)
+	})
+	SelfDefine1(DefaultEnv, "index", func(ctx *Context, self string, a string) float64 {
+		return float64(strings.Index(self, a))
+	})
+
+	SelfDefine0(DefaultEnv, "bytes", func(ctx *Context, self []byte) []byte {
+		h := md5.New()
+		h.Write(self)
+		return h.Sum(nil)
+	})
+
+	SelfDefine0(DefaultEnv, "copy", func(ctx *Context, b []byte) []byte {
+		dst := make([]byte, len(b))
+		copy(dst, b)
+		return dst
+	})
+	SelfDefine0(DefaultEnv, "base64", func(ctx *Context, b []byte) string {
+		return base64EncodeToString(b)
+	})
+
+	SelfDefine0(DefaultEnv, "base64", func(ctx *Context, self string) string {
+		return base64EncodeToString(ToBytes(self))
+	})
+
+	SelfDefine0(DefaultEnv, "base64d", func(ctx *Context, b []byte) any {
+		d, err := base64DecodeString(ToString(b))
+		if err != nil {
+			return newError(err)
+		}
+		return d
+	})
+	SelfDefine0(DefaultEnv, "base64d", func(ctx *Context, self string) any {
+		d, err := base64DecodeString(self)
+		if err != nil {
+			return newError(err)
+		}
+		return d
+	})
+
+	SelfDefine0(DefaultEnv, "md5", func(ctx *Context, self []byte) []byte {
+		s := md5.Sum(self)
+		return s[:]
+	})
+
+	SelfDefine2(DefaultEnv, "set", func(ctx *Context, self map[string]any, a string, b any) map[string]any {
+		self[a] = b
+		return self
+	})
+	SelfDefine1(DefaultEnv, "get", func(ctx *Context, self map[string]any, a string) any {
+		return self[a]
+	})
+	SelfDefine0(DefaultEnv, "len", func(ctx *Context, self map[string]any) float64 {
+		return float64(len(self))
+	})
+	SelfDefine1(DefaultEnv, "delete", func(ctx *Context, self map[string]any, a string) map[string]any {
+		delete(self, a)
+		return self
+	})
+	SelfDefine1(DefaultEnv, "get", func(ctx *Context, self []any, a float64) any {
+		n := int(a)
+		if n >= len(self) {
+			return nil
+		}
+		return self[n]
+	})
+
+	SelfDefine1(DefaultEnv, "merge", func(ctx *Context, self map[string]any, b map[string]any) any {
+		for key, val := range b {
+			self[key] = val
+		}
+		return self
+	})
+
+	SelfDefine0(DefaultEnv, "clone", func(ctx *Context, self map[string]any) map[string]any {
+		dst := make(map[string]any, len(self))
+		for k, v := range self {
+			dst[k] = v
+		}
+		return dst
+	})
+
+	SelfDefine1(DefaultEnv, "equals", func(ctx *Context, self map[string]any, b map[string]any) bool {
+		return reflect.DeepEqual(self, b)
+	})
+
+	//SelfDefine1("exclude", func(ctx *Context, self map[string]any, keys []any) map[string]any {
+	//	dst := make(map[string]any, len(self)-len(keys))
+	//	for k, v := range self {
+	//
+	//		contains := false
+	//		for _, key := range keys {
+	//			if k == key {
+	//				contains = true
+	//				break
+	//			}
+	//		}
+	//		if !contains {
+	//			dst[k] = v
+	//		}
+	//	}
+	//	return dst
+	//})
+
+	SelfDefineN[map[string]any, map[string]any](DefaultEnv, "exclude", func(ctx *Context, self any, args ...Val) any {
+		sm := self.(map[string]any)
+		ks := make(map[string]bool, len(args))
+		for _, v := range args {
+			switch v := v.Val(ctx).(type) {
+			case []any:
+				for _, a := range v {
+					ks[StringOf(a)] = true
+				}
+			default:
+				ks[StringOf(v)] = true
+
+			}
+		}
+		dst := make(map[string]any, len(sm))
+		for k, v := range sm {
+			if !ks[k] {
+				dst[k] = v
+			}
+		}
+		return dst
+	})
+
+	SelfDefineN[map[string]any, map[string]any](DefaultEnv, "some", func(ctx *Context, self any, args ...Val) any {
+		sm := self.(map[string]any)
+		ks := make(map[string]bool, len(args))
+		for _, v := range args {
+			switch v := v.Val(ctx).(type) {
+			case []any:
+				for _, a := range v {
+					ks[StringOf(a)] = true
+				}
+			default:
+				ks[StringOf(v)] = true
+
+			}
+		}
+		dst := make(map[string]any, len(sm))
+		for k, v := range sm {
+			if ks[k] {
+				dst[k] = v
+			}
+		}
+		return dst
+	})
+
+	SelfDefine0(DefaultEnv, "clone", func(ctx *Context, self []any) []any {
+		dst := make([]any, len(self))
+		for k, v := range self {
+			dst[k] = v
+		}
+		return dst
+	})
+
+	SelfDefine1(DefaultEnv, "sub", func(ctx *Context, self time.Time, tm time.Time) float64 {
+		return float64(self.Sub(tm) / 1e6)
+	})
+	SelfDefine1(DefaultEnv, "add_mill", func(ctx *Context, self time.Time, mill float64) time.Time {
+		return self.Add(time.Duration(mill * 1e6))
+	})
+	SelfDefine0(DefaultEnv, "day", func(ctx *Context, self time.Time) float64 {
+		return float64(self.Day())
+	})
+	SelfDefine0(DefaultEnv, "hour", func(ctx *Context, self time.Time) float64 {
+		return float64(self.Hour())
+	})
+	SelfDefine0(DefaultEnv, "month", func(ctx *Context, self time.Time) float64 {
+		return float64(self.Month())
+	})
+	SelfDefine0(DefaultEnv, "year", func(ctx *Context, self time.Time) float64 {
+		return float64(self.Year())
+	})
+	SelfDefine1(DefaultEnv, "format", func(ctx *Context, self time.Time, fmt string) string {
+		return self.Format(fmt)
+	})
+	SelfDefine0(DefaultEnv, "unix", func(ctx *Context, self time.Time) float64 {
+		return float64(self.Unix())
+	})
+	SelfDefine0(DefaultEnv, "unix_mill", func(ctx *Context, self time.Time) float64 {
+		return float64(self.UnixMilli())
+	})
+	SelfDefine0(DefaultEnv, "unix_micro", func(ctx *Context, self time.Time) float64 {
+		return float64(self.UnixMicro())
+	})
+	SelfDefine0(DefaultEnv, "minute", func(ctx *Context, self time.Time) float64 {
+		return float64(self.Minute())
+	})
+	SelfDefine0(DefaultEnv, "second", func(ctx *Context, self time.Time) float64 {
+		return float64(self.Second())
+	})
+	SelfDefine0(DefaultEnv, "utc", func(ctx *Context, self time.Time) time.Time {
+		return self.UTC()
+	})
+	SelfDefine0(DefaultEnv, "local", func(ctx *Context, self time.Time) time.Time {
+		return self.Local()
+	})
+
+	DefaultEnv.RegisterFunc("regexp_new", FuncDefine1(func(a string) any {
+		reg, err := regexp.Compile(a)
+		if err != nil {
+			return newError(err)
+		}
+		return reg
+	}), 1)
+	SelfDefine1(DefaultEnv, "match", func(ctx *Context, self *regexp.Regexp, src string) bool {
+		return self.MatchString(src)
+	})
+
+	DefaultEnv.RegisterFunc("url_new_values", FuncDefine(func() url.Values {
+		uv := url.Values{}
+		return uv
+	}), 0)
+
+	SelfDefine1(DefaultEnv, "get", func(ctx *Context, self url.Values, key string) string {
+		return self.Get(key)
+	})
+	SelfDefine2(DefaultEnv, "set", func(ctx *Context, self url.Values, key string, val any) url.Values {
+		self.Set(key, StringOf(val))
+		return self
+	})
+	SelfDefine0(DefaultEnv, "encode", func(ctx *Context, self url.Values) string {
+		return self.Encode()
+	})
+
+	//var (
+	//	arrKeys = []string{""}
+	//)
+	//var (
+	//	mapKeys = []string{"$key", "$val"}
+	//)
+	RegisterObjFunc[[]any](DefaultEnv, "all", func(ctx *Context, self any, args ...Val) any {
+		if len(args) != 1 {
+			return newErrorf("all expects 1 arg")
+		}
+		dst := make([]any, 0, len(args))
+		forRangeExec(args[0], ctx, self, func(k, v any, val Val) any {
+			if BoolCond(val.Val(ctx)) {
+				dst = append(dst, v)
+			}
+			return nil
+		})
+		return dst
+	}, 1, "all(cond)[]any")
+	RegisterObjFunc[[]any](DefaultEnv, "filter", func(ctx *Context, self any, args ...Val) any {
+		if len(args) != 1 {
+			return newErrorf("filter expects 1 arg")
+		}
+
+		dst := make([]any, 0, len(self.([]any)))
+		forRangeExec(args[0], ctx, self, func(k, v any, val Val) any {
+			dst = append(dst, val.Val(ctx))
+			return nil
+		})
+		return dst
+	}, 1, "all(cond)[]any")
+
+	//RegisterObjFunc[[]any]("for", func(ctx *Context, self any, args ...Val) any {
+	//
+	//	if len(args) != 1 {
+	//		return newErrorf("for expects 1 arg")
+	//	}
+	//	res := forRangeExec(args[0], ctx, self, func(_, _ any, val Val) any {
+	//		v := val.Val(ctx)
+	//		if err := convertToError(v); err != nil {
+	//			return err
+	//		}
+	//		return nil
+	//	})
+	//	return res
+	//}, 1, "for(expr)")
+	//
+	//RegisterObjFunc[map[string]any]("for", func(ctx *Context, self any, args ...Val) any {
+	//
+	//	if len(args) != 1 {
+	//		return newErrorf("for expects 1 arg")
+	//	}
+	//	res := forRangeExec(args[0], ctx, self, func(_, _ any, val Val) any {
+	//		v := val.Val(ctx)
+	//		if err := convertToError(v); err != nil {
+	//			return err
+	//		}
+	//		return nil
+	//	})
+	//	return res
+	//}, 1, "for(expr)")
+
+	SelfDefine0(DefaultEnv, "json_str", func(ctx *Context, self map[string]any) any {
+		bs, err := json.Marshal(self)
+		if err != nil {
+			return newError(err)
+		}
+		return ToString(bs)
+	})
+	SelfDefine0(DefaultEnv, "json_str", func(ctx *Context, self []any) string {
+		bs, _ := json.Marshal(self)
+		return ToString(bs)
+	})
+	SelfDefine0(DefaultEnv, "json_str", func(ctx *Context, self float64) string {
+		bs, _ := json.Marshal(self)
+		return ToString(bs)
+	})
+	SelfDefine0(DefaultEnv, "json_str", func(ctx *Context, self string) string {
+		bs, _ := json.Marshal(self)
+		return ToString(bs)
+	})
+
+	SelfDefine0(DefaultEnv, "fields", func(ctx *Context, self string) []string {
+		return strings.Fields(self)
+	})
+
+	//arr.sort({a,b} => a > b)
+	SelfDefine1(DefaultEnv, "sort", func(ctx *Context, self []any, cond Val) any {
+		lm, ok := cond.(*lambda)
+		if !ok {
+			return newErrorf("sort expect lambda args")
+		}
+		if len(lm.Lefts) != 2 {
+			return newErrorf("sort  lambda expect 2 args")
+		}
+		if self == nil {
+			return nil
+		}
+		slices.SortFunc(self, func(a, b any) int {
+			if a == b {
+				return 0
+			}
+			lm.setMapKvForLambda(ctx, a, b)
+			ok := BoolOf(lm.Right.Val(ctx))
+			if ok {
+				return -1
+			}
+			return 1
+		})
+		//sort.Slice(self, func(i, j int) bool {
+		//	lm.setMapKvForLambda(ctx, self[i], self[j])
+		//	return
+		//})
+		return self
+	})
+
+	type test struct {
+	}
+	tst := &test{}
+	DefaultEnv.RegisterFunc("_test", func(ctx *Context, args ...Val) any {
+		return tst
+	}, 0)
+
+	SelfDefine0(DefaultEnv, "get", func(ctx *Context, self *test) *test {
+		return self
+	})
+
+	//SelfDefine1("group_by", func(ctx *Context, self []any, k Val) any {
+	//	dst := make(map[string]any)
+	//
+	//	forRangeExec()
+	//	for _, e := range self {
+	//		em, ok := e.(map[string]interface{})
+	//		if ok {
+	//			kk := StringOf(em[k])
+	//			ee, ok := dst[kk].([]any)
+	//			if !ok {
+	//				ee = make([]any, 0)
+	//			}
+	//			ee = append(ee, e)
+	//			dst[kk] = ee
+	//		}
+	//	}
+	//	return dst
+	//})
+	//RegisterFunc("hmac.new", FuncDefine2(func(a hash.Hash, key string) hash.Hash {
+	//	hmac.New(a, key)
+	//}), 1)
+
+	SelfDefine0(DefaultEnv, "keys", func(ctx *Context, self map[string]any) []any {
+		res := make([]any, 0, len(self))
+		for key := range self {
+			res = append(res, key)
+		}
+		return res
+	})
+
+	SelfDefine1(DefaultEnv, "join", func(ctx *Context, self []any, s string) string {
+		arr := make([]string, len(self))
+		for i, a := range self {
+			arr[i] = StringOf(a)
+		}
+		return strings.Join(arr, s)
+	})
+
+	SelfDefine0(DefaultEnv, "time", func(ctx *Context, self float64) time.Time {
+		return time.Unix(int64(self), 0)
+	}, WithDoc("convert to time from unix"))
+
+	SelfDefine2(DefaultEnv, "to_string", func(ctx *Context, self map[string]any, sep1 string, sep2 string) string {
+		sb := strings.Builder{}
+		sb.Grow(len(self) * (len(sep1) + len(sep2) + 5))
+		for key, val := range self {
+			sb.WriteString(key)
+			sb.WriteString(sep1)
+			sb.WriteString(StringOf(val))
+			sb.WriteString(sep2)
+		}
+		str := sb.String()
+		if len(str) == 0 {
+			return str
+		}
+		return str[:len(str)-len(sep2)]
+	}, WithDoc("convert to string to_string('=',';')"))
+}
+
+func init() {
+	RegisterOptFuncDefine1(DefaultEnv, "atomic_int", func(ctx *Context, a float64, opt *Options) *atomic.Int64 {
+		v := &atomic.Int64{}
+		v.Store(int64(a))
+		return v
+	})
+
+	SelfDefine1(DefaultEnv, "set", func(ctx *Context, self *atomic.Int64, a float64) any {
+		self.Store(int64(a))
+		return self
+	})
+	SelfDefine1(DefaultEnv, "add", func(ctx *Context, self *atomic.Int64, a float64) any {
+		return self.Add(int64(a))
+	})
+	SelfDefine0(DefaultEnv, "get", func(ctx *Context, self *atomic.Int64) any {
+
+		return float64(self.Load())
+	})
+}

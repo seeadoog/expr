@@ -1,0 +1,1875 @@
+package expr
+
+import (
+	"bytes"
+	"crypto/hmac"
+	"crypto/md5"
+	"crypto/sha256"
+	"encoding/hex"
+	"encoding/json"
+	"fmt"
+	"math"
+	"math/rand"
+	"os"
+	"os/exec"
+	"reflect"
+	"regexp"
+	"runtime/debug"
+	"sort"
+	"strings"
+	"sync"
+	"testing"
+	"time"
+	"unsafe"
+)
+
+// compileFunc func(args ...any)(any,err)
+type innerFunc struct {
+	compileFunc  compileFunc
+	compiledArgs int // 预编译的参数数量
+	docs         string
+	argString    string
+	hasOpt       bool
+	fun          ScriptFunc
+	name         string
+	argsNum      int
+}
+type compileFunc func(args ...any) (result any, err error)
+
+var (
+	funtables_ = map[string]*innerFunc{
+		"append": {nil, 0, "", "", false, appendFunc, "append", -1},
+		"join":   {nil, 0, "", "", false, joinFunc, "join", -1},
+		"eq":     {nil, 0, "", "(string,string)bool", false, eqFunc, "eq", 2},
+		"eqs":    {nil, 0, "", "", false, eqsFunc, "eqs", 2},
+		"neq":    {nil, 0, "", "", false, notEqFunc, "neq", 2},
+		"lt":     {nil, 0, "", "", false, lessFunc, "lt", 2},
+		"lte":    {nil, 0, "", "", false, lessOrEqual, "lte", 2},
+		"gt":     {nil, 0, "", "", false, largeFunc, "gt", 2},
+		"gte":    {nil, 0, "", "", false, largeOrEqual, "gte", 2},
+		"neqs":   {nil, 0, "", "", false, notEqSFunc, "neqs", 2},
+		"not":    {nil, 0, "", "", false, notFunc, "not", 1},
+		"or":     {nil, 0, "", "(any,any)any", false, orFunc, "or", -1},
+		"and":    {nil, 0, "", "", false, andFunc, "and", -1},
+		//"if":             {nil, 0, "", "", false, ifFunc, "if", -1},
+		"len":            {nil, 0, "", "", false, lenFunc, "len", 1},
+		"inn":            {nil, 0, "", "", false, inFunc, "inn", -1},
+		"print":          {nil, 0, "", "", false, printFunc, "print", -1},
+		"add":            {nil, 0, "", "", false, addFunc, "add", -1},
+		"sub":            {nil, 0, "", "", false, subFunc, "sub", 2},
+		"mul":            {nil, 0, "", "", false, mulFunc, "mul", 2},
+		"mod":            {nil, 0, "", "", false, modFunc, "mod", 2},
+		"div":            {nil, 0, "", "", false, divFunc, "div", 2},
+		"pow":            {nil, 0, "", "", false, powFunc, "pow", 2},
+		"neg":            {nil, 0, "", "", false, negativeFunc, "neg", 1},
+		"delete":         {nil, 0, "", "", false, deleteFunc, "delete", 2},
+		"get":            {nil, 0, "", "", false, getFunc, "get", 2},
+		"set":            {nil, 0, "", "", false, setFunc, "set", 3},
+		"set_index":      {nil, 0, "", "", false, setIndex, "set_index", 3},
+		"str_has_prefix": {nil, 0, "", "", false, hasPrefixFunc, "has_prefix", 2},
+		"str_has_suffix": {nil, 0, "", "", false, hasSuffixFunc, "has_suffix", 2},
+		"str_join":       {nil, 0, "", "", false, joinFunc, "str_join", -1},
+		"str_split":      {nil, 0, "", "(string,string,int)", false, splitFunc, "str_split", 3},
+		"str_to_upper":   {nil, 0, "", "(string)string", false, toUpperFunc, "str_to_upper", 1},
+		"str_to_lower":   {nil, 0, "", "(string)string", false, toLowerFunc, "str_to_lower", 1},
+		"str_trim":       {nil, 0, "", "(string)string", false, trimFunc, "str_trim", 1},
+		"str_fields":     {nil, 0, "", "(string)[]string", false, fieldFunc, "str_fields", 1},
+		"json_to":        {nil, 0, "", "", false, jsonEncode, "json_to", 1},
+		"to_json_str":    {nil, 0, "", "(any)string", false, jsonEncode, "to_json_str", 1},
+		"json_from":      {nil, 0, "", "", false, jsonDecode, "json_from", 1},
+		"to_json_obj":    {nil, 0, "", "(string)any", false, jsonDecode, "to_json_obj", 1},
+		"time_now":       {nil, 0, "", "()time.Time", false, timeNow, "time_now", 0},
+		"time_now_mill":  {nil, 0, "", "()number", false, nowTimeMillsec, "time_now_mill", 0},
+		"time_from_unix": {nil, 0, "", "(timeunix)", false, timeFromUnix, "time_from_unix", 1},
+		"time_format":    {nil, 0, "", "(time.Time,string)", false, timeFormat, "time_format", 2},
+		"time_parse":     {nil, 0, "", "(layout string,time string)time.Time", false, funcTimeParse, "time_parse", 2},
+		"type":           {nil, 0, "", "", false, typeOfFunc, "type", 1},
+		"slice_new":      {nil, 0, "", "", false, newArrFunc, "slice_new", -1},
+		"slice_init":     {nil, 0, "", "", false, sliceInitFunc, "slice_init", -1},
+		"slice_cut":      {nil, 0, "", "", false, arrSliceFunc, "slice_cut", 3},
+		"ternary":        {nil, 0, "", "", false, ternaryFunc, "ternary", 3},
+		"string":         {nil, 0, "", "", false, stringFunc, "string", 1},
+		"number":         {nil, 0, "", "()number convert val to number", false, numberFunc, "number", 1},
+		"int":            {nil, 0, "", "()number convert val to int number", false, intFunc, "int", 1},
+		"bool":           {nil, 0, "", "()bool  convert val to bool", false, boolFunc, "bool", 1},
+		"bytes":          {nil, 0, "", "()[]byte convert val to byte", false, bytesFuncs, "bytes", 1},
+		"base64_encode":  {nil, 0, "", "()string encoding string or bytes to base64", false, base64Encode, "base64_encode", 1},
+		"base64_decode":  {nil, 0, "", "(string)[]byte decode from base64 string and will panic on error", false, base64Decode, "base64_decode", 1},
+		"md5_sum":        {nil, 0, "", "(...string)[]byte calc md5 of string set", false, md5SumFunc, "md5", 1},
+		"sha256_sum":     {nil, 0, "", "(string)[]byte cals sha256 of string", false, sha256Func, "sha256", 1},
+		"hmac_sha256":    {nil, 0, "", "(string|[]byte,secret)[]byte ", false, hmacSha266Func, "hmac_sha256", 2},
+		"hex_encode":     {nil, 0, "", "([]byte)string", false, hexEncodeFunc, "hex_encode", 1},
+		"hex_decode":     {nil, 0, "", "(string)[]byte panic on error", false, hexDecodeFunc, "hex_decode", 1},
+		"sprintf":        {nil, 0, "", "", false, sprintfFunc, "sprintf", -1},
+		"http_request":   {nil, 0, "", "(method string ,url string,headers obj,body any,timeout_ms number)map[string]any", false, httpRequest, "http_request", 5},
+		"return":         {nil, 0, "", "(...any) terminate exec expr", false, returnFunc, "return", -1},
+		"orr":            {nil, 0, "", "", false, orrFunc, "orr", 2},
+		"new":            {nil, 0, "", "()map[string]any return new map", false, newFunc, "new", 0},
+		"all":            {nil, 0, "", "", false, funcAll, "all", 2},
+		"for":            {nil, 0, "", "", false, funcFor, "for", 2},
+		"loop":           {nil, 0, "", "", false, funcLoop, "loop", -1},
+		"go":             {nil, 0, "", "", false, funcGo, "go", 1},
+		"catch":          {nil, 0, "", "", false, funcCatch, "catch", 1},
+		"unwrap":         {nil, 0, "", "", false, funcUnwrap, "unwrap", 1},
+		"boolean":        {nil, 0, "", "", false, funcBool, "boolean", 1},
+		"recover":        {nil, 0, "", "", false, funcRecover, "recover", 1},
+		"recovers":       {nil, 0, "", "", false, funcRecoverS, "recovers", 1},
+		"recoverd":       {nil, 0, "", "", false, funcRecoverD, "recoverd", 1},
+		"sleep":          {nil, 0, "", "(millsec)", false, funcSleep, "sleep", 1},
+		"repeat":         {nil, 0, "", "", false, funcRepeat, "repeat", 2},
+		"repeats":        {nil, 0, "", "", false, funcRepeats, "repeats", 2},
+		"range":          {nil, 0, "", "", false, funcRange, "range", 1},
+		"exec":           {nil, 0, "", "", false, funcExec, "exec", -1},
+		"cost":           {nil, 0, "", "", false, funcCost, "cost", 1},
+		"_debug":         {nil, 0, "", "", false, funcDebug, "_debug", -1},
+		"rand":           {nil, 0, "", "", false, funcRand, "rand", 1},
+		"is_empty":       {nil, 0, "", "", false, funcIsEmpty, "is_empty", 1},
+		"printf":         {nil, 0, "", "", false, funcPrintf, "printf", -1},
+		"set_to":         {nil, 0, "", "", false, funcSetTo, "set_to", 2},
+		"seto":           {nil, 0, "", "", false, funcSetTo, "seto", 2},
+		"benchmark":      {nil, 0, "", "", false, funcBenchmark, "benchmark", 1},
+		"defer":          {nil, 0, "", "(do,defer)", false, funcDefer, "defer", 2},
+		"log10":          {nil, 0, "", "(number)number", false, funcLog10, "log10", 1},
+		"sqrt":           {nil, 0, "", "(number)number", false, funcSqrt, "sqrt", 1},
+	}
+)
+
+func init() {
+	//RegisterFunc("func", defineFunc, 2)
+
+	DefaultEnv.RegisterFunc("show_doc", funcShowFuncs, 0)
+}
+
+//func RemoveGlobalFunc(fun string) {
+//	delete(funtables, fun)
+//}
+
+var newFunc = FuncDefine(func() any {
+	return make(map[string]any)
+})
+
+//func RegisterDynamicFunc(funName string, argsNum int) {
+//	if strings.Contains(funName, ".") {
+//		panic("dynamic function name must not contain '.' :" + funName)
+//	}
+//	funtables[funName] = &innerFunc{
+//		fun: func(ctx *Context, args ...Val) any {
+//			if ctx.funcs == nil {
+//				return nil
+//			}
+//			f := ctx.funcs[funName]
+//			if f == nil {
+//				return nil
+//			}
+//			return f(ctx, args...)
+//		},
+//		name:    funName,
+//		argsNum: argsNum,
+//	}
+//}
+
+type funcOpt func(f *innerFunc)
+
+func WithArgsString(s string) funcOpt {
+	return func(f *innerFunc) {
+		f.argString = s
+	}
+}
+func WithCompiledArgs(n int, cf compileFunc) funcOpt {
+	return func(f *innerFunc) {
+		f.compiledArgs = n
+		f.compileFunc = cf
+	}
+}
+
+func (e *Env) RegisterFunc(funName string, f ScriptFunc, argsNum int, opts ...funcOpt) {
+	if strings.Contains(funName, ".") {
+		panic("function name must not contain '.':" + funName)
+	}
+	if e.isDefault && e.funtables[funName] != nil {
+		panic("cannot change function in defaultEnv: " + funName)
+	}
+	in := &innerFunc{
+		fun:     f,
+		name:    funName,
+		argsNum: argsNum,
+	}
+	for _, opt := range opts {
+		opt(in)
+	}
+	if in.argsNum >= 0 && in.compiledArgs > in.argsNum {
+		panic(fmt.Sprintf("func '%s' args num less than compiled args", funName))
+	}
+	e.funtables[funName] = in
+}
+
+type OptFunc func(ctx *Context, args []Val, opt *Options) any
+
+type commonOpt struct {
+	doc   string
+	inner []funcOpt
+}
+
+type commonFuncOpt func(c *commonOpt)
+
+func Doc(doc string) commonFuncOpt {
+	return func(c *commonOpt) {
+		c.doc = doc
+	}
+}
+
+func FuncOpt(opt funcOpt) commonFuncOpt {
+	return func(c *commonOpt) {
+		c.inner = append(c.inner, opt)
+	}
+}
+
+func (e *Env) RegisterFuncWithOpt(funName string, f OptFunc, argsNum int, argDesc string, opts ...funcOpt) {
+	if strings.Contains(funName, ".") {
+		panic("function name must not contain '.':" + funName)
+	}
+	if e.isDefault && e.funtables[funName] != nil {
+		panic("cannot change function in defaultEnv: " + funName)
+	}
+	fn := &innerFunc{
+		argString: argDesc,
+		hasOpt:    true,
+		fun: func(ctx *Context, args ...Val) any {
+			var opt *Options
+			if len(args) == argsNum+1 {
+				opt = args[argsNum].Val(ctx).(*Options)
+			}
+			return f(ctx, args, opt)
+		},
+		name:    funName,
+		argsNum: argsNum,
+	}
+	for _, opt := range opts {
+		opt(fn)
+	}
+	e.funtables[funName] = fn
+}
+
+func generateArgsString(args ...any) string {
+	ss := make([]string, len(args))
+	for i, arg := range args {
+		ss[i] = reflect.TypeOf(arg).Elem().String()
+	}
+	return strings.Join(ss, ",")
+}
+
+func generateOptArgsAndReturn(ret any, args ...any) string {
+	as := generateArgsString(args...)
+	if len(as) > 0 {
+		as += ",options"
+	}
+	return fmt.Sprintf("(%s)%s ", as, reflect.TypeOf(ret).Elem().String())
+}
+
+func docFromOpt(opt []commonFuncOpt) string {
+	o := commonOpt{}
+	for _, opt := range opt {
+		opt(&o)
+	}
+	return o.doc
+}
+
+func innerOptFromOpt(opt []commonFuncOpt) []funcOpt {
+	o := commonOpt{}
+	for _, opt := range opt {
+		opt(&o)
+	}
+	return o.inner
+}
+
+func WithCompiled[T any](n int, fun func(args ...any) T) commonFuncOpt {
+	return func(f *commonOpt) {
+		f.inner = append(f.inner, func(iff *innerFunc) {
+			iff.compiledArgs = n
+			iff.compileFunc = func(args ...any) (result any, err error) {
+				return fun(args...), nil
+			}
+		})
+	}
+}
+
+func RegisterOptFuncDefine2[A any, B any, R any](e *Env, fname string, f func(ctx *Context, a A, b B, opt *Options) R, opts ...commonFuncOpt) {
+	e.RegisterFuncWithOpt(fname, func(ctx *Context, args []Val, opt *Options) any {
+		a, _ := args[0].Val(ctx).(A)
+		b, _ := args[1].Val(ctx).(B)
+		return f(ctx, a, b, opt)
+	}, 2, generateOptArgsAndReturn(new(R), new(A), new(B))+docFromOpt(opts), innerOptFromOpt(opts)...)
+}
+
+func RegisterOptFuncDefine1[A any, R any](e *Env, fname string, f func(ctx *Context, a A, opt *Options) R, opts ...commonFuncOpt) {
+	e.RegisterFuncWithOpt(fname, func(ctx *Context, args []Val, opt *Options) any {
+		a, _ := args[0].Val(ctx).(A)
+		return f(ctx, a, opt)
+	}, 1, generateOptArgsAndReturn(new(R), new(A))+docFromOpt(opts), innerOptFromOpt(opts)...)
+}
+func RegisterOptFuncDefine0[R any](e *Env, fname string, f func(ctx *Context, opt *Options) R, opts ...commonFuncOpt) {
+	e.RegisterFuncWithOpt(fname, func(ctx *Context, args []Val, opt *Options) any {
+		return f(ctx, opt)
+	}, 0, generateOptArgsAndReturn(new(R))+docFromOpt(opts), innerOptFromOpt(opts)...)
+}
+func RegisterOptFuncDefine3[A any, B any, C any, R any](e *Env, fname string, f func(ctx *Context, a A, b B, c C, opt *Options) R, opts ...commonFuncOpt) {
+	e.RegisterFuncWithOpt(fname, func(ctx *Context, args []Val, opt *Options) any {
+		a, _ := args[0].Val(ctx).(A)
+		b, _ := args[1].Val(ctx).(B)
+		c, _ := args[2].Val(ctx).(C)
+		return f(ctx, a, b, c, opt)
+	}, 3, generateOptArgsAndReturn(new(R), new(A), new(B), new(C))+docFromOpt(opts), innerOptFromOpt(opts)...)
+}
+
+func RegisterOptFuncDefine4[A any, B any, C any, D any, R any](e *Env, fname string, f func(ctx *Context, a A, b B, c C, d D, opt *Options) R, opts ...commonFuncOpt) {
+
+	e.RegisterFuncWithOpt(fname, func(ctx *Context, args []Val, opt *Options) any {
+		a, _ := args[0].Val(ctx).(A)
+		b, _ := args[1].Val(ctx).(B)
+		c, _ := args[2].Val(ctx).(C)
+		d, _ := args[3].Val(ctx).(D)
+		return f(ctx, a, b, c, d, opt)
+	}, 4, generateOptArgsAndReturn(new(R), new(A), new(B), new(C), new(D))+docFromOpt(opts), innerOptFromOpt(opts)...)
+}
+
+var appendFunc ScriptFunc = func(ctx *Context, args ...Val) any {
+	if len(args) == 0 {
+		return nil
+	}
+	a1 := args[0].Val(ctx)
+	switch a1 := a1.(type) {
+	case string:
+		sb := strings.Builder{}
+		sb.WriteString(a1)
+		for _, v := range args[1:] {
+			vad, ok := v.(*VariadicVal)
+			if ok {
+				for _, e := range vad.ArrVal(ctx) {
+					sb.WriteString(StringOf(e))
+				}
+			} else {
+				sb.WriteString(StringOf(v.Val(ctx)))
+			}
+
+		}
+		return sb.String()
+	case []byte:
+
+	case []any:
+		for _, v := range args[1:] {
+			vad, ok := v.(*VariadicVal)
+			if ok {
+				for _, e := range vad.ArrVal(ctx) {
+					a1 = append(a1, e)
+				}
+			} else {
+				a1 = append(a1, v.Val(ctx))
+
+			}
+
+		}
+		return a1
+	case nil:
+		a := make([]any, 0, len(args)-1)
+		for _, v := range args[1:] {
+			a = append(a, v.Val(ctx))
+		}
+		return a
+
+	}
+
+	return nil
+}
+
+var joinFunc ScriptFunc = func(ctx *Context, args ...Val) any {
+	if len(args) != 2 {
+		return ""
+	}
+
+	arg := args[0].Val(ctx)
+	sep := StringOf(args[1].Val(ctx))
+	ss, ok := arg.([]string)
+	if ok {
+		return strings.Join(ss, sep)
+	}
+
+	length := 0
+	var index func(i int) string
+	switch arg := arg.(type) {
+	case []any:
+		length = len(arg)
+		index = func(i int) string {
+			return StringOf(arg[i])
+		}
+	case []string:
+		length = len(arg)
+		index = func(i int) string {
+			return arg[i]
+		}
+	default:
+		return ""
+	}
+	switch length {
+	case 0:
+		return ""
+	case 1:
+		return index(0)
+	}
+	sb := strings.Builder{}
+	sb.Grow(length * 3)
+	sb.WriteString(index(0))
+	for i := 1; i < length; i++ {
+		sb.WriteString(sep)
+		sb.WriteString(index(i))
+	}
+	return sb.String()
+}
+
+var eqFunc ScriptFunc = func(ctx *Context, args ...Val) any {
+	if len(args) != 2 {
+		return false
+	}
+	return args[0].Val(ctx) == args[1].Val(ctx)
+}
+var eqsFunc ScriptFunc = func(ctx *Context, args ...Val) any {
+	if len(args) != 2 {
+		return false
+	}
+	a0 := args[0].Val(ctx)
+	a1 := args[1].Val(ctx)
+	if a0 == a1 {
+		return true
+	}
+	return StringOf(a0) == StringOf(a1)
+}
+
+var orFunc ScriptFunc = func(ctx *Context, args ...Val) any {
+	for _, arg := range args {
+		v := arg.Val(ctx)
+		if v != nil {
+			switch vb := v.(type) {
+			case bool:
+				if vb {
+					return true
+				}
+				continue
+			case float64:
+				if vb == 0 {
+					continue
+				}
+			case int:
+				if vb == 0 {
+					continue
+				}
+			case string:
+				if vb == "" {
+					continue
+				}
+			}
+
+			return v
+		}
+	}
+	return nil
+}
+
+var orrFunc = FuncDefine2(func(a any, b any) any {
+	if a != nil {
+		return a
+	}
+	return b
+})
+
+var andFunc ScriptFunc = func(ctx *Context, args ...Val) any {
+	for _, arg := range args {
+		if !BoolCond(arg.Val(ctx)) {
+			return false
+		}
+	}
+	return true
+}
+
+var powFunc = FuncDefine2(math.Pow)
+
+var ifFunc ScriptFunc = func(ctx *Context, args ...Val) any {
+	var v any
+	for _, arg := range args {
+		v = arg.Val(ctx)
+		if !BoolCond(v) {
+			return v
+		}
+	}
+	return v
+}
+
+var printFunc ScriptFunc = func(ctx *Context, args ...Val) any {
+	argv := make([]any, 0, len(args))
+	for _, arg := range args {
+		argv = append(argv, arg.Val(ctx))
+	}
+	fmt.Println(argv...)
+
+	return nil
+}
+
+var sprintfFunc ScriptFunc = func(ctx *Context, args ...Val) any {
+	if len(args) < 1 {
+		return ""
+	}
+	format := StringOf(args[0].Val(ctx))
+	vals := make([]any, 0, len(args)-1)
+	for _, arg := range args[1:] {
+		vals = append(vals, arg.Val(ctx))
+	}
+	return fmt.Sprintf(format, vals...)
+}
+
+func FuncDefine1[A1 any, R any](f func(a A1) R) ScriptFunc {
+	return func(ctx *Context, args ...Val) any {
+		//if len(args) != 1 {
+		//	return nil
+		//}
+		a, _ := args[0].Val(ctx).(A1)
+		return f(a)
+	}
+}
+func FuncDefine1WithCtx[A1 any, R any](f func(ctx *Context, a A1) R) ScriptFunc {
+	return func(ctx *Context, args ...Val) any {
+		//if len(args) != 1 {
+		//	return nil
+		//}
+		a, _ := args[0].Val(ctx).(A1)
+		return f(ctx, a)
+	}
+}
+func FuncDefine[R any](f func() R) ScriptFunc {
+	return func(ctx *Context, args ...Val) any {
+		return f()
+	}
+}
+func FuncDefineWithCtx[R any](f func(ctx *Context) R) ScriptFunc {
+	return func(ctx *Context, args ...Val) any {
+		return f(ctx)
+	}
+}
+
+func FuncDefine2[A1 any, A2 any, R any](f func(a A1, b A2) R) ScriptFunc {
+	return func(ctx *Context, args ...Val) any {
+		//if len(args) != 2 {
+		//	return nil
+		//}
+		a, _ := args[0].Val(ctx).(A1)
+
+		b, _ := args[1].Val(ctx).(A2)
+
+		return f(a, b)
+	}
+}
+func FuncDefine2WithCtx[A1 any, A2 any, R any](f func(ctx *Context, a A1, b A2) R) ScriptFunc {
+	return func(ctx *Context, args ...Val) any {
+		//if len(args) != 2 {
+		//	return nil
+		//}
+		a, _ := args[0].Val(ctx).(A1)
+
+		b, _ := args[1].Val(ctx).(A2)
+
+		return f(ctx, a, b)
+	}
+}
+
+func FuncDefine3[A1 any, A2 any, A3 any, R any](f func(a A1, b A2, c A3) R) ScriptFunc {
+	return func(ctx *Context, args ...Val) any {
+		//if len(args) != 3 {
+		//	return nil
+		//}
+		a, _ := args[0].Val(ctx).(A1)
+
+		b, _ := args[1].Val(ctx).(A2)
+
+		c, _ := args[2].Val(ctx).(A3)
+
+		return f(a, b, c)
+	}
+}
+func FuncDefine3WithCtx[A1 any, A2 any, A3 any, R any](f func(ctx *Context, a A1, b A2, c A3) R) ScriptFunc {
+	return func(ctx *Context, args ...Val) any {
+		//if len(args) != 3 {
+		//	return nil
+		//}
+		a, _ := args[0].Val(ctx).(A1)
+
+		b, _ := args[1].Val(ctx).(A2)
+
+		c, _ := args[2].Val(ctx).(A3)
+
+		return f(ctx, a, b, c)
+	}
+}
+func FuncDefine4[A1 any, A2 any, A3 any, A4 any, R any](f func(a A1, b A2, c A3, d A4) R) ScriptFunc {
+	return func(ctx *Context, args ...Val) any {
+		//if len(args) != 4 {
+		//	return nil
+		//}
+		a, _ := args[0].Val(ctx).(A1)
+
+		b, _ := args[1].Val(ctx).(A2)
+
+		c, _ := args[2].Val(ctx).(A3)
+		d, _ := args[3].Val(ctx).(A4)
+
+		return f(a, b, c, d)
+	}
+}
+
+func FuncDefine4WithCtx[A1 any, A2 any, A3 any, A4 any, R any](f func(ctx *Context, a A1, b A2, c A3, d A4) R) ScriptFunc {
+	return func(ctx *Context, args ...Val) any {
+		//if len(args) != 4 {
+		//	return nil
+		//}
+		a, _ := args[0].Val(ctx).(A1)
+
+		b, _ := args[1].Val(ctx).(A2)
+
+		c, _ := args[2].Val(ctx).(A3)
+		d, _ := args[3].Val(ctx).(A4)
+
+		return f(ctx, a, b, c, d)
+	}
+}
+
+func FuncDefine5[A1 any, A2 any, A3 any, A4 any, A5 any, R any](f func(a A1, b A2, c A3, d A4, e A5) R) ScriptFunc {
+	return func(ctx *Context, args ...Val) any {
+		//if len(args) != 5 {
+		//	return nil
+		//}
+		a, _ := args[0].Val(ctx).(A1)
+
+		b, _ := args[1].Val(ctx).(A2)
+
+		c, _ := args[2].Val(ctx).(A3)
+		d, _ := args[3].Val(ctx).(A4)
+		e, _ := args[4].Val(ctx).(A5)
+
+		return f(a, b, c, d, e)
+	}
+}
+
+func FuncDefine5WithCtx[A1 any, A2 any, A3 any, A4 any, A5 any, R any](f func(ctx *Context, a A1, b A2, c A3, d A4, e A5) R) ScriptFunc {
+	return func(ctx *Context, args ...Val) any {
+		//if len(args) != 5 {
+		//	return nil
+		//}
+		a, _ := args[0].Val(ctx).(A1)
+
+		b, _ := args[1].Val(ctx).(A2)
+
+		c, _ := args[2].Val(ctx).(A3)
+		d, _ := args[3].Val(ctx).(A4)
+		e, _ := args[4].Val(ctx).(A5)
+
+		return f(ctx, a, b, c, d, e)
+	}
+}
+
+func FuncDefine1WithDef[A any, R any](f func(a A) R, def R) ScriptFunc {
+	return func(ctx *Context, args ...Val) any {
+		if len(args) != 1 {
+			return def
+		}
+		a, ok := args[0].Val(ctx).(A)
+		if !ok {
+			return def
+		}
+		return f(a)
+	}
+}
+
+func FuncDefineN[T any, R any](f func(a ...T) R) ScriptFunc {
+	return func(ctx *Context, args ...Val) any {
+
+		argv := make([]T, 0, len(args))
+		for _, arg := range args {
+			arg, _ := arg.Val(ctx).(T)
+			argv = append(argv, arg)
+		}
+		return f(argv...)
+	}
+}
+
+var setFunc = FuncDefine3(func(m map[string]any, b string, c any) any {
+	if m == nil {
+		return newErrorf("assign to nil map: k:%v v:%v", b, c)
+	}
+	m[b] = c
+	return nil
+})
+
+var setIndex = FuncDefine3(func(m []any, b float64, c any) any {
+	idx := int(b)
+	if idx >= len(m) {
+		return newErrorf("index out of range: k:%v v:%v", b, c)
+	}
+	m[idx] = c
+	return nil
+})
+
+var deleteFunc = FuncDefine2(func(m map[string]any, b string) any {
+	delete(m, b)
+	return nil
+})
+
+var getFunc = FuncDefine2(func(m map[string]any, b string) any {
+	return m[b]
+})
+
+var addFunc = FuncDefineN(func(a ...any) any {
+	if len(a) == 0 {
+		return nil
+	}
+	switch v := a[0].(type) {
+	case float64:
+		sum := v
+		for _, va := range a[1:] {
+			sum += NumberOf(va)
+		}
+		return sum
+	default:
+		sb := strings.Builder{}
+		sb.WriteString(StringOf(v))
+		for _, va := range a[1:] {
+			sb.WriteString(StringOf(va))
+		}
+		return sb.String()
+	}
+
+})
+
+var add2Func = FuncDefine2(func(a, b any) any {
+	return add2(a, b)
+})
+
+func add2(a, b any) any {
+
+	switch v := a.(type) {
+	case float64:
+		return v + NumberOf(b)
+	case string:
+		return v + StringOf(b)
+	default:
+		return newErrorf("cannot add type '%v' '+' '%v'", reflect.TypeOf(a), reflect.TypeOf(b))
+	case nil:
+		switch b := b.(type) {
+		case float64, string, nil:
+			return b
+		}
+		return newErrorf("cannot add type '%v' '+' '%v'", reflect.TypeOf(a), reflect.TypeOf(b))
+	}
+}
+
+var subFunc = FuncDefine2(func(a, b float64) any {
+	return a - b
+})
+var divFunc = FuncDefine2(func(a, b float64) any {
+	return a / b
+})
+var mulFunc = FuncDefine2(func(a, b float64) any {
+	return a * b
+})
+var modFunc = FuncDefine2(func(a, b float64) any {
+	return float64(int(a) % int(b))
+})
+var hasPrefixFunc = FuncDefine2(func(a, b string) any {
+	return strings.HasPrefix(a, b)
+})
+
+var hasSuffixFunc = FuncDefine2(func(a, b string) any {
+	return strings.HasSuffix(a, b)
+})
+
+var trimFunc = FuncDefine1(strings.TrimSpace)
+var splitFunc = FuncDefine3(func(a, b string, n float64) any {
+	vals := strings.SplitAfterN(a, b, int(n))
+	va := make([]any, 0, len(vals))
+	for _, v := range vals {
+		va = append(va, v)
+	}
+	return va
+})
+
+var toUpperFunc = FuncDefine1(strings.ToUpper)
+
+var toLowerFunc = FuncDefine1(strings.ToLower)
+
+var jsonEncode = FuncDefine1(func(a any) any {
+	bf := bytes.NewBuffer(nil)
+	je := json.NewEncoder(bf)
+	je.SetEscapeHTML(false)
+	je.Encode(a)
+	res := unsafe.String(unsafe.SliceData(bf.Bytes()), len(bf.Bytes()))
+	if len(res) > 0 && res[len(res)-1] == '\n' {
+		return res[:len(res)-1]
+	}
+	return res
+})
+
+var jsonDecode = FuncDefine1(func(a any) (res any) {
+	switch a := a.(type) {
+	case string:
+		err := json.Unmarshal(unsafe.Slice(unsafe.StringData(a), len(a)), &res)
+		if err != nil {
+			return newError(err)
+		}
+		return res
+	case []byte:
+		err := json.Unmarshal(a, &res)
+		if err != nil {
+			return newError(err)
+		}
+		return res
+	case nil:
+		return nil
+	}
+	return newErrorf("cannot decode type to json obj %s", reflect.TypeOf(a).String())
+})
+
+var timeFormat = FuncDefine2(func(tim time.Time, format string) any {
+	return tim.Format(format)
+})
+
+var timeNow = FuncDefine(time.Now)
+
+var notFunc = FuncDefine1(func(a any) bool {
+	return !BoolCond(a)
+})
+
+var notEqFunc = FuncDefine2(func(a any, b any) bool {
+	return a != b
+})
+var notEqSFunc = FuncDefine2(func(a any, b any) bool {
+	if a != b {
+		return true
+	}
+	return StringOf(a) != StringOf(b)
+})
+
+var largeFunc = FuncDefine2(func(a any, b any) bool {
+	return compare(a, b) > 0
+})
+
+func compare(a, b any) int {
+	switch aa := a.(type) {
+	case float64:
+		bb := NumberOf(b)
+		switch {
+		case aa == bb:
+			return 0
+		case aa < bb:
+			return -1
+		default:
+			return 1
+		}
+	case int:
+		bb := int(NumberOf(b))
+		switch {
+		case aa == bb:
+			return 0
+		case aa < bb:
+			return -1
+		default:
+			return 1
+		}
+	case string:
+		bb := StringOf(b)
+		return strings.Compare(aa, bb)
+	default:
+		return 0
+	}
+}
+
+var largeOrEqual = FuncDefine2(func(a any, b any) bool {
+	return compare(a, b) >= 0
+})
+var lessFunc = FuncDefine2(func(a any, b any) bool {
+	return compare(a, b) < 0
+})
+var lessOrEqual = FuncDefine2(func(a any, b any) bool {
+	return compare(a, b) <= 0
+})
+
+var typeOfFunc ScriptFunc = func(ctx *Context, args ...Val) any {
+	if len(args) != 1 {
+		return nil
+	}
+	a := args[0].Val(ctx)
+	switch a.(type) {
+	case string:
+		return "string"
+	case []byte:
+		return "bytes"
+	case float64, int:
+		return "number"
+	case bool:
+		return "boolean"
+	case nil:
+		return "nil"
+	case []any:
+		return "array"
+	default:
+		return reflect.TypeOf(a).String()
+	}
+}
+
+var newArrFunc ScriptFunc = func(ctx *Context, args ...Val) any {
+	size := 0
+	cap := 0
+	switch len(args) {
+	case 0:
+	case 1:
+		size = int(NumberOf(args[0].Val(ctx)))
+	default:
+		size = int(NumberOf(args[0].Val(ctx)))
+		cap = int(NumberOf(args[1].Val(ctx)))
+	}
+	if cap < size {
+		cap = size
+	}
+	return make([]any, size, cap)
+}
+
+var makeArrFunc = FuncDefine1(func(a float64) any {
+	return make([]any, int(a))
+})
+
+var sliceInitFunc ScriptFunc = func(ctx *Context, args ...Val) any {
+	arr := make([]any, 0, len(args))
+	for _, v := range args {
+		arr = append(arr, v.Val(ctx))
+	}
+	return arr
+}
+
+var arrSliceFunc = FuncDefine3(func(arr []any, start, end float64) any {
+	endi := int(end)
+	starti := int(start)
+	if len(arr) < endi {
+		endi = len(arr)
+	}
+	return arr[starti:endi]
+})
+
+var ternaryFunc ScriptFunc = func(ctx *Context, args ...Val) any {
+	if len(args) != 3 {
+		return nil
+	}
+	ok := BoolCond(args[0].Val(ctx))
+	if ok {
+		return args[1].Val(ctx)
+	}
+	return args[2].Val(ctx)
+}
+
+var stringFunc ScriptFunc = func(ctx *Context, args ...Val) any {
+	if len(args) != 1 {
+		return nil
+	}
+	return StringOf(args[0].Val(ctx))
+}
+
+var intFunc = FuncDefine1(func(a float64) float64 {
+	return float64(int(a))
+})
+
+var boolFunc ScriptFunc = func(ctx *Context, args ...Val) any {
+	if len(args) != 1 {
+		return nil
+	}
+	return BoolOf(args[0].Val(ctx))
+}
+
+var numberFunc ScriptFunc = func(ctx *Context, args ...Val) any {
+	if len(args) != 1 {
+		return nil
+	}
+	return NumberOf(args[0].Val(ctx))
+}
+
+//var newStringBuilder ScriptFunc = func(ctx *Context, args ...Val) any {
+//	return &strings.Builder{}
+//}
+//
+//var stringBuilderWrite ScriptFunc = func(ctx *Context, args ...Val) any {
+//	if len(args) <= 0 {
+//		return nil
+//	}
+//	sb := &strings.Builder{}
+//}
+
+var base64Encode = FuncDefine1WithDef(func(a any) string {
+	switch v := a.(type) {
+	case string:
+		return base64EncodeToString(ToBytes(v))
+	case []byte:
+		return base64EncodeToString(v)
+	default:
+		return ""
+	}
+}, "")
+
+var base64Decode = FuncDefine1WithDef(func(a string) any {
+	bs, err := base64DecodeString(a)
+	if err != nil {
+		return newError(err)
+	}
+	return bs
+}, nil)
+
+var bytesFuncs = FuncDefine1(BytesOf)
+
+var md5SumFunc ScriptFunc = func(ctx *Context, args ...Val) any {
+	var data []byte
+	if len(args) > 0 {
+		data = BytesOf(args[0].Val(ctx))
+	}
+	res := md5.Sum(data)
+	return res[:]
+}
+
+var sha256Func ScriptFunc = func(ctx *Context, args ...Val) any {
+	var data []byte
+	if len(args) > 0 {
+		data = BytesOf(args[0].Val(ctx))
+	}
+	res := sha256.New()
+	res.Write(data)
+	return res.Sum(nil)
+}
+
+var hexEncodeFunc = FuncDefine1WithDef(func(a any) string {
+	return hex.EncodeToString(BytesOf(a))
+}, "")
+
+var hexDecodeFunc = FuncDefine1WithDef(func(a any) any {
+	data, err := hex.DecodeString(StringOf(a))
+	if err != nil {
+		return newError(err)
+	}
+	return data
+}, nil)
+
+var hmacSha266Func = FuncDefine2(func(a any, b any) []byte {
+	h := hmac.New(sha256.New, BytesOf(b))
+	h.Write(BytesOf(a))
+	return h.Sum(nil)
+})
+var lenFunc = FuncDefine1(func(a any) float64 {
+	switch a := a.(type) {
+	case string:
+		return float64(len(a))
+	case []byte:
+		return float64(len(a))
+	case []any:
+		return float64(len(a))
+	case map[string]interface{}:
+		return float64(len(a))
+	case []string:
+		return float64(len(a))
+	case nil:
+		return 0
+	default:
+		return float64(lenOfStruct(reflect.ValueOf(a)))
+	}
+})
+var inFunc ScriptFunc = func(ctx *Context, args ...Val) any {
+	if len(args) < 2 {
+		return false
+	}
+	arg := args[0].Val(ctx)
+	targets := args[1:]
+	for _, target := range targets {
+		tv := target.Val(ctx)
+		switch tgt := tv.(type) {
+		case []any:
+			for _, a := range tgt {
+				if arg == a {
+					return true
+				}
+			}
+		case map[string]interface{}:
+			sarg := StringOf(arg)
+			_, ok := tgt[sarg]
+			if ok {
+				return true
+			}
+
+		default:
+			if arg == tv {
+				return true
+			}
+		}
+
+	}
+	return false
+}
+
+var returnFunc = FuncDefineN(func(a ...any) any {
+	return &Return{
+		Var: a,
+	}
+})
+
+var negativeFunc = FuncDefine1(func(a float64) any {
+	return -a
+})
+var funcAll ScriptFunc = func(ctx *Context, args ...Val) any {
+	if len(args) != 2 {
+		return nil
+	}
+	data := args[0].Val(ctx)
+	size := 5
+	arr, ok := data.([]any)
+	if ok {
+		size = len(arr)
+	}
+	dst := make([]any, 0, size)
+	forRangeExec(args[1], ctx, data, func(k, v any, val Val) any {
+		data := val.Val(ctx)
+		if BoolCond(data) {
+			dst = append(dst, v)
+		}
+		return data
+	})
+	return dst
+}
+
+var funcFor ScriptFunc = func(ctx *Context, args ...Val) any {
+	if len(args) != 2 {
+		return nil
+	}
+	//return lambdaExecMapRange(args[0].Val(ctx).(map[string]any), ctx, args[1].(*lambda), func(k, v any, val Val) any {
+	//	return val.Val(ctx)
+	//})
+	return forRangeExec(args[1], ctx, args[0].Val(ctx), func(k, v any, val Val) any {
+		return val.Val(ctx)
+	})
+
+}
+
+func lambaCall(lm *lambda, ctx *Context, as []Val) any {
+	argNames := lm.Lefts
+	newC := ctx
+	if ctx.NewCallEnv {
+		newC = ctx.Clone()
+	}
+	//if len(argNames) > len(as) {
+	//	argNames = argNames[:len(as)]
+	//}
+
+	for i, name := range argNames {
+		if i < len(as) {
+			newC.Set(lm.leftsHash[i], name, as[i].Val(ctx))
+		} else {
+			newC.Set(lm.leftsHash[i], name, nil)
+		}
+
+	}
+	return lm.Right.Val(newC)
+}
+
+var (
+	_loopConst = &constraint{
+		value: true,
+	}
+)
+
+var funcLoop ScriptFunc = func(ctx *Context, args ...Val) any {
+	var shouldContinue Val
+	var doVar Val
+	switch len(args) {
+	case 1:
+		shouldContinue = _loopConst
+		doVar = args[0]
+	case 2:
+		shouldContinue = args[0]
+		doVar = args[1]
+	default:
+		return newErrorf("func loop expects 1 or 2, got %d", len(args))
+	}
+	for BoolCond(shouldContinue.Val(ctx)) {
+		o := doVar.Val(ctx)
+		switch o.(type) {
+		case *Return, *Error:
+			return o
+		case *Break:
+			return nil
+		}
+	}
+	return nil
+}
+
+type goroutine struct {
+	done chan any
+}
+
+func (c *goroutine) join() any {
+	return <-c.done
+}
+
+func newGoroutine() *goroutine {
+	return &goroutine{done: make(chan any, 1)}
+}
+
+func init() {
+	SelfDefine0(DefaultEnv, "join", func(ctx *Context, self *goroutine) any {
+		return self.join()
+	})
+	SelfDefine1(DefaultEnv, "resume", func(ctx *Context, self *goroutine, data any) any {
+		self.done <- data
+		return self
+	})
+}
+
+var funcGo ScriptFunc = func(ctx *Context, args ...Val) any {
+	if len(args) != 1 {
+		return nil
+	}
+	lm, ok := args[0].(*lambda)
+	if !ok {
+		newc := ctx.Clone()
+		gor := newGoroutine()
+		go func() {
+			gor.done <- args[0].Val(newc)
+		}()
+		return gor
+	}
+	goCtx := ctx.Clone()
+	gor := newGoroutine()
+	go func() {
+		gor.done <- RunLambda(goCtx, lm, gor)
+
+	}()
+	return gor
+}
+
+var funcTimeParse = FuncDefine2(func(layout string, val string) any {
+	tm, err := time.Parse(layout, val)
+	if err != nil {
+		return newError(err)
+	}
+	return tm
+})
+
+var funcCatch = FuncDefine1(func(a any) any {
+
+	switch v := a.(type) {
+	case *Return, *Error:
+		return nil
+	case *Result:
+		return v.Data
+	}
+	return a
+})
+
+var funcUnwrap = FuncDefine1(func(a any) any {
+	res, ok := a.(*Result)
+	if ok {
+		if res.Err != nil {
+			return newError(res.Err)
+		}
+		return res.Data
+	}
+	return a
+})
+
+var funcBool = FuncDefine1(func(a any) any {
+	return BoolOf(a)
+})
+
+var funcRecover ScriptFunc = func(ctx *Context, args ...Val) (res any) {
+
+	defer func() {
+		if r := recover(); r != nil {
+			res = r
+			switch r.(type) {
+			case *Result:
+
+			default:
+				res = &Result{
+					Err: r,
+				}
+			}
+		}
+	}()
+	res = args[0].Val(ctx)
+
+	return res
+}
+var funcRecoverD ScriptFunc = func(ctx *Context, args ...Val) (res any) {
+
+	defer func() {
+		if r := recover(); r != nil {
+			res = r
+			switch r.(type) {
+			case *Result:
+
+			default:
+				res = &Result{
+					Err: r,
+				}
+			}
+		}
+	}()
+	res = args[0].Val(ctx)
+	if res != nil {
+		return &Result{
+			Data: res,
+		}
+	}
+
+	return nil
+}
+
+var funcRecoverS ScriptFunc = func(ctx *Context, args ...Val) (res any) {
+
+	defer func() {
+		if r := recover(); r != nil {
+			stack := string(debug.Stack())
+			res = r
+			switch r.(type) {
+			case *Result:
+			default:
+				res = &Result{
+					Err:  r,
+					Data: stack,
+				}
+
+			}
+		}
+	}()
+	res = args[0].Val(ctx)
+	return res
+}
+var funcSleep = FuncDefine1(func(a float64) any {
+	time.Sleep(time.Duration(a) * time.Millisecond)
+	return nil
+})
+
+var funcRange = FuncDefine1(func(a float64) any {
+	return make([]any, int(a))
+})
+
+var funcRepeat ScriptFunc = func(ctx *Context, args ...Val) any {
+	end := int(NumberOf(args[1].Val(ctx)))
+
+	results := make([]any, end)
+	switch a1 := args[0].(type) {
+	case *lambda:
+		for i := 0; i < end; i++ {
+			ctx.Set(a1.leftsHash[0], a1.Lefts[0], float64(i))
+			v := a1.Right.Val(ctx)
+			if e := convertToError(v); e != nil {
+				return e
+			}
+			results[i] = v
+		}
+		return results
+	default:
+		for i := 0; i < end; i++ {
+			v := a1.Val(ctx)
+			if e := convertToError(v); e != nil {
+				return e
+			}
+			results[i] = v
+		}
+		return results
+	}
+}
+var funcRepeats ScriptFunc = func(ctx *Context, args ...Val) any {
+	end := int(NumberOf(args[1].Val(ctx)))
+
+	switch a1 := args[0].(type) {
+	case *lambda:
+		for i := 0; i < end; i++ {
+			ctx.Set(a1.leftsHash[0], a1.Lefts[0], float64(i))
+			v := a1.Right.Val(ctx)
+			if e := convertToError(v); e != nil {
+				return e
+			}
+		}
+	default:
+		for i := 0; i < end; i++ {
+			v := a1.Val(ctx)
+			if e := convertToError(v); e != nil {
+				return e
+			}
+		}
+	}
+	return nil
+}
+var funcCost ScriptFunc = func(ctx *Context, args ...Val) any {
+	if len(args) != 1 {
+		return nil
+	}
+	start := time.Now()
+	args[0].Val(ctx)
+	end := time.Now()
+
+	return float64(end.Sub(start).Milliseconds())
+}
+
+var funcExec ScriptFunc = func(ctx *Context, args ...Val) any {
+	if len(args) == 0 {
+		return nil
+	}
+	argss := make([]string, 0, len(args)-1)
+	for _, arg := range args[1:] {
+		argss = append(argss, StringOf(arg.Val(ctx)))
+	}
+	stdout := new(bytes.Buffer)
+	c := StringOf(args[0].Val(ctx))
+	vs := strings.Fields(c)
+	cmd := exec.Command(vs[0], append(vs[1:], argss...)...)
+	cmd.Stdin = os.Stdin
+	cmd.Stdout = stdout
+	cmd.Stderr = os.Stderr
+
+	err := cmd.Run()
+	if err != nil {
+		return newError(err.Error())
+	}
+	if cmd.ProcessState.ExitCode() != 0 {
+		return newError(cmd.ProcessState.ExitCode())
+	}
+	return stdout.String()
+}
+
+var funcDebug ScriptFunc = func(ctx *Context, args ...Val) any {
+	if len(args) == 0 {
+		return nil
+	}
+	val := args[0]
+	v := val.Val(ctx)
+	argss := make([]any, 0, len(args)-1)
+	for _, v := range args[1:] {
+		argss = append(argss, v.Val(ctx))
+	}
+	fmt.Fprintf(os.Stderr, "[DEBUG] %s %s: %v\n", fmt.Sprint(argss...), valTypeOf(val), v)
+	return v
+}
+
+func valTypeOf(v Val) string {
+	switch v := v.(type) {
+	case *constraint:
+		return fmt.Sprintf("constraint(%v)", v.value)
+	case *variable:
+		return fmt.Sprintf("variable(%v)", v.varName)
+	case *funcVariable:
+		return fmt.Sprintf("func(%v)", v.funcName)
+	default:
+		return "()"
+	}
+}
+
+var funcIsEmpty = FuncDefine1(func(a any) any {
+	switch v := a.(type) {
+	case string:
+		return v == ""
+	case nil:
+		return true
+	case []any:
+		return len(v) == 0
+	case []byte:
+		return len(v) == 0
+	default:
+		return false
+	}
+})
+
+var funcPrintf ScriptFunc = func(ctx *Context, args ...Val) any {
+	if len(args) < 1 {
+		return nil
+	}
+	f := StringOf(args[0].Val(ctx))
+	av := make([]any, 0, len(args))
+	for _, val := range args[1:] {
+		av = append(av, val.Val(ctx))
+	}
+	fmt.Printf(f, av...)
+	return nil
+}
+
+var (
+	_randseed = rand.New(rand.NewSource(time.Now().UnixNano()))
+	_randLock = sync.Mutex{}
+)
+
+var funcRand = FuncDefine1(func(a float64) []byte {
+	_randLock.Lock()
+	defer _randLock.Unlock()
+	bs := make([]byte, int(a))
+	_randseed.Read(bs)
+	return bs
+})
+
+var funcSetTo ScriptFunc = func(ctx *Context, args ...Val) any {
+	v := args[1]
+	key := ""
+	keyHash := uint64(0)
+	switch v := v.(type) {
+	case *variable:
+		key = v.varName
+		keyHash = v.hash
+	default:
+		key = StringOf(v.Val(ctx))
+		keyHash = calcHash(key)
+	}
+	vv := args[0].Val(ctx)
+	ctx.Set(keyHash, key, vv)
+	return vv
+}
+
+var funcBenchmark ScriptFunc = func(ctx *Context, args ...Val) any {
+	res := testing.Benchmark(func(b *testing.B) {
+		b.ReportAllocs()
+
+		for i := 0; i < b.N; i++ {
+			//RunLambda(ctx, args[0], nil)
+			args[0].Val(ctx)
+		}
+	})
+	fmt.Println(res.String(), res.MemString())
+	return nil
+}
+
+var funcShowFuncs ScriptFunc = func(ctx *Context, args ...Val) any {
+	docsObj := []string{}
+	//for _, m := range objFuncMap {
+	//	for _, o := range m {
+	//
+	//		docsObj = append(docsObj, fmt.Sprintf("%s::%s\n", o.typeI, o.doc))
+	//	}
+	//}
+	//
+	objFuncMap.foreach(func(f *funcMap) bool {
+		f.foreach(func(key string, o *objectFunc) bool {
+			docsObj = append(docsObj, fmt.Sprintf("%s::%s \n", o.typeI, o.doc))
+			return true
+		})
+		return true
+	})
+
+	sort.Strings(docsObj)
+	glb := []string{}
+	for _, i := range ctx.Env.funtables {
+
+		glb = append(glb, fmt.Sprintf("%s%s  args: %d  %s %s\n", i.name,
+			ift(i.argString == "", "()", i.argString), i.argsNum,
+			ift(ctx.Env.allTypeFuncs[i.name], "for all types", ""), i.docs))
+	}
+	sort.Strings(glb)
+
+	fmt.Printf("### global funcs\n")
+	fmt.Println("````")
+	for _, s := range glb {
+		fmt.Printf("%s", s)
+	}
+
+	fmt.Printf("\n\n### object funcs\n")
+	for _, s := range docsObj {
+		fmt.Printf("%v", s)
+	}
+
+	fmt.Printf("\n\n````\n")
+	return nil
+}
+
+var funcDefer ScriptFunc = func(ctx *Context, args ...Val) any {
+	fun := args[1]
+	defer func() {
+		fun.Val(ctx)
+	}()
+	return args[0].Val(ctx)
+}
+
+func init() {
+	DefaultEnv.RegisterFunc("show_env", funcShowEnv, 0)
+}
+
+var funcShowEnv ScriptFunc = func(ctx *Context, args ...Val) any {
+
+	ctx.table.foreach(func(_ uint64, key string, val any) bool {
+		switch v := val.(type) {
+		case *lambda:
+			fmt.Printf("%s: func(%v)\n", key, strings.Join(v.Lefts, ","))
+		default:
+			bs, _ := json.Marshal(val)
+			fmt.Printf("%s: %s\n", key, bs)
+		}
+		return true
+	})
+	return nil
+}
+
+var funcLog10 = FuncDefine1(func(a float64) float64 {
+	return math.Log10(a)
+})
+
+var funcSqrt = FuncDefine1(func(a float64) float64 {
+	return math.Sqrt(a)
+})
+
+type elfs struct {
+	cond Val
+	Do   Val
+}
+
+type ifctx struct {
+	cond Val
+	then Val
+	EL   Val
+	Elfs []elfs
+}
+
+func (c2 *ifctx) Val(c *Context) any {
+	return c2.do(c)
+}
+
+func (c2 *ifctx) Set(c *Context, val any) {
+
+}
+
+func (c *ifctx) do(ctx *Context) any {
+
+	if BoolCond(c.cond.Val(ctx)) {
+		if c.then != nil {
+			return c.then.Val(ctx)
+		}
+		return nil
+	} else {
+		for _, elf := range c.Elfs {
+			if BoolCond(elf.cond.Val(ctx)) {
+				if elf.Do != nil {
+					return elf.Do.Val(ctx)
+				}
+				return nil
+			}
+		}
+		if c.EL != nil {
+			return c.EL.Val(ctx)
+		}
+		return nil
+	}
+}
+
+type switchCtx struct {
+	sw    Val
+	cases []elfs
+	def   Val
+}
+
+func (s *switchCtx) Set(c *Context, val any) {
+
+}
+
+func (s *switchCtx) Val(c *Context) any {
+	v := s.sw.Val(c)
+	for _, e := range s.cases {
+		if e.cond.Val(c) == v {
+			if e.Do != nil {
+				return e.Do.Val(c)
+			}
+			return nil
+		}
+	}
+	if s.def != nil {
+		return s.def.Val(c)
+	}
+	return nil
+}
+
+func init() {
+	DefaultEnv.RegisterFunc("if", func(ctx *Context, args ...Val) any {
+		return newErrorf("'if' called unexpected: you may lose .end() at end of if expr")
+		//return &ifctx{
+		//	cond: args[0],
+		//}
+	}, -1, WithArgsString("(cond,then?)"))
+
+	RegisterObjFunc[*ifctx](DefaultEnv, "then", func(ctx *Context, self any, args ...Val) any {
+		return newErrorf("'then' called unexpected: you may lose .end() at end of if expr")
+		//self.(*ifctx).then = args[0]
+		//return self
+	}, 1, "then(action)")
+	RegisterObjFunc[*ifctx](DefaultEnv, "else", func(ctx *Context, self any, args ...Val) any {
+		return newErrorf("'else' called unexpected: you may lose .end() at end of if expr")
+		//self.(*ifctx).EL = args[0]
+		//return self
+	}, 1, "else(action)")
+	RegisterObjFunc[*ifctx](DefaultEnv, "elseif", func(ctx *Context, self any, args ...Val) any {
+
+		return newErrorf("'elseif' called unexpected: you may lose .end() at end of if expr")
+		//
+		//f := self.(*ifctx)
+		//switch len(args) {
+		//case 1:
+		//	f.Elfs = append(f.Elfs, elfs{
+		//		cond: args[0],
+		//	})
+		//case 2:
+		//	f.Elfs = append(f.Elfs, elfs{
+		//		cond: args[0],
+		//		Do:   args[1],
+		//	})
+		//}
+
+		//return self
+	}, 2, "elseif(cond,action)")
+	RegisterObjFunc[*ifctx](DefaultEnv, "end", func(ctx *Context, self any, args ...Val) any {
+		return self.(*ifctx).do(ctx)
+	}, 0, "end()")
+
+	DefaultEnv.RegisterFunc("switch", func(ctx *Context, args ...Val) any {
+		return newErrorf("'switch' called unexpected: you may lose .end() at end of if expr")
+		//return &switchCtx{
+		//	sw: args[0],
+		//}
+	}, 1, WithArgsString("(val)"))
+
+	RegisterObjFunc[*switchCtx](DefaultEnv, "case", func(ctx *Context, self any, args ...Val) any {
+		return newErrorf("'case' called unexpected: you may lose .end() at end of switch expr")
+		//sw := self.(*switchCtx)
+		//
+		//switch len(args) {
+		//case 1:
+		//	sw.cases = append(sw.cases, elfs{
+		//		cond: args[0],
+		//	})
+		//case 2:
+		//	sw.cases = append(sw.cases, elfs{
+		//		cond: args[0],
+		//		Do:   args[1],
+		//	})
+		//}
+		//return self
+	}, 2, "case(v,action)")
+
+	RegisterObjFunc[*switchCtx](DefaultEnv, "default", func(ctx *Context, self any, args ...Val) any {
+		return newErrorf("'default' called unexpected: you may lose .end() at end of switch expr")
+		//sw := self.(*switchCtx)
+		//if len(args) > 0 {
+		//	sw.def = args[0]
+		//}
+		//return self
+	}, 1, "case(v,action)")
+
+	RegisterObjFunc[*switchCtx](DefaultEnv, "end", func(ctx *Context, self any, args ...Val) any {
+		return self.(*switchCtx).Val(ctx)
+	}, 0, "end()")
+
+	RegisterObjFunc[*switchCtx](DefaultEnv, "case", func(ctx *Context, self any, args ...Val) any {
+		return newErrorf("'case' called unexpected: you may lose .end() at end of switch expr")
+		//return self
+	}, 1, "case(v,action)")
+
+}
+
+func init() {
+	DefaultEnv.RegisterFunc("duration", func(ctx *Context, args ...Val) any {
+		s, err := time.ParseDuration(StringOf(args[0].Val(ctx)))
+		if err != nil {
+			return newErrorf("parse duration: %v", err)
+		}
+		return s
+	}, 1, WithArgsString("(3s)"))
+}
+
+func init() {
+	DefaultEnv.RegisterFunc("_ctx", func(ctx *Context, args ...Val) any {
+		return ctx
+	}, 0)
+
+	DefaultEnv.RegisterFunc("doc", func(ctx *Context, args ...Val) any {
+		fmt.Println(GenDocOf("", args[0].Val(ctx)))
+		return nil
+	}, 1)
+
+	DefaultEnv.SetFuncForAllTypes("doc")
+
+	RegisterOptFuncDefine1(DefaultEnv, "runtime_hash", func(ctx *Context, a string, opt *Options) float64 {
+		return float64(calcHash(a))
+	})
+}
+
+type FuncDesc struct {
+	Name string
+	Desc string
+}
+
+func GetTypeFuncsDoc(v any) (res []FuncDesc) {
+	fm := objFuncMap.get(TypeOf(v))
+	if fm == nil {
+		return nil
+	}
+
+	fm.foreach(func(key string, val *objectFunc) bool {
+		res = append(res, FuncDesc{
+			Name: val.name,
+			Desc: val.doc,
+		})
+		return true
+	})
+	return res
+}
+
+func init() {
+
+	//RegisterFunc("regmatch", func(ctx *Context, args ...Val) any {
+	//	rg := args[0].Val(ctx).(*regexp.Regexp)
+	//	return rg.MatchString(StringOf(args[1].Val(ctx)))
+	//}, 2, WithCompiledArgs(1, func(args ...any) (result any, err error) {
+	//	reg := StringOf(args[0])
+	//	regex, err := regexp.Compile(reg)
+	//	if err != nil {
+	//		return nil, err
+	//	}
+	//	return regex, nil
+	//}))
+	RegisterOptFuncDefine2(DefaultEnv, "regmatch", func(ctx *Context, a *regexp.Regexp, b string, opt *Options) bool {
+		return a.MatchString(b)
+	}, FuncOpt(WithCompiledArgs(1, func(args ...any) (result any, err error) {
+		reg := StringOf(args[0])
+		regex, err := regexp.Compile(reg)
+		if err != nil {
+			return nil, err
+		}
+		return regex, nil
+	})))
+
+	RegisterOptFuncDefine2(DefaultEnv, "regfind", func(ctx *Context, a *regexp.Regexp, b string, opt *Options) []any {
+		res := a.FindAllStringSubmatch(b, -1)
+		dst := make([]any, len(res))
+		for i, re := range res {
+			dst[i] = sliceToAny(re)
+		}
+		return dst
+	}, FuncOpt(WithCompiledArgs(1, func(args ...any) (result any, err error) {
+		reg := StringOf(args[0])
+		regex, err := regexp.Compile(reg)
+		if err != nil {
+			return nil, err
+		}
+		return regex, nil
+	})), Doc("(regex_str, string)[][]any"))
+
+	SelfDefine0(DefaultEnv, "hash", func(ctx *Context, self string) uint64 {
+		return calcHash(self)
+	})
+}
+
+func sliceToAny[T any](ss []T) []any {
+	res := make([]any, len(ss))
+	for i, v := range ss {
+		res[i] = v
+	}
+	return res
+}

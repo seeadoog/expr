@@ -1,0 +1,473 @@
+package expr
+
+import (
+	"encoding/json"
+	"fmt"
+	"io"
+	"net/http"
+	"os"
+	"reflect"
+	"testing"
+	"time"
+	"unsafe"
+)
+
+func TestStr(t *testing.T) {
+	e, err := DefaultEnv.ParseFromJSONStr(`
+[
+"a = 'hello   world'",
+"b = str_fields(a)",
+"c = str_join(b,':')",
+"d = str_trim(' hello ')",
+"e = (' hello ')::trim_left(' ')",
+"f = (' hello ')::trim_right(' ')",
+"g = str_to_upper('hello')",
+"h = str_to_lower('HELLO')",
+"i->a->b = 'gg'",
+"j.a.b = 'gg'",
+"dd = a != 'hell'",
+"ee = ddd or 1",
+"qs = a.has_prefix('hello')",
+"qs2 = a.has_prefix('ahello')",
+"sss = str_builder().write('1','2').write('3').string()",
+"uup = 'hello'.to_upper()",
+"uupl = uup.to_lower()",
+"rpl = uupl.replace('he','HE')",
+"emptys = ''.is_empty()",
+"emptys2 = hasf.is_empty()",
+"emptys3 = ee.is_empty()"
+]
+`)
+	if err != nil {
+		panic(err)
+	}
+
+	c := DefaultEnv.NewContext(map[string]any{})
+	c.ForceType = false
+	err = c.Exec(e)
+	if err != nil {
+		panic(err)
+	}
+
+	assertDeepEqual(t, c, "b", []string{"hello", "world"})
+	assertDeepEqual(t, c, "c", "hello:world")
+	assertDeepEqual(t, c, "d", "hello")
+	assertDeepEqual(t, c, "e", "hello ")
+	assertDeepEqual(t, c, "f", " hello")
+	assertDeepEqual(t, c, "g", "HELLO")
+	assertDeepEqual(t, c, "h", "hello")
+	assertDeepEqual(t, c, "i.a.b", "gg")
+	assertDeepEqual(t, c, "j.a.b", "gg")
+	assertDeepEqual(t, c, "dd", true)
+	assertDeepEqual(t, c, "ee", float64(1))
+	assertDeepEqual(t, c, "qs", true)
+	assertDeepEqual(t, c, "qs2", false)
+	assertDeepEqual(t, c, "sss", "123")
+	assertDeepEqual(t, c, "uup", "HELLO")
+	assertDeepEqual(t, c, "uupl", "hello")
+	assertDeepEqual(t, c, "rpl", "HEllo")
+	assertDeepEqual(t, c, "emptys", true)
+	assertDeepEqual(t, c, "emptys2", true)
+	assertDeepEqual(t, c, "emptys3", false)
+}
+
+func TestHttp(t *testing.T) {
+	go func() {
+		http.HandleFunc("/post", func(writer http.ResponseWriter, request *http.Request) {
+			request.ParseForm()
+
+			bs, _ := io.ReadAll(request.Body)
+			var i any
+			json.Unmarshal(bs, &i)
+			bd := map[string]any{
+				"h1":   request.Header.Get("h1"),
+				"p1":   request.Form.Get("p1"),
+				"body": i,
+			}
+			writer.Header().Set("Content-Type", "application/json")
+			writer.WriteHeader(http.StatusOK)
+			json.NewEncoder(writer).Encode(bd)
+		})
+		http.ListenAndServe(":19802", nil)
+	}()
+	time.Sleep(1 * time.Second)
+	e, err := DefaultEnv.ParseFromJSONStr(`
+[
+"res = http_request('POST', 'http://127.0.0.1:19802/post?p1=p1',{'h1':'h1'},{name:'xn'},2000).body.to_json_obj()",
+"res2 = curl('http://127.0.0.1:19802/post?p1=p1',{body:{name:'xn'},header:{'h1':'h1'}}).body.to_json_obj()"
+]
+`)
+	if err != nil {
+		panic(err)
+	}
+
+	c := DefaultEnv.NewContext(map[string]any{})
+	c.ForceType = false
+	err = c.Exec(e)
+	if err != nil {
+		panic(err)
+	}
+	assertDeepEqual(t, c, "res.h1", "h1")
+	assertDeepEqual(t, c, "res.p1", "p1")
+	assertDeepEqual(t, c, "res.body.name", "xn")
+
+	assertDeepEqual(t, c, "res2.h1", "h1")
+	assertDeepEqual(t, c, "res2.p1", "p1")
+	assertDeepEqual(t, c, "res2.body.name", "xn")
+}
+
+func mapEq(a, b map[string]interface{}) bool {
+	if len(a) != len(b) {
+		return false
+	}
+	for k, v := range a {
+		bv := b[k]
+		switch vv := bv.(type) {
+		case map[string]interface{}:
+			if !mapEq(b, vv) {
+				return false
+			}
+		default:
+			if !reflect.DeepEqual(v, vv) {
+				return false
+			}
+		}
+	}
+	return true
+}
+
+func TestTime(t *testing.T) {
+	e, err := DefaultEnv.ParseFromJSONStr(`
+[
+"tm = time_parse('2006-01-02 15:04:05','2025-01-02 12:10:20')",
+"y = tm::year()",
+"m = tm::month()",
+"d = tm::day()",
+"h = tm::hour()",
+"i = tm::minute()",
+"s = tm::second()"
+]
+`)
+	if err != nil {
+		panic(err)
+	}
+
+	c := DefaultEnv.NewContext(map[string]any{})
+	c.ForceType = false
+	err = c.Exec(e)
+	if err != nil {
+		panic(err)
+	}
+
+	assertEqual2(t, c.GetByString("tm") == nil, false)
+	assertEqual(t, c, "y", float64(2025))
+	assertEqual(t, c, "m", float64(1))
+	assertEqual(t, c, "d", float64(2))
+	assertEqual(t, c, "h", float64(12))
+	assertEqual(t, c, "i", float64(10))
+	assertEqual(t, c, "s", float64(20))
+}
+
+var ()
+
+func BenchmarkMaps(b *testing.B) {
+	//maps := map[Type]int{
+	//	TypeOf(float64(1)): 1,
+	//}
+	maps := make(map[Type]int, 200)
+	maps[TypeOf(float64(1))] = 1
+	k := TypeOf(1.1)
+	for i := 0; i < b.N; i++ {
+		_ = maps[k]
+	}
+	//println(d)
+}
+
+type iface struct {
+	t, d uintptr
+}
+
+func typf(i any) uintptr {
+	p := (*iface)(unsafe.Pointer(&i))
+	return p.d
+}
+
+func TestName(t *testing.T) {
+	os.Setenv("1", "22")
+	a := typf(2)
+	b := typf(len(os.Getenv("1")))
+	fmt.Println(a)
+	fmt.Println(b)
+	fmt.Println(len(os.Getenv("1")))
+
+}
+
+func BenchmarkI(b *testing.B) {
+	var a uintptr
+	for i := 0; i < b.N; i++ {
+		a = typf(i)
+	}
+	fmt.Println(a)
+}
+
+// SELECT table_name FROM information_schema.tables  WHERE table_schema = 'public'  ORDER BY table_name;
+func TestSort(t *testing.T) {
+
+	e, err := DefaultEnv.ParseFromJSONStr(`
+[
+"data = [1,5,6,3,2,4]",
+"data.sort({a,b} => a < b)",
+"aa.add = {a,b}=>a + b; cc = aa.add(2,4)"
+]
+`)
+	if err != nil {
+		panic(err)
+	}
+
+	c := DefaultEnv.NewContext(map[string]any{
+		"data2": []int{1, 2, 5, 4, 3},
+	})
+	c.ForceType = false
+	err = c.Exec(e)
+	if err != nil {
+		//panic(err)
+	}
+
+	assertDeepEqual(t, c, "data", []any{1.0, 2.0, 3.0, 4.0, 5.0, 6.0})
+	assertDeepEqual(t, c, "cc", float64(6))
+}
+
+func TestIFF(t *testing.T) {
+
+	e, err := DefaultEnv.ParseFromJSONStr(`
+[
+"if(a=='5').then(c1=5).elseif(a=='6',c1=6).elseif(a=='7',c1=7).else(c1=9).end()",
+"if(b=='5').then(c2=5).elseif(b=='6',c2=6).elseif(b=='7',c2=7).else(c2=9).end()",
+"if(c=='5').then(c3=5).elseif(c=='6',c3=6).elseif(c=='7',c3=7).else(c3=9).end()",
+"if(d=='5').then(c4=5).elseif(d=='6',c4=6).elseif(d=='7',c4=7).else(c4=9).end()",
+"switch(dc).case(nil,b1=1).case(1,b1=2).default(b1=9).end()",
+"switch(1).case(nil,b2=1).case(1,b2=1).default(b2=9).end()",
+"switch(3).case(nil,b3=1).case(1,b3=1).default(b3=9).end()"
+]
+`)
+	if err != nil {
+		panic(err)
+	}
+
+	c := DefaultEnv.NewContext(map[string]any{
+		"a": "5",
+		"b": "6",
+		"c": "7",
+		"d": "10",
+	})
+	c.ForceType = false
+	err = c.Exec(e)
+	if err != nil {
+		//panic(err)
+	}
+
+	assertDeepEqual(t, c, "c1", float64(5))
+	assertDeepEqual(t, c, "c2", float64(6))
+	assertDeepEqual(t, c, "c3", float64(7))
+	assertDeepEqual(t, c, "c4", float64(9))
+	assertDeepEqual(t, c, "b1", float64(1))
+	assertDeepEqual(t, c, "b2", float64(1))
+	assertDeepEqual(t, c, "b3", float64(9))
+}
+
+func TestKK(t *testing.T) {
+	return
+	dps := objFuncMap
+
+	for _, datum := range dps.data {
+		if len(datum) > 0 {
+			fmt.Println(len(datum))
+		}
+		for _, e := range datum {
+			for _, felems := range e.val.data {
+				if len(felems) > 1 {
+					fmt.Println("sub", len(felems))
+				}
+			}
+		}
+	}
+}
+
+type MyStruct struct {
+	D any
+}
+
+func TestHash(t *testing.T) {
+	var vv *string
+	v := &MyStruct{D: vv}
+	vvv, err := json.Marshal(v)
+	fmt.Println(string(vvv), err)
+}
+
+func TestNotNil(t *testing.T) {
+
+	e, err := DefaultEnv.ParseFromJSONStr(`
+[
+"data = [1,5,6,3,2,4]",
+"data.sort({a,b} => a < b)",
+"aa.add = {a,b}=>a + b; cc = aa.add(2,4)"
+]
+`)
+	if err != nil {
+		panic(err)
+	}
+
+	c := DefaultEnv.NewContext(map[string]any{
+		"data2": []int{1, 2, 5, 4, 3},
+	})
+	c.ForceType = false
+	err = c.Exec(e)
+	if err != nil {
+		//panic(err)
+	}
+
+	assertDeepEqual(t, c, "data", []any{1.0, 2.0, 3.0, 4.0, 5.0, 6.0})
+	assertDeepEqual(t, c, "cc", float64(6))
+
+}
+
+func TestFuncCall(t *testing.T) {
+	e, err := DefaultEnv.ParseFromJSONStr(`
+[
+"time_now().Add(duration('3s'))"
+]
+`)
+	if err != nil {
+		panic(err)
+	}
+
+	c := DefaultEnv.NewContext(map[string]any{
+		"data2": []int{1, 2, 5, 4, 3},
+	})
+	c.ForceType = false
+	err = c.Exec(e)
+	if err != nil {
+		//panic(err)
+	}
+
+}
+
+func TestAddAdd(t *testing.T) {
+	e, err := DefaultEnv.ParseFromJSONStr(`
+[
+"a=5",
+"a++",
+"c.b++",
+"m['a']++",
+"m['b']--",
+"k=9;k--",
+"dd=m.keys()",
+"ss=m.keys().join('');sb=ss=='ab'||ss=='ba'",
+"5+5 as a1",
+"add(5,5).string() as a2 as a3"
+]
+`)
+	if err != nil {
+		panic(err)
+	}
+
+	c := DefaultEnv.NewContext(map[string]any{})
+	c.ForceType = false
+	err = c.Exec(e)
+	if err != nil {
+		panic(err)
+	}
+
+	assertDeepEqual(t, c, "a", 6.0)
+	assertDeepEqual(t, c, "c.b", 1.0)
+	assertDeepEqual(t, c, "m.a", 1.0)
+	assertDeepEqual(t, c, "m.b", -1.0)
+	assertDeepEqual(t, c, "k", 8.0)
+	assertDeepEqual(t, c, "dd.len()", 2.0)
+	assertDeepEqual(t, c, "sb", true)
+	assertDeepEqual(t, c, "a1", 10.0)
+	assertDeepEqual(t, c, "a2", "10")
+	assertDeepEqual(t, c, "a3", "10")
+
+}
+
+func BenchmarkPutHash(b *testing.B) {
+	fm := newEnvMap(8)
+	for i := 0; i < b.N; i++ {
+		fm.putString("name0000000000", "gg")
+	}
+}
+
+type inter struct {
+	d, t unsafe.Pointer
+}
+
+var (
+	nnn = 5.6
+
+	ptr = new(inter)
+)
+
+var ss string = "hello world"
+
+func BenchmarkNamesdff(b *testing.B) {
+	b.ReportAllocs()
+	for i := 0; i < b.N; i++ {
+		psss()
+	}
+}
+
+func psss() any {
+
+	var sa any = ss
+
+	sp := (*inter)(unsafe.Pointer(&sa))
+
+	ptr.t = sp.t
+	ptr.d = sp.d
+
+	pp := *(*any)(unsafe.Pointer(ptr))
+
+	return pp
+}
+
+func TestRegexp(t *testing.T) {
+
+	e, err := DefaultEnv.ParseFromJSONStr(`
+[
+"ma = regmatch('abcd$','abcde')",
+"ma1 = regmatch('abcd$','aabcd')",
+"ma2 = regmatch('^abcd$','aabcd')"
+]
+`)
+	if err != nil {
+		panic(err)
+	}
+
+	c := DefaultEnv.NewContext(map[string]any{})
+	c.ForceType = false
+	err = c.Exec(e)
+	if err != nil {
+		panic(err)
+	}
+
+	assertDeepEqual(t, c, "ma", false)
+	assertDeepEqual(t, c, "ma1", true)
+	assertDeepEqual(t, c, "ma2", false)
+
+}
+
+type Ctx map[string]any
+
+func Check(ctx Ctx) bool {
+	return ctx["func"] == "busi" &&
+		ctx["chan"] == "iat" &&
+		ctx["appid"] == "123"
+}
+
+func BenchmarkCheck(b *testing.B) {
+
+	for i := 0; i < b.N; i++ {
+		DefaultEnv.NewContext(nil)
+	}
+}

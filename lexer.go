@@ -1,0 +1,1678 @@
+package expr
+
+import (
+	"fmt"
+	"github.com/seeadoog/expr/ast"
+	"reflect"
+	"strconv"
+	"strings"
+	"sync"
+)
+
+const (
+	variables = 0
+	constant  = -1
+	number    = -2
+)
+
+type lexer struct {
+	tokens []tokenV
+	pos    int
+	err    []string
+	root   ast.Node
+}
+
+func (l *lexer) Lex(lval *ast.YySymType) int {
+	//TODO implement me
+	if l.pos >= len(l.tokens) {
+		return 0
+	}
+	tt := l.tokens[l.pos]
+	l.pos++
+	switch tt.kind {
+	case variables:
+		switch tt.tkn {
+		case "true":
+			lval.SetBool(true)
+			lval.SetPos(tt.x, tt.y)
+			return ast.BOOL
+		case "false":
+			lval.SetBool(false)
+			lval.SetPos(tt.x, tt.y)
+			return ast.BOOL
+		case "nil":
+			lval.SetPos(tt.x, tt.y)
+			return ast.NIL
+		}
+
+		if len(tt.tkn) > 0 {
+			c := tt.tkn[0]
+			if c >= '0' && c <= '9' {
+				nn, err := parseNumber(tt.tkn)
+				if err == nil {
+					lval.SetNum(nn)
+					lval.SetPos(tt.x, tt.y)
+					return ast.NUMBER
+				} else {
+					l.Error("invalid number:" + tt.tkn)
+				}
+			}
+		}
+
+		lval.SetStr(tt.tkn)
+		lval.SetPos(tt.x, tt.y)
+		return ast.IDENT
+	case constant:
+		lval.SetStr(tt.tkn)
+		lval.SetPos(tt.x, tt.y)
+		return ast.STRING
+	case number:
+		lval.SetNum(tt.num)
+		lval.SetPos(tt.x, tt.y)
+		return ast.NUMBER
+	default:
+		lval.SetPos(tt.x, tt.y)
+		return tt.kind
+	}
+}
+
+func parseNumber(s string) (float64, error) {
+	if strings.HasPrefix(s, "0x") {
+		n, err := strconv.ParseInt(s, 0, 64)
+		if err != nil {
+			return 0, fmt.Errorf("parser invalid number: %s", s)
+		}
+		return float64(n), nil
+	}
+	if strings.Contains(s, ".") || strings.Contains(s, "e") {
+		n, err := strconv.ParseFloat(s, 64)
+		if err != nil {
+			return 0, fmt.Errorf("parser invalid number: %s", s)
+		}
+		return n, nil
+	}
+	n, err := strconv.ParseInt(s, 0, 64)
+	if err != nil {
+		return 0, fmt.Errorf("parser invalid number: %s", s)
+	}
+
+	return float64(n), nil
+}
+
+func (l *lexer) SetRoot(node ast.Node) {
+	l.root = node
+}
+
+func (l *lexer) Error(s string) {
+	l.err = append(l.err, fmt.Sprintf("'%s' %s near: '%v'  ", func() string {
+		if len(l.tokens) == 0 {
+			return "no token"
+		}
+		if l.pos == 0 {
+			return "no token and invalid pos 0"
+		}
+		t := l.tokens[l.pos-1]
+		return t.tkn + fmt.Sprintf(" at %d:%d", t.y, t.x)
+	}(), s, l.near()))
+}
+
+func (l *lexer) near() string {
+	next := l.pos + 5
+	pre := l.pos - 5
+	if pre < 0 {
+		pre = 0
+	}
+	if next > len(l.tokens) {
+		next = len(l.tokens)
+	}
+	ss := l.tokens[pre:next]
+	arr := make([]string, 0, 6)
+	for _, s := range ss {
+		arr = append(arr, s.tkn)
+	}
+	return strings.Join(arr, " ")
+}
+
+type emptyVal struct {
+}
+
+func (e *emptyVal) Set(c *Context, val any) {
+
+}
+
+func (e *emptyVal) Val(c *Context) any {
+	return nil
+}
+
+type ParserContext struct {
+	tb   *envMap
+	lock sync.Mutex
+}
+
+func (p *ParserContext) put(key string) {
+	p.lock.Lock()
+	defer p.lock.Unlock()
+	p.tb.putString(key, nil)
+}
+
+func (p *ParserContext) putHash(key uint64, ks string) {
+	p.lock.Lock()
+	defer p.lock.Unlock()
+	p.tb.putHash(key, ks, nil)
+}
+
+func CalcKeyHash(key string) uint64 {
+	hash := calcHash(key)
+	return hash
+}
+
+func NewParserContext() *ParserContext {
+	pc := &ParserContext{
+		tb: newEnvMap(8),
+	}
+	for _, key := range mapKeys {
+		pc.tb.putHash(calcHash(key), key, nil)
+	}
+	for _, key := range arrKeys {
+		pc.tb.putHash(calcHash(key), key, nil)
+	}
+	return pc
+}
+
+func (e *Env) ParseValueFromNode(node ast.Node, isAccess bool, pc *ParserContext) (Val, error) {
+
+	//if pc == nil {
+	//	pc = NewParserContext()
+	//}
+	switch n := node.(type) {
+	case *ast.String:
+		sp := &strparser{
+			str: []rune(n.Val),
+		}
+
+		err := sp.parser()
+		if err != nil {
+			return nil, fmt.Errorf("parse string: %w %s", err, n.Val)
+		}
+		if len(sp.vals) == 1 && sp.vals[0].kind == 0 {
+			return &constraint{
+				value: sp.vals[0].val,
+			}, nil
+		}
+		if len(sp.vals) == 0 {
+			return &constraint{""}, nil
+		}
+		v, err := e.parseStrVals(sp.vals)
+		if err != nil {
+			return nil, fmt.Errorf("parse string: %w %s", err, n.Val)
+		}
+		return v, nil
+	case *ast.Number:
+		return &constraint{
+			value: n.Val,
+		}, nil
+	case *ast.Bool:
+		return &constraint{
+			value: n.Val,
+		}, nil
+	case *ast.Nil:
+		return &constraint{}, nil
+	case *ast.Variable:
+		//var jp *jsonpath.Complied
+		//if isJsonPath(n.Name) {
+		//	var err error
+		//	jp, err = jsonpath.Compile(n.Name)
+		//	if err != nil {
+		//		return nil, fmt.Errorf("parse vname as jsonpath error:%w", err)
+		//	}
+		//}
+		switch n.Name {
+		case "break":
+			return &breakVar{}, nil
+		case "_":
+			return &emptyVal{}, nil
+		}
+
+		pc.putHash(calcHash(n.Name), n.Name)
+		return &variable{
+			varName: n.Name,
+			hash:    calcHash(n.Name),
+			//varPath: jp,
+		}, nil
+
+	case *ast.Access:
+		lv, err := e.ParseValueFromNode(n.L, false, pc)
+		if err != nil {
+			return nil, fmt.Errorf("binary parse val L error:%w %s", err, lv)
+		}
+		rv, err := e.ParseValueFromNode(n.R, true, pc)
+		if err != nil {
+			return nil, fmt.Errorf("binary parse val R error:%w %s", err, lv)
+		}
+		rf, ok := rv.(*objFuncVal)
+		if ok {
+			if e.allTypeFuncs[rf.funcName] {
+				fun := e.funtables[rf.funcName]
+				if fun == nil {
+					return nil, fmt.Errorf("binary parse val function is all type funcs but not defined '%s'", rf.funcName)
+				}
+				if fun.hasOpt {
+					if fun.argsNum >= 0 && (fun.argsNum != len(rf.args)+1 && fun.argsNum != len(rf.args)) {
+						return nil, fmt.Errorf("binary parse val function '%s' args num should be %d  but  %d", rf.funcName, fun.argsNum-1, len(rf.args))
+					}
+					if fun.argsNum == len(rf.args) { // has opt
+						optArg, ok := rf.args[len(rf.args)-1].(*mapDefineVal)
+						if !ok {
+							return nil, fmt.Errorf("binary parse val function '%s' last extra arg type should be object but  %s", rf.funcName, reflect.TypeOf(optArg).String())
+						}
+						conv, ok := tryConvertToConst(optArg).(*constraint)
+						if !ok {
+							return nil, fmt.Errorf("binary parse val function '%s' last extra arg type should be const object", rf.funcName)
+						}
+						conv.value = newOption(conv.value.(map[string]any))
+						rf.args[len(rf.args)-1] = conv
+
+					}
+				} else {
+					if fun.argsNum >= 0 && fun.argsNum != len(rf.args)+1 {
+						return nil, fmt.Errorf("binary parse val function '%s' args num should be %d  but  %d", rf.funcName, fun.argsNum-1, len(rf.args))
+					}
+				}
+
+				return &funcVariable{
+					funcNameHash: calcHash(rf.funcName),
+					funcName:     rf.funcName,
+					fun:          fun.fun,
+					args:         append([]Val{lv}, rf.args...),
+				}, nil
+			}
+		}
+		av := &accessVal{
+			left:  lv,
+			right: rv,
+		}
+		if shouldCompileIf(av) {
+			return tryCompileVal(av), nil
+		}
+
+		return av, nil
+	case *ast.Call:
+		if isAccess {
+			args := make([]Val, 0, len(n.Args))
+			for _, arg := range n.Args {
+				argv, err := e.ParseValueFromNode(arg, false, pc)
+				if err != nil {
+					return nil, err
+				}
+				args = append(args, argv)
+			}
+			return &objFuncVal{
+				funNameHash: calcHash(n.Name),
+				args:        args,
+				funcName:    n.Name,
+			}, nil
+		}
+		fun := e.funtables[n.Name]
+
+		hasOpt := false
+		//if !strings.HasPrefix(n.Name, "$") {
+		//	if fun == nil {
+		//		return nil, fmt.Errorf("func '%s' is not defined", n.Name)
+		//	}
+		if fun != nil {
+			if fun.hasOpt {
+				switch {
+				case len(n.Args) == fun.argsNum:
+
+				case len(n.Args) == fun.argsNum+1:
+					//_, ok := n.Args[fun.argsNum].(*ast.MapSet)
+
+					switch an := n.Args[fun.argsNum].(type) {
+					case *ast.MapSet:
+					case *ast.Const:
+						_, ok := an.L.(*ast.MapSet)
+						if !ok {
+							return nil, fmt.Errorf("func '%s' option arg should be  define as object", n.Name)
+						}
+						n.Args[fun.argsNum] = an.L
+					default:
+						return nil, fmt.Errorf("func '%s' option arg should be  define as object", n.Name)
+					}
+
+					hasOpt = true
+
+				case fun.argsNum == -1:
+					return nil, fmt.Errorf("func '%s' has option, args num cannot be -1", n.Name)
+				default:
+					return nil, fmt.Errorf("func '%s' args num should be '%d' but '%d'", n.Name, fun.argsNum, len(n.Args))
+				}
+			} else {
+				if fun.argsNum != -1 && len(n.Args) != fun.argsNum {
+					return nil, fmt.Errorf("func '%s' args num should be '%d' but '%d'", n.Name, fun.argsNum, len(n.Args))
+				}
+			}
+
+		}
+
+		args := make([]Val, 0, len(n.Args))
+		for _, arg := range n.Args {
+			argv, err := e.ParseValueFromNode(arg, false, pc)
+			if err != nil {
+				return nil, err
+			}
+			args = append(args, argv)
+		}
+		if hasOpt {
+			ov := args[len(args)-1].(*mapDefineVal)
+			ov.isOpt = true
+			ovconst, ok := tryConvertToConst(ov).(*constraint)
+			if ok {
+				ovconst.value = newOption(ovconst.value.(map[string]any))
+				args[len(args)-1] = ovconst
+			}
+
+		}
+		var f ScriptFunc
+		if fun != nil {
+			f = fun.fun
+		}
+
+		if fun != nil {
+			if fun.compiledArgs > 0 {
+				var err error
+				args, err = newCompileFunc(args, fun.compiledArgs, fun.compileFunc)
+				if err != nil {
+					return nil, fmt.Errorf("compile func '%s' error: %w", fun.name, err)
+				}
+			}
+		}
+
+		pc.putHash(calcHash(n.Name), n.Name)
+		return &funcVariable{
+			funcNameHash: calcHash(n.Name),
+			funcName:     n.Name,
+			fun:          f,
+			args:         args,
+		}, nil
+	case *ast.Unary:
+		val, err := e.ParseValueFromNode(n.X, false, pc)
+		if err != nil {
+			return nil, fmt.Errorf("unary parse val error:%w", err)
+		}
+		switch n.Op {
+		case "!":
+			return newUnaryValue("!", val, func(ctx *Context, a Val) any {
+				return !BoolCond(val.Val(ctx))
+			}), nil
+		case "-":
+			return newUnaryValue("-", val, func(ctx *Context, a Val) any {
+				v, _ := val.Val(ctx).(float64)
+				return -v
+			}), nil
+		case "...":
+			return &VariadicVal{val}, nil
+		case "++":
+			return &addAddVal{val}, nil
+		case "--":
+			return &subSubVal{val}, nil
+		}
+		return nil, fmt.Errorf("unknown unary operator:%s", n.Op)
+	case *ast.Binary:
+		lv, err := e.ParseValueFromNode(n.L, false, pc)
+		if err != nil {
+			return nil, fmt.Errorf("binary parse val L error:%w %s", err, lv)
+		}
+		rv, err := e.ParseValueFromNode(n.R, false, pc)
+		if err != nil {
+			return nil, fmt.Errorf("binary parse val R error:%w %s", err, lv)
+		}
+		var fun ScriptFunc
+		switch n.Op {
+		case "+":
+			fun = add2Func
+		case "-":
+			fun = subFunc
+		case "*":
+			fun = mulFunc
+		case "/":
+			fun = divFunc
+		case "^":
+			fun = powFunc
+		case "&&":
+			fun = andFunc
+			return newBinaryValue("&&", lv, rv, func(ctx *Context, a, b Val) any {
+				if !BoolCond(a.Val(ctx)) {
+					return false
+				}
+				return BoolCond(b.Val(ctx))
+			}), nil
+		case "||":
+			return newBinaryValue("||", lv, rv, func(ctx *Context, a, b Val) any {
+				if BoolCond(a.Val(ctx)) {
+					return true
+				}
+				return BoolCond(b.Val(ctx))
+			}), nil
+		case "==":
+			//fun = eqFunc
+			return &eqVal{
+				L: lv, R: rv,
+			}, nil
+			//return newBinaryValue("==", lv, rv, func(ctx *Context, a, b Val) any {
+			//	return a.Val(ctx) == b.Val(ctx)
+			//}), nil
+		case "<":
+			fun = lessFunc
+		case "<=":
+			fun = lessOrEqual
+		case ">":
+			fun = largeFunc
+		case ">=":
+			fun = largeOrEqual
+		case "!=":
+			return newBinaryValue("!=", lv, rv, func(ctx *Context, a, b Val) any {
+				return a.Val(ctx) != b.Val(ctx)
+			}), nil
+		case "%":
+			fun = modFunc
+
+		case "orr":
+			return newBinaryValue("orr", lv, rv, func(ctx *Context, a, b Val) any {
+				v := a.Val(ctx)
+				switch v.(type) {
+				case nil:
+					return b.Val(ctx)
+				}
+				return v
+			}), nil
+		case ";":
+			//fun = func(ctx *Context, args ...Val) any {
+			//	var rs any
+			//	for _, arg := range args {
+			//		rs = arg.Val(ctx)
+			//		err := convertToError(rs)
+			//		if err != nil {
+			//			return err
+			//		}
+			//	}
+			//	return rs
+			//}
+			return parAsList(lv, rv), nil
+			//return &expList{
+			//	L: lv,
+			//	R: rv,
+			//}, nil
+		case "in":
+			fun = inFunc
+
+			switch rv.(type) {
+			case *arrDefVal, *mapDefineVal:
+				rv = tryConvertToConst(rv)
+			}
+			//_, ok := rv.(*arrDefVal)
+			//if ok {
+			//	rv = tryConvertToConst(rv)
+			//}
+
+		case "|":
+			return newBinaryValue("|", lv, rv, func(ctx *Context, a, b Val) any {
+				return float64(int(NumberOf(a.Val(ctx))) | int(NumberOf(b.Val(ctx))))
+			}), nil
+		case "&":
+			return newBinaryValue("&", lv, rv, func(ctx *Context, a, b Val) any {
+				return float64(int(NumberOf(a.Val(ctx))) & int(NumberOf(b.Val(ctx))))
+			}), nil
+		case "+=":
+			return &setValue{
+				key: lv,
+				val: newBinaryValue("+=", lv, rv, func(ctx *Context, a, b Val) any {
+					return add2(a.Val(ctx), b.Val(ctx))
+				}),
+			}, nil
+		case "as":
+			varv, ok := rv.(*variable)
+			if !ok {
+				return nil, fmt.Errorf("as right is not variable:%v", n)
+			}
+			return &asVal{
+				key:     varv.varName,
+				keyHash: varv.hash,
+				val:     lv,
+			}, nil
+		default:
+			return nil, fmt.Errorf("unknown operator of binary :%v %v", n.Op, n)
+		}
+		pc.put(n.Op)
+		return &funcVariable{
+			funcNameHash: calcHash(n.Op),
+			funcName:     n.Op,
+			fun:          fun,
+			args:         []Val{lv, rv},
+		}, nil
+	case *ast.Set:
+		//var jp *jsonpath.Complied
+		//var err error
+		//if isJsonPath(n.L) {
+		//	jp, err = jsonpath.Compile(n.L)
+		//	if err != nil {
+		//		return nil, fmt.Errorf("parse set field error:%w", err)
+		//	}
+		//}
+		key, err := e.ParseValueFromNode(n.L, false, pc)
+		if err != nil {
+			return nil, fmt.Errorf("set parse key error:%w %s", err, key)
+		}
+		val, err := e.ParseValueFromNode(n.R, false, pc)
+		if err != nil {
+			return nil, fmt.Errorf("set parse val error:%w", err)
+		}
+		if n.Const {
+			val = tryConvertToConst(val)
+			_, ok := val.(*constraint)
+			if !ok {
+				return nil, fmt.Errorf("set parse val error,val cannot parse as const %T", n.R)
+			}
+		}
+		return &setValue{
+			key: key,
+			//jp:  jp,
+			val: val,
+		}, nil
+	case *ast.MapSet:
+		mapkvs := make([]mapKv, 0, len(n.Kvs))
+		for _, kv := range n.Kvs {
+			kk, err := e.ParseValueFromNode(kv.K, false, pc)
+			if err != nil {
+				return nil, fmt.Errorf("map parse key error:%w", err)
+			}
+			vv, err := e.ParseValueFromNode(kv.V, false, pc)
+			if err != nil {
+				return nil, fmt.Errorf("map parse value error:%w", err)
+			}
+			mapkvs = append(mapkvs, mapKv{kk, vv})
+		}
+		mv := &mapDefineVal{
+			kvs: mapkvs,
+		}
+		return mv, nil
+
+	case *ast.ArrDef:
+		arrV := &arrDefVal{}
+		for i, n2 := range n.V {
+			v, err := e.ParseValueFromNode(n2, false, pc)
+			if err != nil {
+				return nil, fmt.Errorf("array parse error:%w %v", err, i)
+			}
+			arrV.vs = append(arrV.vs, v)
+		}
+		return arrV, nil
+	case *ast.ArrAccess:
+		arrV := &arrAccessVal{}
+		lv, err := e.ParseValueFromNode(n.L, false, pc)
+		if err != nil {
+			return nil, fmt.Errorf("array access parse left error:%w %v", err, n.L)
+		}
+		rv, err := e.ParseValueFromNode(n.R, false, pc)
+		if err != nil {
+			return nil, fmt.Errorf("array access parse right error:%w %v", err, n.R)
+		}
+		arrV.left = lv
+		arrV.right = rv
+		return arrV, nil
+
+	case *ast.SliceCut:
+
+		v, err := e.ParseValueFromNode(n.V, false, pc)
+		if err != nil {
+			return nil, fmt.Errorf("slice cut parse value error:%w %v", err, n.V)
+		}
+		var st, ed Val
+		if n.St != nil {
+			st, err = e.ParseValueFromNode(n.St, false, pc)
+			if err != nil {
+				return nil, fmt.Errorf("slice cut parse st  error:%w %v", err, n.V)
+			}
+		}
+
+		if n.Ed != nil {
+			ed, err = e.ParseValueFromNode(n.Ed, false, pc)
+			if err != nil {
+				return nil, fmt.Errorf("slice cut parse ed error:%w %v", err, n.V)
+			}
+		}
+
+		return &sliceCutVal{
+			st:  st,
+			ed:  ed,
+			val: v,
+		}, nil
+	case *ast.Lambda:
+		e, err := e.ParseValueFromNode(n.R, false, pc)
+		if err != nil {
+			return nil, fmt.Errorf("lambda parse right error:%w %v", err, n.R)
+		}
+		lm := &lambda{
+			Lefts:     n.L,
+			Right:     e,
+			leftsHash: hashOfStrings(n.L),
+		}
+		for i, s := range n.L {
+			pc.putHash(lm.leftsHash[i], s)
+		}
+		//v, err := convertLambda(lm, lm.Right)
+		//if err != nil {
+		//	return nil, fmt.Errorf("lambda parse right error:%w %v", err, lm.Right)
+		//}
+		//lm.Right = v
+		//return lm, nil
+
+		return lm, nil
+
+	case *ast.Ternary:
+		c, err := e.ParseValueFromNode(n.C, false, pc)
+		if err != nil {
+			return nil, fmt.Errorf("ternary parse cond error:%w %v", err, n.R)
+		}
+		l, err := e.ParseValueFromNode(n.L, false, pc)
+		if err != nil {
+			return nil, fmt.Errorf("ternary parse left error:%w %v", err, n.R)
+		}
+		var r Val
+		if n.R != nil {
+			r, err = e.ParseValueFromNode(n.R, false, pc)
+			if err != nil {
+				return nil, fmt.Errorf("ternary parse right error:%w %v", err, n.R)
+			}
+		}
+
+		return &ternaryVal{
+			c: c,
+			l: l,
+			r: r,
+		}, nil
+	case *ast.Const:
+		lv, err := e.ParseValueFromNode(n.L, false, pc)
+		if err != nil {
+			return nil, fmt.Errorf("const val parse left error:%w %v", err, n.L)
+		}
+
+		cv := tryConvertToConst(lv)
+		return cv, nil
+	case *ast.NotNil:
+		lv, err := e.ParseValueFromNode(n.N, isAccess, pc)
+		if err != nil {
+			return nil, fmt.Errorf("not nil val parse  error:%w %v", err, n.N)
+		}
+
+		return &notNil{
+			val: lv,
+		}, nil
+
+	default:
+		return nil, fmt.Errorf("invalid ast.Node type :%T", node)
+	}
+
+}
+
+type sliceCutVal struct {
+	val Val
+	st  Val
+	ed  Val
+}
+
+func (s *sliceCutVal) Set(c *Context, val any) {
+
+}
+
+func (s *sliceCutVal) Val(c *Context) any {
+	//TODO implement me
+	f, length := cutterOf(s.val.Val(c))
+	if f == nil {
+		return nil
+	}
+	st := 0
+	if s.st != nil {
+		st = int(NumberOf(s.st.Val(c)))
+	}
+	ed := length
+	if s.ed != nil {
+		ed = int(NumberOf(s.ed.Val(c)))
+	}
+	if st > ed || st < 0 || ed > length {
+		return nil
+	}
+	return f(st, ed)
+}
+
+func cutterOf(v any) (func(st, ed int) any, int) {
+	switch vs := v.(type) {
+	case []any:
+		return func(st, ed int) any {
+			return vs[st:ed]
+		}, len(vs)
+	case []byte:
+		return func(st, ed int) any {
+			return vs[st:ed]
+		}, len(vs)
+	case string:
+		return func(st, ed int) any {
+			return vs[st:ed]
+		}, len(vs)
+	default:
+		return nil, 0
+	}
+}
+
+type mapKv struct {
+	k, v Val
+}
+type mapDefineVal struct {
+	kvs   []mapKv
+	isOpt bool
+}
+
+func (m *mapDefineVal) Set(c *Context, v any) {
+
+}
+
+func (m *mapDefineVal) Val(c *Context) any {
+	mm := make(map[string]any)
+	for _, kv := range m.kvs {
+		key := ""
+		vk, ok := kv.k.(*variable)
+		if ok {
+			//vvv := kv.k.Val(c)
+			//_, ok := vvv.(string)
+			//if vvv != nil  && {
+			//	key = StringOf(vvv)
+			//} else {
+			key = vk.varName
+			//}
+		} else {
+			key = StringOf(kv.k.Val(c))
+		}
+		mm[key] = kv.v.Val(c)
+	}
+	if m.isOpt {
+		return newOption(mm)
+	}
+	return mm
+}
+
+type arrDefVal struct {
+	vs []Val
+}
+
+func (a *arrDefVal) Val(c *Context) any {
+	arr := make([]any, len(a.vs))
+	for i, vv := range a.vs {
+		arr[i] = vv.Val(c)
+	}
+	return arr
+}
+
+func (a *arrDefVal) Set(c *Context, v any) {}
+
+type strval struct {
+	kind int
+	val  string
+}
+
+type stringFmtVal struct {
+	vals []Val
+}
+
+var arrPool = sync.Pool{
+	New: func() interface{} {
+		return make([]string, 0, 3)
+	},
+}
+
+func (s *stringFmtVal) Val(c *Context) any {
+
+	//sb := strings.Builder{}
+	//for _, val := range s.vals {
+	//	sb.WriteString(StringOf(val.Val(c)))
+	//}
+	//return sb.String()
+	arr := arrPool.Get().([]string)
+	//arr := make([]string, 0, len(s.vals))
+	for _, val := range s.vals {
+		arr = append(arr, StringOf(val.Val(c)))
+	}
+	l := 0
+	for _, s2 := range arr {
+		l += len(s2)
+	}
+	res := make([]byte, 0, l)
+	for _, s2 := range arr {
+		res = append(res, s2...)
+	}
+	arrPool.Put(arr[:0])
+	return ToString(res)
+}
+
+func (s *stringFmtVal) Set(c *Context, v any) {
+
+}
+
+func (e *Env) parseStrVals(vs []*strval) (Val, error) {
+
+	smt := &stringFmtVal{}
+	for _, v := range vs {
+		switch v.kind {
+		case 0:
+			smt.vals = append(smt.vals, &constraint{
+				value: v.val,
+			})
+		case 1:
+			vv, err := e.parseValueV(v.val)
+			if err != nil {
+				return nil, fmt.Errorf("parse fmt value error:%w %s", err, v.val)
+			}
+			smt.vals = append(smt.vals, vv)
+		}
+	}
+	return smt, nil
+}
+
+type strparser struct {
+	str   []rune
+	pos   int
+	vals  []*strval
+	token []rune
+}
+
+func (s *strparser) next() (rune, bool) {
+	if s.pos >= len(s.str) {
+		return 0, false
+	}
+	r := s.str[s.pos]
+	s.pos++
+	return r, true
+}
+
+func (s *strparser) parseVars() error {
+	for {
+		c, ok := s.next()
+		if !ok {
+			return fmt.Errorf("unexpected end in string format var ,need '}' to end '${' ")
+		}
+		switch c {
+		//case '\'':
+		//	return fmt.Errorf("invalid char ' in string format variable")
+		case '}':
+			s.appendToken(1)
+			return nil
+		default:
+			s.token = append(s.token, c)
+		}
+	}
+}
+
+func (s *strparser) appendToken(kind int) {
+	if len(s.token) == 0 {
+		return
+	}
+	s.vals = append(s.vals, &strval{kind: kind, val: string(s.token)})
+	s.token = s.token[:0]
+
+}
+
+func (s *strparser) parser() error {
+	for {
+		c, ok := s.next()
+		if !ok {
+			s.appendToken(0)
+			return nil
+		}
+		switch c {
+		case '$':
+			cc, ok := s.next()
+			if !ok {
+				s.token = append(s.token, c)
+				continue
+			}
+			if cc == '{' {
+				s.appendToken(0)
+				err := s.parseVars()
+				if err != nil {
+					return err
+				}
+			} else {
+				s.token = append(s.token, c)
+				s.pos--
+			}
+		case '\\':
+			cc, ok := s.next()
+			if !ok {
+				return nil
+			}
+			s.token = append(s.token, cc)
+
+		default:
+			s.token = append(s.token, c)
+		}
+	}
+}
+
+type accessVal struct {
+	left  Val
+	right Val
+}
+
+func setForObject(left Val, lv any, right string, c *Context, val any) {
+	//rvar, ok := right.(*variable)
+	//if !ok {
+	//	return
+	//}
+	//lv := left.Val(c)
+	switch parent := lv.(type) {
+	case map[string]any:
+		parent[right] = val
+	case nil:
+		pr := map[string]any{}
+		left.Set(c, pr)
+		//set, ok := left.(parentValueSetter)
+		//if ok {
+		//	set.Set(c, pr)
+		//}
+		pr[right] = val
+	case *Result:
+		switch right {
+		case "err":
+			parent.Err = val
+		case "data":
+			parent.Data = val
+		}
+	case Setter:
+		parent.SetField(c, right, val)
+	default:
+		setFieldOfStruct(c, reflect.ValueOf(lv), right, val)
+
+	}
+}
+
+func (a *accessVal) Set(c *Context, val any) {
+
+	switch rv := a.right.(type) {
+	case *variable:
+		setForObject(a.left, a.left.Val(c), rv.varName, c, val)
+		//case *compiledVar:
+		//	c.stackSet(rv.index, val)
+	}
+}
+
+// abc::b()::c()::d
+
+var (
+	nilType = TypeOf(nil)
+)
+
+func callSelf(ctx *Context, self any, f *objFuncVal) (any, bool) {
+	s, ok := self.(map[string]any)
+	if !ok {
+		return nil, false
+	}
+
+	ff := s[f.funcName]
+	if ff == nil {
+		return nil, false
+	}
+	fun, ok := ff.(*LambdaVal)
+	if !ok {
+		fv := reflect.ValueOf(ff)
+		if fv.Kind() == reflect.Func {
+			return callFunc(ctx, fv, f.args), true
+		}
+		panic(fmt.Sprintf("cannot call func '%s' ,type is not func but :%v", f.funcName, reflect.TypeOf(ff).String()))
+	}
+	args := make([]any, len(f.args))
+	for i, arg := range f.args {
+		args[i] = arg.Val(ctx)
+	}
+	return RunLambda(ctx, fun, args...), true
+}
+
+func (a *accessVal) Val(ctx *Context) any {
+
+	switch v := a.right.(type) {
+	case *objFuncVal:
+		self := a.left.Val(ctx)
+		se, ok := self.(*Error)
+		if ok {
+			return se
+		}
+		t := TypeOf(self)
+		//f := objFuncMap[t]
+		f := objFuncMap.get(t)
+		if f == nil {
+
+			fv := reflect.ValueOf(self)
+			if fv.Kind() == reflect.Func {
+				return callFunc(ctx, fv, v.args)
+			}
+
+			data, ok := callFuncByReflect(ctx, v, self, v.args)
+			if ok {
+				return data
+			}
+
+			return newErrorf("var '%s' type '%v' do not define func '%s' ", nameOf(a.left), reflect.TypeOf(self), v.funcName)
+		}
+		//ff := f[v.funcName]
+		ff := f.get(v.funNameHash)
+		if ff == nil {
+
+			data, ok := callFuncByReflect(ctx, v, self, v.args)
+			if ok {
+				return data
+			}
+
+			data, ok = callSelf(ctx, self, v)
+			if ok {
+				return data
+			}
+
+			return newErrorf("var '%s' type '%v' do not define func '%s'", nameOf(a.left), reflect.TypeOf(self), v.funcName)
+		}
+		return ff.fun(ctx, self, v.args...)
+	case *variable:
+		lv := a.left.Val(ctx)
+		//lvv, ok := lv.(map[string]any)
+		//if ok {
+		//	return lvv[v.varName]
+		//}
+		switch data := lv.(type) {
+		case map[string]any:
+			return data[v.varName]
+		case *Result:
+			switch v.varName {
+			case "data":
+				return data.Data
+			case "err":
+				return data.Err
+			}
+			return nil
+		case nil:
+			return nil
+		case Getter:
+			return data.GetField(ctx, v.varName)
+		default:
+
+			return getFieldOfStruct(ctx.ForceType, reflect.ValueOf(lv), v.varName)
+		}
+		//return getFieldOfStruct(reflect.ValueOf(lv), v.varName)
+	default:
+		return nil
+	}
+}
+
+type Setter interface {
+	SetField(ctx *Context, name string, val any)
+}
+
+type Getter interface {
+	GetField(c *Context, key string) any
+}
+
+type IndexGet interface {
+	IndexGet(c *Context, key float64) any
+}
+
+type IndexSet interface {
+	GetIndSet(ctx *Context, key float64, val any)
+}
+
+type parentValueSetter interface {
+	Set(c *Context, val any)
+}
+
+//// a.b.c
+//func (a *accessVal) SetSelf(ctx *Context, v any) {
+//	lv := a.left.Val(ctx)
+//	if lv == nil {
+//		switch lvr := a.left.(type) {
+//		case *accessVal:
+//			lvrv := lvr.left.Val(ctx)
+//			if lvrv == nil {
+//				lvr.left.(SetSelf).SetSelf(ctx, map[string]any{})
+//			}else{
+//				lvr.right.
+//				lvrv.(map[string]any)[]
+//			}
+//		}
+//	}
+//}
+
+type arrAccessVal struct {
+	left  Val
+	right Val
+}
+
+func (a *arrAccessVal) Set(c *Context, val any) {
+	lv := a.left.Val(c)
+	rv := a.right.Val(c)
+
+	switch rvv := rv.(type) {
+	case string:
+		setForObject(a.left, lv, rvv, c, val)
+		return
+
+	case float64:
+		idx := int(rvv)
+		parent, ok := lv.([]any)
+		if !ok {
+			if lv != nil {
+				setIndexOfStruct(c, reflect.ValueOf(lv), idx, val)
+				return
+			}
+			parent = make([]any, idx+1)
+			a.left.Set(c, parent)
+			//set, ok := a.left.(parentValueSetter)
+			//if ok {
+			//	set.Set(c, parent)
+			//}
+		} else {
+			if len(parent) <= idx {
+				old := parent
+				parent = make([]any, idx+1)
+				copy(parent, old)
+				a.left.Set(c, parent)
+				//set, ok := a.left.(parentValueSetter)
+				//if ok {
+				//	set.Set(c, parent)
+				//}
+			}
+		}
+		parent[idx] = val
+		return
+	case nil:
+	}
+	return
+}
+
+func (a *arrAccessVal) Val(ctx *Context) any {
+	lv := a.left.Val(ctx)
+	rv := a.right.Val(ctx)
+	switch v := lv.(type) {
+	case []any:
+		idx := int(NumberOf(rv))
+
+		if idx >= len(v) {
+			return nil
+		}
+		return v[idx]
+	case []string:
+		idx := int(NumberOf(rv))
+
+		if idx >= len(v) {
+			return nil
+		}
+		return v[idx]
+	case map[string]any:
+		idx := StringOf(rv)
+		return v[idx]
+	case nil:
+		return nil
+	default:
+		return getIndexOfSlice(ctx, ctx.ForceType, reflect.ValueOf(lv), rv)
+
+	}
+	return nil
+}
+
+func tryConvertToConst(val Val) Val {
+	switch vv := val.(type) {
+	case *arrDefVal:
+		return tryCovertArrToConst(vv)
+	case *mapDefineVal:
+		return tryCovertMapToConst(vv)
+	case *setValue:
+		vv.val = tryConvertToConst(vv.val)
+	}
+	return val
+}
+
+func tryCovertArrToConst(val *arrDefVal) Val {
+	dst := []any{}
+	for _, v := range val.vs {
+		vv, ok := tryConvertToConst(v).(*constraint)
+		if ok {
+			dst = append(dst, vv.value)
+		} else {
+			return val
+		}
+	}
+	return &constraint{
+		value: dst,
+	}
+}
+func tryCovertMapToConst(val *mapDefineVal) Val {
+	dst := map[string]any{}
+	for _, v := range val.kvs {
+		//cst, ok := v.(*constraint)
+		//if !ok {
+		//	return val
+		//}
+		var ckk any
+		ck, ok1 := v.k.(*constraint)
+		if ok1 {
+			ckk = ck.value
+		}
+		ck2, ok2 := v.k.(*variable)
+		if ok2 {
+			ckk = ck2.varName
+		}
+		if !ok1 && !ok2 {
+			return val
+		}
+
+		vcv, ok := tryConvertToConst(v.v).(*constraint)
+		if ok {
+			dst[StringOf(ckk)] = vcv.value
+		} else {
+			return val
+		}
+	}
+	return &constraint{
+		value: dst,
+	}
+}
+
+type ternaryVal struct {
+	c Val
+	l Val
+	r Val
+}
+
+func (t *ternaryVal) Val(c *Context) any {
+	if BoolCond(t.c.Val(c)) {
+		return t.l.Val(c)
+	}
+	if t.r == nil {
+		return nil
+	}
+
+	return t.r.Val(c)
+}
+
+func (t *ternaryVal) Set(c *Context, val any) {
+}
+
+type binaryValue struct {
+	name string
+	fun  func(ctx *Context, a, b Val) any
+	l, r Val
+}
+
+func (b *binaryValue) Val(c *Context) any {
+	return b.fun(c, b.l, b.r)
+}
+
+func (b *binaryValue) Set(c *Context, val any) {
+}
+
+func newBinaryValue(name string, l, r Val, f func(ctx *Context, a, b Val) any) *binaryValue {
+	return &binaryValue{
+		name: name,
+		fun:  f,
+		l:    l,
+		r:    r,
+	}
+}
+
+type unaryValue struct {
+	name string
+	fun  func(ctx *Context, a Val) any
+	v    Val
+}
+
+func (u *unaryValue) Val(c *Context) any {
+	return u.fun(c, u.v)
+}
+
+func (u *unaryValue) Set(c *Context, val any) {
+}
+func newUnaryValue(name string, v Val, f func(ctx *Context, a Val) any) *unaryValue {
+	return &unaryValue{
+		name: name,
+		v:    v,
+		fun:  f,
+	}
+}
+
+type notNil struct {
+	val Val
+}
+
+func nameOf(val Val) string {
+	switch vv := val.(type) {
+	case *variable:
+		return vv.varName
+	case *funcVariable:
+		return vv.funcName + "()"
+	case *objFuncVal:
+		return vv.funcName + "()"
+	case *accessVal:
+		return nameOf(vv.left) + "." + nameOf(vv.right)
+	case *constraint:
+		return StringOf(vv.value)
+	case *notNil:
+		return nameOf(vv.val) + "!!"
+	default:
+		return reflect.TypeOf(val).String()
+	}
+}
+
+func (n *notNil) Val(c *Context) any {
+	v := n.val.Val(c)
+	if v != nil {
+		return v
+	}
+	return newErrorf("%v", nameOf(n.val)+" val is nil")
+}
+
+func (n *notNil) Set(c *Context, val any) {
+	//TODO implement me
+	panic("implement me")
+}
+
+type expList struct {
+	Vals []Val
+}
+
+func (e *expList) Val(c *Context) any {
+	//TODO implement me
+	var v any
+	for _, e := range e.Vals {
+		v = e.Val(c)
+		if convertToError(v) != nil {
+			return v
+		}
+	}
+	return v
+}
+
+func (e *expList) Set(c *Context, val any) {
+
+}
+
+type eqVal struct {
+	L Val
+	R Val
+}
+
+func (e *eqVal) Set(c *Context, val any) {
+	//TODO implement me
+	return
+}
+
+func (e *eqVal) Val(c *Context) any {
+	return e.L.Val(c) == e.R.Val(c)
+}
+
+// a==5 && b == 6 && call(a,b,c) //    and eq a 5 and b 6
+
+type binaryCode struct {
+	op  int
+	val Val
+}
+
+func toPost(v Val) []binaryCode {
+	switch vv := v.(type) {
+	case *variable:
+		return []binaryCode{{val: vv}}
+	case *eqVal:
+		ss := make([]binaryCode, 0)
+		ss = append(ss, toPost(vv.L)...)
+		ss = append(ss, toPost(vv.R)...)
+		ss = append(ss, binaryCode{val: vv, op: '='})
+		return ss
+	case *constraint:
+		return []binaryCode{{val: v}}
+	case *binaryValue:
+		ss := make([]binaryCode, 0)
+		ss = append(ss, toPost(vv.l)...)
+		ss = append(ss, toPost(vv.r)...)
+		switch vv.name {
+		case "&&":
+			ss = append(ss, binaryCode{val: vv.l, op: '&'})
+			return ss
+		default:
+			panic("invalid v")
+		}
+	}
+	panic("invalid val")
+}
+
+func shouldCompileIf(v *accessVal) bool {
+	switch rv := v.right.(type) {
+	case *objFuncVal:
+		switch rv.funcName {
+		case "end":
+			return true
+		}
+	}
+	return false
+}
+
+func tryCompileVal(v *accessVal) Val {
+	name := getTopFuncName(v)
+	switch name {
+	case "if":
+		ifc := &ifctx{}
+		if compileIF(ifc, v) {
+			return ifc
+		}
+		return v
+	case "switch":
+		swc := &switchCtx{}
+		if compileSwitch(swc, v) {
+			return swc
+		}
+		return v
+	default:
+		return v
+	}
+}
+
+func getTopFuncName(lv Val) string {
+	switch lv := lv.(type) {
+	case *accessVal:
+		return getTopFuncName(lv.left)
+	case *funcVariable:
+		return lv.funcName
+	default:
+		return ""
+	}
+}
+
+func compileSwitch(ctx *switchCtx, v *accessVal) bool {
+	switch rv := v.right.(type) {
+	case *objFuncVal:
+		switch rv.funcName {
+		case "case":
+			switch len(rv.args) {
+			case 1:
+				ctx.cases = append([]elfs{{cond: rv.args[0]}}, ctx.cases...)
+			case 2:
+				ctx.cases = append([]elfs{{cond: rv.args[0], Do: rv.args[1]}}, ctx.cases...)
+			}
+
+		case "default":
+			if len(rv.args) > 0 {
+				ctx.def = rv.args[0]
+			}
+		case "end":
+
+		default:
+			return false
+		}
+	}
+	switch lv := v.left.(type) {
+	case *accessVal:
+		if !compileSwitch(ctx, lv) {
+			return false
+		}
+		return true
+	case *funcVariable:
+		if lv.funcName == "switch" {
+			ctx.sw = lv.args[0]
+			return true
+		} else {
+			return false
+		}
+	default:
+		return false
+	}
+
+}
+
+func compileIF(ctx *ifctx, v *accessVal) bool {
+	switch rv := v.right.(type) {
+	case *objFuncVal:
+		switch rv.funcName {
+		case "then":
+			if len(rv.args) > 0 {
+				ctx.then = rv.args[0]
+			}
+
+		case "else":
+			if len(rv.args) > 0 {
+				ctx.EL = rv.args[0]
+			}
+
+		case "elseif":
+			switch len(rv.args) {
+			case 1:
+				ctx.Elfs = append([]elfs{{
+					cond: rv.args[0],
+					Do:   nil,
+				}}, ctx.Elfs...)
+			case 2:
+				ctx.Elfs = append([]elfs{{
+					cond: rv.args[0],
+					Do:   rv.args[1],
+				}}, ctx.Elfs...)
+			}
+
+		case "end":
+
+		default:
+			return false
+		}
+	}
+	switch lv := v.left.(type) {
+	case *accessVal:
+		if !compileIF(ctx, lv) {
+			return false
+		}
+		return true
+	case *funcVariable:
+		if lv.funcName == "if" {
+
+			switch len(lv.args) {
+			case 1:
+				ctx.cond = lv.args[0]
+			case 2:
+				ctx.cond = lv.args[0]
+				ctx.then = lv.args[1]
+			}
+
+			return true
+		} else {
+			return false
+		}
+	default:
+		return false
+	}
+}
+func parAsList(l Val, r Val) *expList {
+	newx := &expList{}
+	switch lv := l.(type) {
+	case *expList:
+		newx.Vals = append(newx.Vals, lv.Vals...)
+	default:
+		newx.Vals = append(newx.Vals, lv)
+	}
+
+	switch rv := r.(type) {
+	case *expList:
+		newx.Vals = append(newx.Vals, rv.Vals...)
+	default:
+		newx.Vals = append(newx.Vals, rv)
+	}
+	return newx
+}
+
+type VariadicVal struct {
+	V Val
+}
+
+func (v *VariadicVal) ArrVal(ctx *Context) []any {
+	e := v.V.Val(ctx)
+	res, ok := e.([]any)
+	if ok {
+		return res
+	}
+	return []any{e}
+
+}
+
+func (v *VariadicVal) Val(c *Context) any {
+	//TODO implement me
+	//return v.v.Val(c)
+	return newErrorf("variadicVar called unexpeced: %s", nameOf(v.V))
+}
+
+func (v *VariadicVal) Set(c *Context, val any) {
+	//TODO implement me
+	return
+}
+
+type addAddVal struct {
+	v Val
+}
+
+func (v *addAddVal) Val(c *Context) any {
+
+	n := NumberOf(v.v.Val(c))
+	v.v.Set(c, n+1)
+	return n + 1
+}
+
+func (v *addAddVal) Set(c *Context, val any) {
+
+}
+
+type subSubVal struct {
+	v Val
+}
+
+func (v *subSubVal) Val(c *Context) any {
+
+	n := NumberOf(v.v.Val(c))
+	v.v.Set(c, n-1)
+	return n - 1
+}
+
+func (v *subSubVal) Set(c *Context, val any) {
+
+}
+
+type asVal struct {
+	key     string
+	keyHash uint64
+	val     Val
+}
+
+func (a *asVal) Val(c *Context) any {
+	v := a.val.Val(c)
+	c.Set(a.keyHash, a.key, v)
+	return v
+}
+
+func (a *asVal) Set(c *Context, val any) {
+
+}
