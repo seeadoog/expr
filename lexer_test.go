@@ -36,7 +36,7 @@ func execPost(code []binaryCode, ctx *Context, ss *stack[any]) any {
 }
 
 func TestPost(t *testing.T) {
-
+	DefaultEnv := NewEnv()
 	e, err := DefaultEnv.ParseValue(" a==1 && b == 3")
 	if err != nil {
 		t.Fatal(err)

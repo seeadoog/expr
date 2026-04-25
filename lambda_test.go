@@ -155,6 +155,7 @@ func BenchmarkIN(b *testing.B) {
 }
 
 func BenchmarkParserSpeed(b *testing.B) {
+	DefaultEnv := NewEnv()
 	exp := `
 str = "hels";
 dst = str?  str :  "xxx";
@@ -175,6 +176,7 @@ dt = cms.format("2006-01-02 15:04:05");
 }
 
 func TestLamNew(t *testing.T) {
+	DefaultEnv := NewEnv()
 	RegisterOptFuncDefine0(DefaultEnv, "ret_ff", func(ctx *Context, opt *Options) any {
 		fmt.Println("ret call")
 		return map[string]any{

@@ -13,6 +13,7 @@ import (
 )
 
 func TestStr(t *testing.T) {
+	DefaultEnv := NewEnv()
 	e, err := DefaultEnv.ParseFromJSONStr(`
 [
 "a = 'hello   world'",
@@ -72,6 +73,7 @@ func TestStr(t *testing.T) {
 }
 
 func TestHttp(t *testing.T) {
+	DefaultEnv := NewEnv()
 	go func() {
 		http.HandleFunc("/post", func(writer http.ResponseWriter, request *http.Request) {
 			request.ParseForm()
@@ -137,6 +139,7 @@ func mapEq(a, b map[string]interface{}) bool {
 }
 
 func TestTime(t *testing.T) {
+	DefaultEnv := NewEnv()
 	e, err := DefaultEnv.ParseFromJSONStr(`
 [
 "tm = time_parse('2006-01-02 15:04:05','2025-01-02 12:10:20')",
@@ -212,7 +215,7 @@ func BenchmarkI(b *testing.B) {
 
 // SELECT table_name FROM information_schema.tables  WHERE table_schema = 'public'  ORDER BY table_name;
 func TestSort(t *testing.T) {
-
+	DefaultEnv := NewEnv()
 	e, err := DefaultEnv.ParseFromJSONStr(`
 [
 "data = [1,5,6,3,2,4]",
@@ -238,7 +241,7 @@ func TestSort(t *testing.T) {
 }
 
 func TestIFF(t *testing.T) {
-
+	DefaultEnv := NewEnv()
 	e, err := DefaultEnv.ParseFromJSONStr(`
 [
 "if(a=='5').then(c1=5).elseif(a=='6',c1=6).elseif(a=='7',c1=7).else(c1=9).end()",
@@ -305,7 +308,7 @@ func TestHash(t *testing.T) {
 }
 
 func TestNotNil(t *testing.T) {
-
+	DefaultEnv := NewEnv()
 	e, err := DefaultEnv.ParseFromJSONStr(`
 [
 "data = [1,5,6,3,2,4]",
@@ -332,6 +335,7 @@ func TestNotNil(t *testing.T) {
 }
 
 func TestFuncCall(t *testing.T) {
+	DefaultEnv := NewEnv()
 	e, err := DefaultEnv.ParseFromJSONStr(`
 [
 "time_now().Add(duration('3s'))"
@@ -353,6 +357,7 @@ func TestFuncCall(t *testing.T) {
 }
 
 func TestAddAdd(t *testing.T) {
+	DefaultEnv := NewEnv()
 	e, err := DefaultEnv.ParseFromJSONStr(`
 [
 "a=5",
@@ -432,7 +437,7 @@ func psss() any {
 }
 
 func TestRegexp(t *testing.T) {
-
+	DefaultEnv := NewEnv()
 	e, err := DefaultEnv.ParseFromJSONStr(`
 [
 "ma = regmatch('abcd$','abcde')",
@@ -466,7 +471,7 @@ func Check(ctx Ctx) bool {
 }
 
 func BenchmarkCheck(b *testing.B) {
-
+	DefaultEnv := NewEnv()
 	for i := 0; i < b.N; i++ {
 		DefaultEnv.NewContext(nil)
 	}
