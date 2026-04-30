@@ -195,7 +195,7 @@ func TestLamNew(t *testing.T) {
 	}
 	c := DefaultEnv.NewContext(nil)
 
-	_, err2 := c.SafeValue(e)
+	_, err2 := c.SafeExecValue(e)
 	if err2 != nil {
 		t.Fatal(err)
 	}

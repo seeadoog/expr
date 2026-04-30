@@ -63,7 +63,7 @@ math_log(4) / math_log(2)`)
 		panic(err)
 	}
 
-	res, e := ctx.SafeValue(v)
+	res, e := ctx.SafeExecValue(v)
 	if e != nil {
 		panic(e)
 	}

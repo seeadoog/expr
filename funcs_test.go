@@ -369,7 +369,7 @@ func TestAddAdd(t *testing.T) {
 "dd=m.keys()",
 "ss=m.keys().join('');sb=ss=='ab'||ss=='ba'",
 "5+5 as a1",
-"add(5,5).string() as a2 as a3"
+"(5+5).string() as a2 as a3"
 ]
 `)
 	if err != nil {

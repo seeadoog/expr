@@ -195,12 +195,17 @@ func (c *Context) SetContext(ctx context.Context) {
 	c.pctx = ctx
 }
 
-func (c *Context) SafeValue(v Val) (res any, err any) {
+func (c *Context) SafeExecValue(v Val) (res any, err any) {
 	defer func() {
 		if r := recover(); r != nil {
 			err = r
 		}
 	}()
+	res = v.Val(c)
+	return
+}
+
+func (c *Context) ExecValue(v Val) (res any) {
 	res = v.Val(c)
 	return
 }
@@ -314,6 +319,7 @@ func (c *funcVariable) Val(ctx *Context) any {
 		if ok {
 			return lambaCall(lm, ctx, c.args)
 		}
+
 		if ctx.IgnoreFuncNotFoundError {
 			return nil
 		}

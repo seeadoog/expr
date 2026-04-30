@@ -377,7 +377,7 @@ func TestHTTP(t *testing.T) {
     "for": "k,v in kv",
     "do": [
       "#helloworld",
-      "set($,k,v)"
+      "$[k]=v"
     ]
   },
  "header.name = 'nn'",
@@ -1019,5 +1019,134 @@ func TestSortOrder(t *testing.T) {
 	for _, od := range ods {
 		fmt.Println(od)
 	}
+
+}
+
+type funcCtx struct {
+	ss string
+}
+
+func BenchmarkFunc(b *testing.B) {
+	env := NewEnv()
+
+	b.ReportAllocs()
+	SelfDefine0(env, "gets", func(ctx *Context, self *funcCtx) any {
+		return self.ss
+	})
+
+	exprss := []any{}
+
+	for i := 0; i < 1; i++ {
+		exprss = append(exprss, fmt.Sprintf("$.name=='aa%d' && $.from == 'xa' && $.to == 'xb' && $.route = '/xa_to'", i))
+	}
+
+	// 200
+	exprs, err := env.ParseFromJSONObj(exprss)
+	if err != nil {
+		panic(err)
+	}
+	ctx := env.NewContext(nil)
+	ctx.SetByString("ctx", &funcCtx{
+		ss: `ctx.gets()`,
+	})
+	ctx.SetByString("$", map[string]any{
+		"name": "baa1",
+		"from": "xa",
+		"to":   "xb",
+	})
+	fmt.Println("val:", ctx.Exec(exprs))
+
+	fmt.Println("val", ctx.GetByString("$"))
+	b.ResetTimer()
+	for i := 0; i < b.N; i++ {
+		ctx.Exec(exprs)
+
+	}
+}
+
+func BenchmarkENv(b *testing.B) {
+
+	env := NewEnv()
+
+	SelfDefine0(env, "gets", func(ctx *Context, self *funcCtx) any {
+		return self.ss
+	})
+
+	SelfDefineN[*funcCtx, any](env, "log", func(ctx *Context, self any, args ...Val) any {
+		av := make([]any, len(args))
+		for i, arg := range args {
+			av[i] = arg.Val(ctx)
+		}
+		fmt.Println(av...)
+		return nil
+	})
+	exprs, err := env.ParseValue(`
+a1==1
+`)
+	if err != nil {
+		panic(err)
+	}
+
+	ctx := env.NewContext(nil)
+
+	ctx.SetByString("ctx", &funcCtx{
+		ss: `ctx.gets()`,
+	})
+	ctx.SetByString("$", map[string]any{
+		"name": "ada",
+		"from": "ca",
+		"to":   "xb",
+	})
+
+	for i := 0; i < 30; i++ {
+		ctx.SetByString(fmt.Sprintf("a%d", i), float64(i))
+	}
+	fmt.Println("val:", ctx.ExecValue(exprs))
+
+	fmt.Println("val", ctx.GetByString("$"))
+
+	for i := 0; i < b.N; i++ {
+		//ctx.ExecValue(exprs)
+		ctx.SetByString("sreser", "1")
+	}
+}
+
+func TestEnv(t *testing.T) {
+
+	env := NewEnv()
+
+	SelfDefine0(env, "gets", func(ctx *Context, self *funcCtx) any {
+		return self.ss
+	})
+
+	SelfDefineN[*funcCtx, any](env, "log", func(ctx *Context, self any, args ...Val) any {
+		av := make([]any, len(args))
+		for i, arg := range args {
+			av[i] = arg.Val(ctx)
+		}
+		fmt.Println(av...)
+		return nil
+	})
+	exprs, err := env.ParseValue(`
+$.name=='aaa' && $.from == 'xa' && $.to == 'xb' && $.route = '/xa_to';
+
+`)
+	if err != nil {
+		panic(err)
+	}
+
+	ctx := env.NewContext(nil)
+
+	ctx.SetByString("ctx", &funcCtx{
+		ss: `ctx.gets()`,
+	})
+	ctx.SetByString("$", map[string]any{
+		"name": "ada",
+		"from": "ca",
+		"to":   "xb",
+	})
+	fmt.Println("val:", ctx.ExecValue(exprs))
+
+	fmt.Println("val", ctx.GetByString("$"))
 
 }

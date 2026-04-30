@@ -40,31 +40,31 @@ var (
 	funtables_ = map[string]*innerFunc{
 		"append": {nil, 0, "", "", false, appendFunc, "append", -1},
 		"join":   {nil, 0, "", "", false, joinFunc, "join", -1},
-		"eq":     {nil, 0, "", "(string,string)bool", false, eqFunc, "eq", 2},
-		"eqs":    {nil, 0, "", "", false, eqsFunc, "eqs", 2},
-		"neq":    {nil, 0, "", "", false, notEqFunc, "neq", 2},
-		"lt":     {nil, 0, "", "", false, lessFunc, "lt", 2},
-		"lte":    {nil, 0, "", "", false, lessOrEqual, "lte", 2},
-		"gt":     {nil, 0, "", "", false, largeFunc, "gt", 2},
-		"gte":    {nil, 0, "", "", false, largeOrEqual, "gte", 2},
-		"neqs":   {nil, 0, "", "", false, notEqSFunc, "neqs", 2},
-		"not":    {nil, 0, "", "", false, notFunc, "not", 1},
-		"or":     {nil, 0, "", "(any,any)any", false, orFunc, "or", -1},
-		"and":    {nil, 0, "", "", false, andFunc, "and", -1},
+		//"eq":     {nil, 0, "", "(string,string)bool", false, eqFunc, "eq", 2},
+		//"eqs":    {nil, 0, "", "", false, eqsFunc, "eqs", 2},
+		//"neq":    {nil, 0, "", "", false, notEqFunc, "neq", 2},
+		//"lt":     {nil, 0, "", "", false, lessFunc, "lt", 2},
+		//"lte":    {nil, 0, "", "", false, lessOrEqual, "lte", 2},
+		//"gt":     {nil, 0, "", "", false, largeFunc, "gt", 2},
+		//"gte":    {nil, 0, "", "", false, largeOrEqual, "gte", 2},
+		//"neqs":   {nil, 0, "", "", false, notEqSFunc, "neqs", 2},
+		//"not":    {nil, 0, "", "", false, notFunc, "not", 1},
+		//"or":     {nil, 0, "", "(any,any)any", false, orFunc, "or", -1},
+		//"and":    {nil, 0, "", "", false, andFunc, "and", -1},
 		//"if":             {nil, 0, "", "", false, ifFunc, "if", -1},
-		"len":            {nil, 0, "", "", false, lenFunc, "len", 1},
-		"inn":            {nil, 0, "", "", false, inFunc, "inn", -1},
-		"print":          {nil, 0, "", "", false, printFunc, "print", -1},
-		"add":            {nil, 0, "", "", false, addFunc, "add", -1},
-		"sub":            {nil, 0, "", "", false, subFunc, "sub", 2},
-		"mul":            {nil, 0, "", "", false, mulFunc, "mul", 2},
-		"mod":            {nil, 0, "", "", false, modFunc, "mod", 2},
-		"div":            {nil, 0, "", "", false, divFunc, "div", 2},
-		"pow":            {nil, 0, "", "", false, powFunc, "pow", 2},
-		"neg":            {nil, 0, "", "", false, negativeFunc, "neg", 1},
-		"delete":         {nil, 0, "", "", false, deleteFunc, "delete", 2},
-		"get":            {nil, 0, "", "", false, getFunc, "get", 2},
-		"set":            {nil, 0, "", "", false, setFunc, "set", 3},
+		"len": {nil, 0, "", "", false, lenFunc, "len", 1},
+		//"inn":            {nil, 0, "", "", false, inFunc, "inn", -1},
+		"print": {nil, 0, "", "", false, printFunc, "print", -1},
+		//"add":            {nil, 0, "", "", false, addFunc, "add", -1},
+		//"sub":            {nil, 0, "", "", false, subFunc, "sub", 2},
+		//"mul":            {nil, 0, "", "", false, mulFunc, "mul", 2},
+		//"mod":            {nil, 0, "", "", false, modFunc, "mod", 2},
+		//"div":            {nil, 0, "", "", false, divFunc, "div", 2},
+		//"pow":            {nil, 0, "", "", false, powFunc, "pow", 2},
+		//"neg":            {nil, 0, "", "", false, negativeFunc, "neg", 1},
+		"delete": {nil, 0, "", "", false, deleteFunc, "delete", 2},
+		//"get":            {nil, 0, "", "", false, getFunc, "get", 2},
+		//"set":            {nil, 0, "", "", false, setFunc, "set", 3},
 		"set_index":      {nil, 0, "", "", false, setIndex, "set_index", 3},
 		"str_has_prefix": {nil, 0, "", "", false, hasPrefixFunc, "has_prefix", 2},
 		"str_has_suffix": {nil, 0, "", "", false, hasSuffixFunc, "has_suffix", 2},
@@ -95,42 +95,42 @@ var (
 		"bytes":          {nil, 0, "", "()[]byte convert val to byte", false, bytesFuncs, "bytes", 1},
 		"base64_encode":  {nil, 0, "", "()string encoding string or bytes to base64", false, base64Encode, "base64_encode", 1},
 		"base64_decode":  {nil, 0, "", "(string)[]byte decode from base64 string and will panic on error", false, base64Decode, "base64_decode", 1},
-		"md5_sum":        {nil, 0, "", "(...string)[]byte calc md5 of string set", false, md5SumFunc, "md5", 1},
-		"sha256_sum":     {nil, 0, "", "(string)[]byte cals sha256 of string", false, sha256Func, "sha256", 1},
+		"md5sum":         {nil, 0, "", "(...string)[]byte calc md5 of string set", false, md5SumFunc, "md5", 1},
+		"sha256sum":      {nil, 0, "", "(string)[]byte cals sha256 of string", false, sha256Func, "sha256", 1},
 		"hmac_sha256":    {nil, 0, "", "(string|[]byte,secret)[]byte ", false, hmacSha266Func, "hmac_sha256", 2},
 		"hex_encode":     {nil, 0, "", "([]byte)string", false, hexEncodeFunc, "hex_encode", 1},
 		"hex_decode":     {nil, 0, "", "(string)[]byte panic on error", false, hexDecodeFunc, "hex_decode", 1},
 		"sprintf":        {nil, 0, "", "", false, sprintfFunc, "sprintf", -1},
 		"http_request":   {nil, 0, "", "(method string ,url string,headers obj,body any,timeout_ms number)map[string]any", false, httpRequest, "http_request", 5},
 		"return":         {nil, 0, "", "(...any) terminate exec expr", false, returnFunc, "return", -1},
-		"orr":            {nil, 0, "", "", false, orrFunc, "orr", 2},
-		"new":            {nil, 0, "", "()map[string]any return new map", false, newFunc, "new", 0},
-		"all":            {nil, 0, "", "", false, funcAll, "all", 2},
-		"for":            {nil, 0, "", "", false, funcFor, "for", 2},
-		"loop":           {nil, 0, "", "", false, funcLoop, "loop", -1},
-		"go":             {nil, 0, "", "", false, funcGo, "go", 1},
-		"catch":          {nil, 0, "", "", false, funcCatch, "catch", 1},
-		"unwrap":         {nil, 0, "", "", false, funcUnwrap, "unwrap", 1},
-		"boolean":        {nil, 0, "", "", false, funcBool, "boolean", 1},
-		"recover":        {nil, 0, "", "", false, funcRecover, "recover", 1},
-		"recovers":       {nil, 0, "", "", false, funcRecoverS, "recovers", 1},
-		"recoverd":       {nil, 0, "", "", false, funcRecoverD, "recoverd", 1},
-		"sleep":          {nil, 0, "", "(millsec)", false, funcSleep, "sleep", 1},
-		"repeat":         {nil, 0, "", "", false, funcRepeat, "repeat", 2},
-		"repeats":        {nil, 0, "", "", false, funcRepeats, "repeats", 2},
-		"range":          {nil, 0, "", "", false, funcRange, "range", 1},
-		"exec":           {nil, 0, "", "", false, funcExec, "exec", -1},
-		"cost":           {nil, 0, "", "", false, funcCost, "cost", 1},
-		"_debug":         {nil, 0, "", "", false, funcDebug, "_debug", -1},
-		"rand":           {nil, 0, "", "", false, funcRand, "rand", 1},
-		"is_empty":       {nil, 0, "", "", false, funcIsEmpty, "is_empty", 1},
-		"printf":         {nil, 0, "", "", false, funcPrintf, "printf", -1},
-		"set_to":         {nil, 0, "", "", false, funcSetTo, "set_to", 2},
-		"seto":           {nil, 0, "", "", false, funcSetTo, "seto", 2},
-		"benchmark":      {nil, 0, "", "", false, funcBenchmark, "benchmark", 1},
-		"defer":          {nil, 0, "", "(do,defer)", false, funcDefer, "defer", 2},
-		"log10":          {nil, 0, "", "(number)number", false, funcLog10, "log10", 1},
-		"sqrt":           {nil, 0, "", "(number)number", false, funcSqrt, "sqrt", 1},
+		//"orr":            {nil, 0, "", "", false, orrFunc, "orr", 2},
+		"new":       {nil, 0, "", "()map[string]any return new map", false, newFunc, "new", 0},
+		"all":       {nil, 0, "", "", false, funcAll, "all", 2},
+		"for":       {nil, 0, "", "", false, funcFor, "for", 2},
+		"loop":      {nil, 0, "", "", false, funcLoop, "loop", -1},
+		"go":        {nil, 0, "", "", false, funcGo, "go", 1},
+		"catch":     {nil, 0, "", "", false, funcCatch, "catch", 1},
+		"unwrap":    {nil, 0, "", "", false, funcUnwrap, "unwrap", 1},
+		"boolean":   {nil, 0, "", "", false, funcBool, "boolean", 1},
+		"recover":   {nil, 0, "", "", false, funcRecover, "recover", 1},
+		"recovers":  {nil, 0, "", "", false, funcRecoverS, "recovers", 1},
+		"recoverd":  {nil, 0, "", "", false, funcRecoverD, "recoverd", 1},
+		"sleep":     {nil, 0, "", "(millsec)", false, funcSleep, "sleep", 1},
+		"repeat":    {nil, 0, "", "", false, funcRepeat, "repeat", 2},
+		"repeats":   {nil, 0, "", "", false, funcRepeats, "repeats", 2},
+		"range":     {nil, 0, "", "", false, funcRange, "range", 1},
+		"exec":      {nil, 0, "", "", false, funcExec, "exec", -1},
+		"cost":      {nil, 0, "", "", false, funcCost, "cost", 1},
+		"_debug":    {nil, 0, "", "", false, funcDebug, "_debug", -1},
+		"rand":      {nil, 0, "", "", false, funcRand, "rand", 1},
+		"is_empty":  {nil, 0, "", "", false, funcIsEmpty, "is_empty", 1},
+		"printf":    {nil, 0, "", "", false, funcPrintf, "printf", -1},
+		"set_to":    {nil, 0, "", "", false, funcSetTo, "set_to", 2},
+		"seto":      {nil, 0, "", "", false, funcSetTo, "seto", 2},
+		"benchmark": {nil, 0, "", "", false, funcBenchmark, "benchmark", 1},
+		"defer":     {nil, 0, "", "(do,defer)", false, funcDefer, "defer", 2},
+		"log10":     {nil, 0, "", "(number)number", false, funcLog10, "log10", 1},
+		"sqrt":      {nil, 0, "", "(number)number", false, funcSqrt, "sqrt", 1},
 	}
 )
 
@@ -293,7 +293,7 @@ func WithCompiled[T any](n int, fun func(args ...any) T) commonFuncOpt {
 	}
 }
 
-func RegisterOptFuncDefine2[A any, B any, R any](e *Env, fname string, f func(ctx *Context, a A, b B, opt *Options) R, opts ...commonFuncOpt) {
+func RegisterOptFuncDefine2[A any, B any, R any](e Register, fname string, f func(ctx *Context, a A, b B, opt *Options) R, opts ...commonFuncOpt) {
 	e.RegisterFuncWithOpt(fname, func(ctx *Context, args []Val, opt *Options) any {
 		a, _ := args[0].Val(ctx).(A)
 		b, _ := args[1].Val(ctx).(B)
@@ -301,18 +301,18 @@ func RegisterOptFuncDefine2[A any, B any, R any](e *Env, fname string, f func(ct
 	}, 2, generateOptArgsAndReturn(new(R), new(A), new(B))+docFromOpt(opts), innerOptFromOpt(opts)...)
 }
 
-func RegisterOptFuncDefine1[A any, R any](e *Env, fname string, f func(ctx *Context, a A, opt *Options) R, opts ...commonFuncOpt) {
+func RegisterOptFuncDefine1[A any, R any](e Register, fname string, f func(ctx *Context, a A, opt *Options) R, opts ...commonFuncOpt) {
 	e.RegisterFuncWithOpt(fname, func(ctx *Context, args []Val, opt *Options) any {
 		a, _ := args[0].Val(ctx).(A)
 		return f(ctx, a, opt)
 	}, 1, generateOptArgsAndReturn(new(R), new(A))+docFromOpt(opts), innerOptFromOpt(opts)...)
 }
-func RegisterOptFuncDefine0[R any](e *Env, fname string, f func(ctx *Context, opt *Options) R, opts ...commonFuncOpt) {
+func RegisterOptFuncDefine0[R any](e Register, fname string, f func(ctx *Context, opt *Options) R, opts ...commonFuncOpt) {
 	e.RegisterFuncWithOpt(fname, func(ctx *Context, args []Val, opt *Options) any {
 		return f(ctx, opt)
 	}, 0, generateOptArgsAndReturn(new(R))+docFromOpt(opts), innerOptFromOpt(opts)...)
 }
-func RegisterOptFuncDefine3[A any, B any, C any, R any](e *Env, fname string, f func(ctx *Context, a A, b B, c C, opt *Options) R, opts ...commonFuncOpt) {
+func RegisterOptFuncDefine3[A any, B any, C any, R any](e Register, fname string, f func(ctx *Context, a A, b B, c C, opt *Options) R, opts ...commonFuncOpt) {
 	e.RegisterFuncWithOpt(fname, func(ctx *Context, args []Val, opt *Options) any {
 		a, _ := args[0].Val(ctx).(A)
 		b, _ := args[1].Val(ctx).(B)
@@ -321,7 +321,7 @@ func RegisterOptFuncDefine3[A any, B any, C any, R any](e *Env, fname string, f 
 	}, 3, generateOptArgsAndReturn(new(R), new(A), new(B), new(C))+docFromOpt(opts), innerOptFromOpt(opts)...)
 }
 
-func RegisterOptFuncDefine4[A any, B any, C any, D any, R any](e *Env, fname string, f func(ctx *Context, a A, b B, c C, d D, opt *Options) R, opts ...commonFuncOpt) {
+func RegisterOptFuncDefine4[A any, B any, C any, D any, R any](e Register, fname string, f func(ctx *Context, a A, b B, c C, d D, opt *Options) R, opts ...commonFuncOpt) {
 
 	e.RegisterFuncWithOpt(fname, func(ctx *Context, args []Val, opt *Options) any {
 		a, _ := args[0].Val(ctx).(A)
@@ -491,16 +491,16 @@ var andFunc ScriptFunc = func(ctx *Context, args ...Val) any {
 
 var powFunc = FuncDefine2(math.Pow)
 
-var ifFunc ScriptFunc = func(ctx *Context, args ...Val) any {
-	var v any
-	for _, arg := range args {
-		v = arg.Val(ctx)
-		if !BoolCond(v) {
-			return v
-		}
-	}
-	return v
-}
+//var ifFunc ScriptFunc = func(ctx *Context, args ...Val) any {
+//	var v any
+//	for _, arg := range args {
+//		v = arg.Val(ctx)
+//		if !BoolCond(v) {
+//			return v
+//		}
+//	}
+//	return v
+//}
 
 var printFunc ScriptFunc = func(ctx *Context, args ...Val) any {
 	argv := make([]any, 0, len(args))
@@ -1118,9 +1118,6 @@ var returnFunc = FuncDefineN(func(a ...any) any {
 	}
 })
 
-var negativeFunc = FuncDefine1(func(a float64) any {
-	return -a
-})
 var funcAll ScriptFunc = func(ctx *Context, args ...Val) any {
 	if len(args) != 2 {
 		return nil

@@ -1048,6 +1048,14 @@ func (a *accessVal) Val(ctx *Context) any {
 		f := objFuncMap.get(t)
 		if f == nil {
 
+			se, ok := a.left.(*variable)
+			if ok {
+				lf := ctx.Env.GetLibFunc(se.hash, v.funNameHash)
+				if lf != nil {
+					return lf(ctx, v.args...)
+				}
+			}
+
 			fv := reflect.ValueOf(self)
 			if fv.Kind() == reflect.Func {
 				return callFunc(ctx, fv, v.args)
@@ -1102,7 +1110,8 @@ func (a *accessVal) Val(ctx *Context) any {
 
 			return getFieldOfStruct(ctx.ForceType, reflect.ValueOf(lv), v.varName)
 		}
-		//return getFieldOfStruct(reflect.ValueOf(lv), v.varName)
+	//return getFieldOfStruct(reflect.ValueOf(lv), v.varName)
+
 	default:
 		return nil
 	}
