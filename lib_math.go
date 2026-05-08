@@ -119,3 +119,7 @@ func initMathLib(lib *Lib) {
 		return x
 	})
 }
+
+func init() {
+	DefaultEnv.RegisterFunc("math_abs", FuncDefine1(math.Abs), 1)
+}

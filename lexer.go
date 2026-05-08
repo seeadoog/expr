@@ -539,6 +539,16 @@ func (e *Env) ParseValueFromNode(node ast.Node, isAccess bool, pc *ParserContext
 				keyHash: varv.hash,
 				val:     lv,
 			}, nil
+		case "===":
+			return &eqValT{
+				L: lv,
+				R: rv,
+			}, nil
+		case "!==":
+			return &notEqValT{
+				L: lv,
+				R: rv,
+			}, nil
 		default:
 			return nil, fmt.Errorf("unknown operator of binary :%v %v", n.Op, n)
 		}
@@ -987,6 +997,9 @@ func setForObject(left Val, lv any, right string, c *Context, val any) {
 		}
 	case Setter:
 		parent.SetField(c, right, val)
+	case map[string]string:
+		parent[right] = StringOf(val)
+
 	default:
 		setFieldOfStruct(c, reflect.ValueOf(lv), right, val)
 
@@ -1104,6 +1117,8 @@ func (a *accessVal) Val(ctx *Context) any {
 			return nil
 		case nil:
 			return nil
+		case map[string]string:
+			return data[v.varName]
 		case Getter:
 			return data.GetField(ctx, v.varName)
 		default:
@@ -1419,6 +1434,152 @@ func (e *eqVal) Set(c *Context, val any) {
 
 func (e *eqVal) Val(c *Context) any {
 	return e.L.Val(c) == e.R.Val(c)
+}
+
+type eqValT struct {
+	L Val
+	R Val
+}
+
+func (e *eqValT) Set(c *Context, val any) {
+	//TODO implement me
+	return
+}
+
+func (e *eqValT) Val(c *Context) any {
+	return eqt(e.L.Val(c), e.R.Val(c))
+}
+func eqt(a, b any) bool {
+
+	switch av := a.(type) {
+	case nil:
+		switch bv := b.(type) {
+		case nil:
+			return true
+		case string:
+			return bv == ""
+		case float64:
+			return bv == 0
+		case int:
+			return bv == 0
+		case bool:
+			return bv == false
+		default:
+			return a == b
+		}
+
+	case string:
+		switch bv := b.(type) {
+		case nil:
+			return av == ""
+		case string:
+			return av == bv
+		case float64:
+			if f, err := strconv.ParseFloat(av, 64); err == nil {
+				return f == bv
+			}
+			return false
+		case int:
+			if f, err := strconv.ParseFloat(av, 64); err == nil {
+				return f == float64(bv)
+			}
+			return false
+		case bool:
+			if v, err := strconv.ParseBool(av); err == nil {
+				return v == bv
+			}
+			return false
+		default:
+			return a == b
+		}
+
+	case bool:
+		switch bv := b.(type) {
+		case nil:
+			return av == false
+		case bool:
+			return av == bv
+		case float64:
+			if av {
+				return bv == 1
+			}
+			return bv == 0
+		case int:
+			if av {
+				return bv == 1
+			}
+			return bv == 0
+		case string:
+			if v, err := strconv.ParseBool(bv); err == nil {
+				return av == v
+			}
+			return false
+		default:
+			return a == b
+		}
+
+	case float64:
+		switch bv := b.(type) {
+		case nil:
+			return av == 0
+		case float64:
+			return av == bv
+		case int:
+			return av == float64(bv)
+		case bool:
+			if bv {
+				return av == 1
+			}
+			return av == 0
+		case string:
+			if f, err := strconv.ParseFloat(bv, 64); err == nil {
+				return av == f
+			}
+			return false
+		default:
+			return a == b
+		}
+
+	case int:
+		switch bv := b.(type) {
+		case nil:
+			return av == 0
+		case int:
+			return av == bv
+		case float64:
+			return float64(av) == bv
+		case bool:
+			if bv {
+				return av == 1
+			}
+			return av == 0
+		case string:
+			if f, err := strconv.ParseFloat(bv, 64); err == nil {
+				return float64(av) == f
+			}
+			return false
+		default:
+			return a == b
+		}
+
+	default:
+		// fallback：仅同类型直接比较
+		return a == b
+	}
+}
+
+type notEqValT struct {
+	L Val
+	R Val
+}
+
+func (e *notEqValT) Set(c *Context, val any) {
+	//TODO implement me
+	return
+}
+
+func (e *notEqValT) Val(c *Context) any {
+	return !eqt(e.L.Val(c), e.R.Val(c))
 }
 
 // a==5 && b == 6 && call(a,b,c) //    and eq a 5 and b 6

@@ -385,3 +385,31 @@ func Benchmark_MapLogic(b *testing.B) {
 	}
 
 }
+
+func BenchmarkEqT(b *testing.B) {
+	env := NewEnv()
+
+	b.ReportAllocs()
+
+	env.AddLib(NewMathLib("math"))
+	v, err := env.ParseValue(`  
+
+math_abs(1)
+`)
+	if err != nil {
+		b.Fatal(err)
+	}
+
+	c := env.NewContext(nil)
+	c.SetByString("a", 1)
+
+	c.SetByString("$", map[string]any{
+		"name": "xb",
+		"age":  5,
+	})
+	fmt.Println(c.SafeExecValue(v))
+	for i := 0; i < b.N; i++ {
+
+		c.ExecValue(v)
+	}
+}

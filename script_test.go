@@ -1081,7 +1081,7 @@ func BenchmarkENv(b *testing.B) {
 		return nil
 	})
 	exprs, err := env.ParseValue(`
-a1==1
+// 
 `)
 	if err != nil {
 		panic(err)

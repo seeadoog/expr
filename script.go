@@ -1102,6 +1102,15 @@ func (t *tokenizer) statStart(r rune) error {
 			return fmt.Errorf("unexpected  eof after '!'")
 		}
 		if c == '=' {
+
+			c2, ok := t.getNext()
+			if ok {
+				if c2 == '=' {
+					t.appendToken(ast.NOTEQT, "!==")
+					return nil
+				}
+			}
+			t.pos--
 			t.appendToken(ast.NOTEQ, "!=")
 			return nil
 		}
@@ -1118,6 +1127,16 @@ func (t *tokenizer) statStart(r rune) error {
 			return fmt.Errorf("unexpected  eof after '='")
 		}
 		if c == '=' {
+
+			c2, ok := t.getNext()
+			if ok {
+				if c2 == '=' {
+					t.appendToken(ast.EQT, "===")
+					return nil
+				}
+			}
+			t.pos--
+
 			t.appendToken(ast.EQ, "==")
 			return nil
 		}

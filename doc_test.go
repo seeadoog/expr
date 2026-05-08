@@ -1,16 +1,23 @@
 package expr
 
 import (
+	"fmt"
 	"testing"
 )
 
 func TestDoc2(t *testing.T) {
-	showDocOf("ctx.", &Usr{})
+	showDocOf("ctx", &Usr{})
 	//fmt.Println(showDocOf("ctx.", &Usr{}))
 }
 
 func TestDOc3(t *testing.T) {
 
+	e := NewEnv()
+	n, err := e.ParseValueToAstNode("check_flow('aa','bb') && check_cnt('aa',bb)")
+	if err != nil {
+		t.Fatal(err)
+	}
+	fmt.Println(n)
 	//fmt.Println(showDocOf("", addV))
 }
 

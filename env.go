@@ -2,6 +2,7 @@ package expr
 
 import (
 	"fmt"
+	"github.com/seeadoog/expr/ast"
 	"sync"
 )
 
@@ -57,6 +58,22 @@ func NewEnv() *Env {
 
 func (e *Env) RemoveFunc(f string) {
 	delete(e.funtables, f)
+}
+
+func (e *Env) ParseValueToAstNode(val string) (ast.Node, error) {
+
+	tks, err := parseTokenizer(val)
+	if err != nil {
+		return nil, err
+	}
+	lex := &lexer{
+		tokens: tks,
+	}
+	ast.YYParse(lex)
+	if lex.err != nil {
+		return nil, fmt.Errorf("parse value error:%v", lex.err)
+	}
+	return lex.root, nil
 }
 
 func (e *Env) GetLibFunc(libHash uint64, funNameHash uint64) ScriptFunc {

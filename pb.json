@@ -1,7 +1,14 @@
 {
-  "plugins": [
+
+  "svc": "ttsf",
+  "pgn": [
     {
-      "on_begin": [
+      "on_continue": [
+        "ctx.data.write(ctx.call('tts','x598xsf'))",
+        {
+          "if": "ctx.data.len() > 0",
+          "then": "call('its')"
+        }
       ]
     }
   ]

@@ -19,7 +19,7 @@ import (
 %left ORR
 %right OR
 %right AND
-%left EQ   NOTEQ  GT GTE LT LTE IN
+%left EQ   NOTEQ  GT GTE LT LTE IN  EQT NOTEQT
 %left ADDEQ ADDADD SUBSUB
 %left '+' '-'
 %left '*' '/'
@@ -50,6 +50,8 @@ Expr:
 	| Expr '&' Expr        { yyVAL.node = &Binary{Op:"&", L: yyS[yypt-2].node, R: yyS[yypt-0].node} }
 	| Expr '|' Expr        { yyVAL.node = &Binary{Op:"|", L: yyS[yypt-2].node, R: yyS[yypt-0].node} }
 	| Expr  EQ Expr        { yyVAL.node = &Binary{Op:"==", L: yyS[yypt-2].node, R: yyS[yypt-0].node} }
+	| Expr  EQT Expr        { yyVAL.node = &Binary{Op:"===", L: yyS[yypt-2].node, R: yyS[yypt-0].node} }
+	| Expr  NOTEQT Expr        { yyVAL.node = &Binary{Op:"!==", L: yyS[yypt-2].node, R: yyS[yypt-0].node} }
 	| Expr  '%' Expr        { yyVAL.node = &Binary{Op:"%", L: yyS[yypt-2].node, R: yyS[yypt-0].node} }
 	| Expr  ';' Expr        { yyVAL.node = &Binary{Op:";", L: yyS[yypt-2].node, R: yyS[yypt-0].node} }
 	| Expr ';'              {$$.node  = $1.node }
