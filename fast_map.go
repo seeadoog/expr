@@ -287,6 +287,7 @@ func (f *envMap) clone() *envMap {
 func (e *envMap) reset() {
 	e.size = 0
 	for i, datum := range e.data {
+		clear(datum)
 		e.data[i] = datum[:0]
 	}
 }

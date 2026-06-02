@@ -678,6 +678,39 @@ func (e *Env) ParseValueFromNode(node ast.Node, isAccess bool, pc *ParserContext
 
 		return lm, nil
 
+	case *ast.Lambda2:
+		r, err := e.ParseValueFromNode(n.R, false, pc)
+		if err != nil {
+			return nil, fmt.Errorf("lambda parse right error:%w %v", err, n.R)
+		}
+		lm := &lambda{
+			//Lefts:     n.L,
+			Right: r,
+			//leftsHash: hashOfStrings(n.L),
+		}
+
+		switch l := n.L.(type) {
+		case *ast.Variable:
+			lm.Lefts = []string{l.Name}
+		case *ast.ArrDef:
+			for _, le := range l.V {
+
+				ln, ok := le.(*ast.Variable)
+				if ok {
+					return nil, fmt.Errorf("lambda parse left array elem type is not variable but :%v", reflect.TypeOf(l))
+				}
+				lm.Lefts = append(lm.Lefts, ln.Name)
+			}
+		default:
+			return nil, fmt.Errorf("lambda parse right array elem type is invaid:%s", reflect.TypeOf(n.R))
+		}
+		lm.leftsHash = hashOfStrings(lm.Lefts)
+
+		for i, s := range lm.Lefts {
+			pc.putHash(lm.leftsHash[i], s)
+		}
+
+		return lm, nil
 	case *ast.Ternary:
 		c, err := e.ParseValueFromNode(n.C, false, pc)
 		if err != nil {

@@ -185,6 +185,16 @@ func (l *Lambda) String() string {
 	return "lambda"
 }
 
+type Lambda2 struct {
+	L Node
+	R Node
+}
+
+func (l *Lambda2) String() string {
+	//TODO implement me
+	return "lambda2"
+}
+
 type Ternary struct {
 	C Node
 	L Node

@@ -107,3 +107,17 @@ func BenchmarkEnvMap2(b *testing.B) {
 	}
 	fmt.Println(m1["x"])
 }
+
+func TestExpr(t *testing.T) {
+	env := NewEnv()
+
+	exp, err := env.ParseValue(" $.a = 1")
+	if err != nil {
+		panic(err)
+	}
+
+	c := env.NewContext(nil)
+
+	fmt.Println(exp.Val(c))
+	fmt.Println(c.GetByString("$"))
+}

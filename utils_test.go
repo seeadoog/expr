@@ -7,6 +7,7 @@ import (
 	"strconv"
 	"sync"
 	"testing"
+	"unicode/utf8"
 )
 
 func BenchmarkHash(b *testing.B) {
@@ -393,8 +394,9 @@ func BenchmarkEqT(b *testing.B) {
 
 	env.AddLib(NewMathLib("math"))
 	v, err := env.ParseValue(`  
-
 math_abs(1)
+
+
 `)
 	if err != nil {
 		b.Fatal(err)
@@ -412,4 +414,25 @@ math_abs(1)
 
 		c.ExecValue(v)
 	}
+
+}
+
+func TestUTF(t *testing.T) {
+
+	s := "地方"
+	e, i := utf8.DecodeRuneInString(s)
+
+	fmt.Println(e)
+	fmt.Println(s[i:])
+
+	for i := 0; i < len(s); i++ {
+		b := s[i]
+
+		if b < 0x80 {
+
+		} else {
+
+		}
+	}
+
 }

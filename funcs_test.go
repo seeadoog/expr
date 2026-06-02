@@ -470,9 +470,77 @@ func Check(ctx Ctx) bool {
 		ctx["appid"] == "123"
 }
 
+type CtxTest struct {
+	Name string
+}
+
+func (c *CtxTest) GetField(ctx *Context, name string) any {
+	switch name {
+	case "name", "Name":
+		return c.Name
+	case "age":
+		return nil
+	}
+	return c.Name
+}
+
 func BenchmarkCheck(b *testing.B) {
 	DefaultEnv := NewEnv()
-	for i := 0; i < b.N; i++ {
-		DefaultEnv.NewContext(nil)
+
+	ctx := DefaultEnv.NewContext(nil)
+
+	ctx.SetByString("ctx", &CtxTest{
+		Name: "test",
+	})
+	SelfDefine0(DefaultEnv, "name", func(ctx *Context, self *CtxTest) any {
+		return self.Name
+	})
+
+	b.ReportAllocs()
+	e, err := DefaultEnv.ParseValue(`ctx.name()`)
+	if err != nil {
+		panic(err)
 	}
+	fmt.Println(e.Val(ctx))
+	for i := 0; i < b.N; i++ {
+
+		e.Val(ctx)
+	}
+}
+
+func TestSwitchCasesArray(t *testing.T) {
+	expr, err := DefaultEnv.ParseFromJSONStr(`
+[
+{
+	"switch":"name",
+	"case":{
+		"['a','b']":"r = 1",
+		"'c'":"r = 2"
+	}
+},
+{
+	"switch":"name2",
+	"case":{
+		"['c1','c2']":"r1 = 1",
+		"'c3'":"r1 = 3"
+	}
+}
+]
+`)
+	if err != nil {
+		panic(err)
+	}
+	c := DefaultEnv.NewContext(map[string]any{
+		"name":  "a",
+		"name2": "c3",
+	})
+
+	err = c.Exec(expr)
+	if err != nil {
+		panic(err)
+	}
+
+	assertDeepEqual(t, c, "r", 1.0)
+	assertDeepEqual(t, c, "r1", 3.0)
+
 }

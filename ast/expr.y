@@ -14,6 +14,7 @@ import (
 %left LAMB
 %left AS
 %right '='
+
 %right '?'
 %left ':'
 %left ORR
@@ -80,6 +81,8 @@ Expr:
 	| Expr NONIL { $$.node = &NotNil{$1.node}}
 	| Expr '@'  { $$.node = &NotNil{$1.node}}
 	| '{' Ids '}' LAMB  Expr  {  $$.node = &Lambda{L: $2.strs , R:$5.node } }
+	| Expr LAMB '{' Expr '}'  {  $$.node = &Lambda2{L: $1.node , R:$4.node } }
+
 //	| '(' ArgListOpt ')' LAMB  Expr  {  $$.node = &Lambda{L: $2.strs , R:$5.node } }
 //	| '(' ArgList ')' LAMB Expr %prec LAMB {  $$.node = &Lambda{L: $2.strs , R:$5.node } }
 	|  IDENT LAMB Expr {

@@ -1150,3 +1150,43 @@ $.name=='aaa' && $.from == 'xa' && $.to == 'xb' && $.route = '/xa_to';
 	fmt.Println("val", ctx.GetByString("$"))
 
 }
+
+func TestLambda(t *testing.T) {
+	v, err := DefaultEnv.ParseValue(`
+
+`)
+	if err != nil {
+		panic(err)
+	}
+	ctx := DefaultEnv.NewContext(nil)
+
+	fmt.Println(ctx.ExecValue(v))
+}
+
+func BenchmarkPgn(b *testing.B) {
+	env := NewEnv()
+	b.ReportAllocs()
+	exp, err := env.ParseValue(`
+o=$;$={};$.a = {a:o.a,b:o.b or 15,c: o.c>0?o.c:5 }
+`)
+	if err != nil {
+		panic(err)
+	}
+
+	input := map[string]any{
+		"a": "xxxx",
+		"b": "xxxx",
+		"c": 1.0,
+	}
+	ctx := env.NewContext(nil)
+	ctx.SetByString("$", input)
+	v := ctx.ExecValue(exp)
+
+	fmt.Println(v)
+	for i := 0; i < b.N; i++ {
+		ctx := env.GetContextFromPool()
+		ctx.SetByString("$", input)
+		ctx.ExecValue(exp)
+		env.PutContext2Pool(ctx)
+	}
+}

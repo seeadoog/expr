@@ -89,6 +89,7 @@ var (
 		"repeat":      true,
 		"repeats":     true,
 		"for":         true,
+		"len":         true,
 
 		//"has_prefix":  true,
 		//"has_suffix":  true,
@@ -385,12 +386,12 @@ func init() {
 		return self[aa:bb]
 	})
 
-	SelfDefine0(DefaultEnv, "len", func(ctx *Context, self string) float64 {
-		return float64(len(self))
-	})
-	SelfDefine0(DefaultEnv, "len", func(ctx *Context, self []any) float64 {
-		return float64(len(self))
-	})
+	//SelfDefine0(DefaultEnv, "len", func(ctx *Context, self string) float64 {
+	//	return float64(len(self))
+	//})
+	//SelfDefine0(DefaultEnv, "len", func(ctx *Context, self []any) float64 {
+	//	return float64(len(self))
+	//})
 
 	//SelfDefine0("string", func(ctx *Context, self []byte) string {
 	//	return ToString(self)
@@ -493,9 +494,9 @@ func init() {
 	SelfDefine1(DefaultEnv, "get", func(ctx *Context, self map[string]any, a string) any {
 		return self[a]
 	})
-	SelfDefine0(DefaultEnv, "len", func(ctx *Context, self map[string]any) float64 {
-		return float64(len(self))
-	})
+	//SelfDefine0(DefaultEnv, "len", func(ctx *Context, self map[string]any) float64 {
+	//	return float64(len(self))
+	//})
 	SelfDefine1(DefaultEnv, "delete", func(ctx *Context, self map[string]any, a string) map[string]any {
 		delete(self, a)
 		return self
