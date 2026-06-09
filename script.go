@@ -5,11 +5,12 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"github.com/seeadoog/expr/ast"
 	"reflect"
 	"regexp"
 	"strings"
 	"time"
+
+	"github.com/seeadoog/expr/ast"
 )
 
 /*
@@ -58,6 +59,14 @@ func (e *Env) NewContext(table map[string]any) *Context {
 		ForceType:               false,
 		NewCallEnv:              false,
 	}
+}
+
+func (c *Context) SetHash(key HashKey, value any) {
+	c.Set(key.Hash, key.Key, value)
+}
+
+func (c *Context) GetHash(key HashKey) any {
+	return c.Get(key.Hash)
 }
 
 func (c *Context) Get(key uint64) interface{} {
@@ -155,6 +164,10 @@ func (c *Context) GetTable() map[string]any {
 		return true
 	})
 	return dst
+}
+
+func (c *Context) Range(fn func(keyHash uint64, key string, val any) bool) {
+	c.table.foreach(fn)
 }
 
 func (c *Context) Done() <-chan struct{} {

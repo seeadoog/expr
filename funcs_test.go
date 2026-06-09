@@ -511,20 +511,20 @@ func BenchmarkCheck(b *testing.B) {
 func TestSwitchCasesArray(t *testing.T) {
 	expr, err := DefaultEnv.ParseFromJSONStr(`
 [
-{
-	"switch":"name",
-	"case":{
-		"['a','b']":"r = 1",
-		"'c'":"r = 2"
+	{
+		"switch":"name",
+		"case":{
+			"['a','b']":"r = 1",
+			"'c'":"r = 2"
+		}
+	},
+	{
+		"switch":"name2",
+		"case":{
+			"['c1','c2']":"r1 = 1",
+			"'c3'":"r1 = 3"
+		}
 	}
-},
-{
-	"switch":"name2",
-	"case":{
-		"['c1','c2']":"r1 = 1",
-		"'c3'":"r1 = 3"
-	}
-}
 ]
 `)
 	if err != nil {
@@ -543,4 +543,73 @@ func TestSwitchCasesArray(t *testing.T) {
 	assertDeepEqual(t, c, "r", 1.0)
 	assertDeepEqual(t, c, "r1", 3.0)
 
+}
+
+/*
+header
+payload {
+
+}
+*/
+// response
+
+type CCtest struct {
+}
+
+func BenchmarkExprWithJSON(b *testing.B) {
+	exp, err := DefaultEnv.ParseFromJSONStr(`
+[
+"$write = _ => ctx.call()",
+"delete($,'data')",
+"header = $.header;",
+"ctx.isok()?header.smd = 1:_",
+"#dd",
+{
+	"if":"header.status == 1",
+	"then":[
+		"$write();$write()"
+	]
+}
+]
+`)
+	if err != nil {
+		panic(err)
+	}
+
+	b.ReportAllocs()
+
+	cc := &CtxTest{}
+
+	SelfDefine0(DefaultEnv, "call", func(ctx *Context, self *CtxTest) any {
+		return nil
+	})
+	SelfDefine0(DefaultEnv, "isok", func(ctx *Context, self *CtxTest) any {
+		return true
+	})
+	pa := map[string]any{
+		"header": map[string]interface{}{
+			"status": 1.0,
+		},
+		"data": 1,
+	}
+	ctxKey := NewKeyHash("ctx")
+	reqKey := NewKeyHash("req")
+	for i := 0; i < b.N; i++ {
+
+		ctx := DefaultEnv.GetContextFromPool()
+		ctx.SetHash(ctxKey, cc)
+		ctx.SetHash(reqKey, pa)
+		err := ctx.SafeExec(exp)
+		if err != nil {
+			panic(err)
+		}
+		DefaultEnv.PutContext2Pool(ctx)
+	}
+}
+
+func BenchmarkMapSet1(b *testing.B) {
+	m := map[string]interface{}{}
+	for i := 0; i < b.N; i++ {
+		m["name"] = 1
+	}
 }

@@ -186,9 +186,10 @@ func TestLamNew(t *testing.T) {
 		}
 	})
 	exp := `
-	c = ret_ff();  c.call().benchmark()
-
+	c = ret_ff();
+	
    `
+
 	e, err := DefaultEnv.ParseValue(exp)
 	if err != nil {
 		t.Fatal(err)
@@ -199,7 +200,10 @@ func TestLamNew(t *testing.T) {
 	if err2 != nil {
 		t.Fatal(err)
 	}
-
+	c.Range(func(keyHash uint64, key string, val any) bool {
+		fmt.Println(keyHash, key, val)
+		return true
+	})
 }
 
 func BenchmarkAtomic(b *testing.B) {

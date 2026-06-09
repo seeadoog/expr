@@ -2,11 +2,12 @@ package expr
 
 import (
 	"fmt"
-	"github.com/seeadoog/expr/ast"
 	"reflect"
 	"strconv"
 	"strings"
 	"sync"
+
+	"github.com/seeadoog/expr/ast"
 )
 
 const (
@@ -164,6 +165,19 @@ func (p *ParserContext) putHash(key uint64, ks string) {
 func CalcKeyHash(key string) uint64 {
 	hash := calcHash(key)
 	return hash
+}
+
+func NewKeyHash(key string) HashKey {
+	hash := CalcKeyHash(key)
+	return HashKey{
+		Key:  key,
+		Hash: hash,
+	}
+}
+
+type HashKey struct {
+	Key  string
+	Hash uint64
 }
 
 func NewParserContext() *ParserContext {
