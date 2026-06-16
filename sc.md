@@ -17,3 +17,16 @@ string::split(num float64)[]any  返回string 切割后的数组。
         
 
 你可以补充下你觉得需要写到文档中的部分，将文档写入expr_help.md
+
+/*
+req.a == 'xxx' && req.b = 'xxx'? req.bcd = 'x5c90':_ ;
+req.b == 'xxx56'? req.def = '${req.a}/${req.b or 1}';
+
+server.name = 'sxf' ;
+server.age = 'sxf'  ;
+log_dir = 'xxx'     ;
+log.1.file = log_dir + '/xxxx'  ;
+log.2.file = log_dir + '/xxxx'  ;
+
+
+*/

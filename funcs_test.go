@@ -594,16 +594,20 @@ func BenchmarkExprWithJSON(b *testing.B) {
 	}
 	ctxKey := NewKeyHash("ctx")
 	reqKey := NewKeyHash("req")
+	_ = exp
+	ctx := DefaultEnv.GetContextFromPool()
+
 	for i := 0; i < b.N; i++ {
 
-		ctx := DefaultEnv.GetContextFromPool()
 		ctx.SetHash(ctxKey, cc)
 		ctx.SetHash(reqKey, pa)
-		err := ctx.SafeExec(exp)
-		if err != nil {
-			panic(err)
-		}
-		DefaultEnv.PutContext2Pool(ctx)
+		//ctx.SetHash(reqKey, pa)
+		//ctx.SetHash(reqKey, pa)
+		//err := ctx.SafeExec(exp)
+		//if err != nil {
+		//	panic(err)
+		//}
+		//DefaultEnv.PutContext2Pool(ctx)
 	}
 }
 

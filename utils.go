@@ -3,7 +3,6 @@ package expr
 import (
 	"encoding/base64"
 	"fmt"
-	xxhash "github.com/cespare/xxhash/v2"
 	"hash/crc64"
 	"reflect"
 	"strconv"
@@ -11,6 +10,8 @@ import (
 	"sync"
 	"time"
 	"unsafe"
+
+	xxhash "github.com/cespare/xxhash/v2"
 )
 
 func BoolOf(v interface{}) bool {
@@ -289,6 +290,13 @@ func calcHash(s string) uint64 {
 	//return crc64.Checksum([]byte(s), table)
 	return hashManagerInst.getHash(s)
 	//return xxhash.Sum64([]byte(s))
+}
+
+func CalcHash(s string) HashKey {
+	return HashKey{
+		Key:  s,
+		Hash: calcHash(s),
+	}
 }
 
 type hashManager struct {

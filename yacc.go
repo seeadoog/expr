@@ -1042,6 +1042,7 @@ func setForObject(left Val, lv any, right string, c *Context, val any) {
 		case "data":
 			parent.Data = val
 		}
+
 	case Setter:
 		parent.SetField(c, right, val)
 	case map[string]string:
@@ -1164,6 +1165,7 @@ func (a *accessVal) Val(ctx *Context) any {
 			return nil
 		case nil:
 			return nil
+
 		case map[string]string:
 			return data[v.varName]
 		case Getter:
@@ -1177,6 +1179,32 @@ func (a *accessVal) Val(ctx *Context) any {
 	default:
 		return nil
 	}
+}
+
+func getFromObject(ctx *Context, key string, lv any) any {
+	switch data := lv.(type) {
+	case map[string]any:
+		return data[key]
+	case *Result:
+		switch key {
+		case "data":
+			return data.Data
+		case "err":
+			return data.Err
+		}
+		return nil
+	case nil:
+		return nil
+	//case []any:
+	case map[string]string:
+		return data[key]
+	case Getter:
+		return data.GetField(ctx, key)
+	default:
+		return getFieldOfStruct(ctx.ForceType, reflect.ValueOf(lv), key)
+	}
+
+	return nil
 }
 
 type Setter interface {

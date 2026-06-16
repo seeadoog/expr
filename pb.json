@@ -8,7 +8,15 @@
         {
           "if": "ctx.data.len() > 0",
           "then": "call('its')"
-        }
+        },
+        {
+          "define": {
+            "rate_map":{
+              "name": [0.1,0.4]
+            }
+          }
+        },
+        "set_rate(rate_map[req.name][0])"
       ]
     }
   ]

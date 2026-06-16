@@ -559,6 +559,7 @@ func init() {
 	expParserFactory["if"] = parseIf
 	expParserFactory["for"] = parseForRange
 	expParserFactory["switch"] = parseSwitch
+	expParserFactory["define"] = parseDefine
 
 }
 
@@ -832,6 +833,36 @@ func (ev *Env) parseExpr(e string) (Expr, error) {
 		}, nil
 		//return nil, fmt.Errorf("invalid exp:%s", e)
 	}
+}
+
+type defineElem struct {
+	hash HashKey
+	val  any
+}
+type defineExpr struct {
+	defs []defineElem
+}
+
+func (e *defineExpr) Exec(c *Context) error {
+	for _, def := range e.defs {
+		c.SetHash(def.hash, def.val)
+	}
+	return nil
+}
+
+var parseDefine = func(e *Env, o map[string]any, val any) (exp, error) {
+	parentMap, ok := val.(map[string]any)
+	if !ok {
+		return nil, fmt.Errorf("invalid define val ,type should be map but %T", val)
+	}
+	defexp := &defineExpr{}
+	for key, val := range parentMap {
+		defexp.defs = append(defexp.defs, defineElem{
+			hash: CalcHash(key),
+			val:  val,
+		})
+	}
+	return defexp, nil
 }
 
 //func parseFuncVal(e string) (val, error) {
