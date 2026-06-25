@@ -13,10 +13,11 @@ func TestDoc2(t *testing.T) {
 func TestDOc3(t *testing.T) {
 
 	e := NewEnv()
-	n, err := e.ParseValueToAstNode("check_flow('aa','bb') && check_cnt('aa',bb)")
+	n, err := e.ParseValueToAstNode("ctx.check_flow('aa','bb') && check_cnt('aa',bb+22)")
 	if err != nil {
 		t.Fatal(err)
 	}
+
 	fmt.Println(n)
 	//fmt.Println(showDocOf("", addV))
 }
@@ -54,4 +55,8 @@ func BenchmarkAddV2(bb *testing.B) {
 
 		c = addV(a, b)
 	}
+}
+
+func TestRule(t *testing.T) {
+
 }

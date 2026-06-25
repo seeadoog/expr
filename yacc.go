@@ -146,20 +146,6 @@ func (e *emptyVal) Val(c *Context) any {
 }
 
 type ParserContext struct {
-	tb   *envMap
-	lock sync.Mutex
-}
-
-func (p *ParserContext) put(key string) {
-	p.lock.Lock()
-	defer p.lock.Unlock()
-	p.tb.putString(key, nil)
-}
-
-func (p *ParserContext) putHash(key uint64, ks string) {
-	p.lock.Lock()
-	defer p.lock.Unlock()
-	p.tb.putHash(key, ks, nil)
 }
 
 func CalcKeyHash(key string) uint64 {
@@ -181,15 +167,16 @@ type HashKey struct {
 }
 
 func NewParserContext() *ParserContext {
-	pc := &ParserContext{
-		tb: newEnvMap(8),
-	}
-	for _, key := range mapKeys {
-		pc.tb.putHash(calcHash(key), key, nil)
-	}
-	for _, key := range arrKeys {
-		pc.tb.putHash(calcHash(key), key, nil)
-	}
+	//pc := &ParserContext{
+	//	tb: newEnvMap(8),
+	//}
+	//for _, key := range mapKeys {
+	//	pc.tb.putHash(calcHash(key), key, nil)
+	//}
+	//for _, key := range arrKeys {
+	//	pc.tb.putHash(calcHash(key), key, nil)
+	//}
+	pc := &ParserContext{}
 	return pc
 }
 
@@ -247,7 +234,7 @@ func (e *Env) ParseValueFromNode(node ast.Node, isAccess bool, pc *ParserContext
 			return &emptyVal{}, nil
 		}
 
-		pc.putHash(calcHash(n.Name), n.Name)
+		//pc.putHash(calcHash(n.Name), n.Name)
 		return &variable{
 			varName: n.Name,
 			hash:    calcHash(n.Name),
@@ -401,7 +388,7 @@ func (e *Env) ParseValueFromNode(node ast.Node, isAccess bool, pc *ParserContext
 			}
 		}
 
-		pc.putHash(calcHash(n.Name), n.Name)
+		//pc.putHash(calcHash(n.Name), n.Name)
 		return &funcVariable{
 			funcNameHash: calcHash(n.Name),
 			funcName:     n.Name,
@@ -543,6 +530,27 @@ func (e *Env) ParseValueFromNode(node ast.Node, isAccess bool, pc *ParserContext
 					return add2(a.Val(ctx), b.Val(ctx))
 				}),
 			}, nil
+		case "-=":
+			return &setValue{
+				key: lv,
+				val: newBinaryValue("-=", lv, rv, func(ctx *Context, a, b Val) any {
+					return NumberOf(a.Val(ctx)) - NumberOf(b.Val(ctx))
+				}),
+			}, nil
+		case "*=":
+			return &setValue{
+				key: lv,
+				val: newBinaryValue("*=", lv, rv, func(ctx *Context, a, b Val) any {
+					return NumberOf(a.Val(ctx)) * NumberOf(b.Val(ctx))
+				}),
+			}, nil
+		case "/=":
+			return &setValue{
+				key: lv,
+				val: newBinaryValue("/=", lv, rv, func(ctx *Context, a, b Val) any {
+					return NumberOf(a.Val(ctx)) / NumberOf(b.Val(ctx))
+				}),
+			}, nil
 		case "as":
 			varv, ok := rv.(*variable)
 			if !ok {
@@ -566,7 +574,7 @@ func (e *Env) ParseValueFromNode(node ast.Node, isAccess bool, pc *ParserContext
 		default:
 			return nil, fmt.Errorf("unknown operator of binary :%v %v", n.Op, n)
 		}
-		pc.put(n.Op)
+		//pc.put(n.Op)
 		return &funcVariable{
 			funcNameHash: calcHash(n.Op),
 			funcName:     n.Op,
@@ -680,9 +688,9 @@ func (e *Env) ParseValueFromNode(node ast.Node, isAccess bool, pc *ParserContext
 			Right:     e,
 			leftsHash: hashOfStrings(n.L),
 		}
-		for i, s := range n.L {
-			pc.putHash(lm.leftsHash[i], s)
-		}
+		//for i, s := range n.L {
+		//	pc.putHash(lm.leftsHash[i], s)
+		//}
 		//v, err := convertLambda(lm, lm.Right)
 		//if err != nil {
 		//	return nil, fmt.Errorf("lambda parse right error:%w %v", err, lm.Right)
@@ -720,9 +728,9 @@ func (e *Env) ParseValueFromNode(node ast.Node, isAccess bool, pc *ParserContext
 		}
 		lm.leftsHash = hashOfStrings(lm.Lefts)
 
-		for i, s := range lm.Lefts {
-			pc.putHash(lm.leftsHash[i], s)
-		}
+		//for i, s := range lm.Lefts {
+		//	pc.putHash(lm.leftsHash[i], s)
+		//}
 
 		return lm, nil
 	case *ast.Ternary:

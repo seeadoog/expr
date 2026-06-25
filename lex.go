@@ -217,6 +217,21 @@ func (t *tokenizer) statStart(r rune) error {
 		t.pos--
 		t.appendToken(int(r), "+")
 	case '*', '/', '^', '@':
+		if r == '*' || r == '/' {
+			c, ok := t.getNext()
+			if !ok {
+				return fmt.Errorf("unexpected eof after '%c'", r)
+			}
+			if c == '=' {
+				if r == '*' {
+					t.appendToken(ast.MULEQ, "*=")
+				} else {
+					t.appendToken(ast.DIVEQ, "/=")
+				}
+				return nil
+			}
+			t.pos--
+		}
 		t.appendToken(int(r), string(r))
 
 	case '-':
@@ -230,6 +245,10 @@ func (t *tokenizer) statStart(r rune) error {
 		}
 		if c == '-' {
 			t.appendToken(ast.SUBSUB, "--")
+			return nil
+		}
+		if c == '=' {
+			t.appendToken(ast.SUBEQ, "-=")
 			return nil
 		}
 		t.pos--

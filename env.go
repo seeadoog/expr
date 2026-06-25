@@ -2,8 +2,9 @@ package expr
 
 import (
 	"fmt"
-	"github.com/seeadoog/expr/ast"
 	"sync"
+
+	"github.com/seeadoog/expr/ast"
 )
 
 type Env struct {
@@ -87,6 +88,28 @@ func (e *Env) GetLibFunc(libHash uint64, funNameHash uint64) ScriptFunc {
 
 func (e *Env) AddLib(l *Lib) {
 	e.libs.putHash(calcHash(l.libName), l.libName, l)
+}
+
+func (e *Env) ParseValue(s string) (Val, error) {
+	return e.parseValueV(s)
+}
+func (ev *Env) parseValueV(e string) (Val, error) {
+	tks, err := parseTokenizer(e)
+	if err != nil {
+		return nil, err
+	}
+	lex := &lexer{
+		tokens: tks,
+	}
+	ast.YYParse(lex)
+	if lex.err != nil {
+		return nil, fmt.Errorf("parse value error:%v", lex.err)
+	}
+	v, err := ev.ParseValueFromNode(lex.root, false, NewParserContext())
+	if err != nil {
+		return nil, fmt.Errorf("parse value error:%w ", err)
+	}
+	return v, nil
 }
 
 type Lib struct {

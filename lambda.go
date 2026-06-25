@@ -13,12 +13,6 @@ type lambda struct {
 	Right     Val
 }
 
-func (l *lambda) checkHash(pc *ParserContext) {
-	for _, left := range l.Lefts {
-		pc.putHash(calcHash(left), left)
-	}
-}
-
 func (l *lambda) findVarIndex(name string) (int, bool) {
 	for i, left := range l.Lefts {
 		if left == name {

@@ -1,0 +1,13 @@
+# Benchmark results
+benchmark_results.txt
+benchmark_new.txt
+*.txt
+
+# Profile files
+*.prof
+
+# Test binaries
+*.test
+
+# Go build cache
+go.sum

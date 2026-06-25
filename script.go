@@ -9,8 +9,6 @@ import (
 	"regexp"
 	"strings"
 	"time"
-
-	"github.com/seeadoog/expr/ast"
 )
 
 /*
@@ -865,38 +863,6 @@ var parseDefine = func(e *Env, o map[string]any, val any) (exp, error) {
 	return defexp, nil
 }
 
-//func parseFuncVal(e string) (val, error) {
-//
-//}
-
-var (
-	globalParseContext = NewParserContext()
-)
-
-func (e *Env) ParseValue(s string) (Val, error) {
-	return e.parseValueV(s)
-}
-func (ev *Env) parseValueV(e string) (Val, error) {
-	tks, err := parseTokenizer(e)
-	if err != nil {
-		return nil, err
-	}
-	lex := &lexer{
-		tokens: tks,
-	}
-	ast.YYParse(lex)
-	if lex.err != nil {
-		return nil, fmt.Errorf("parse value error:%v", lex.err)
-	}
-	v, err := ev.ParseValueFromNode(lex.root, false, globalParseContext)
-	if err != nil {
-		return nil, fmt.Errorf("parse value error:%w ", err)
-	}
-	return v, nil
-}
-
-type valueParser struct {
-}
 type stack[T any] struct {
 	data []T
 }

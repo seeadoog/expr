@@ -7,7 +7,7 @@ import (
 )
 
 %}
-%token IDENT NUMBER STRING BOOL NIL EQ AND OR NOTEQ GT GTE LT LTE ORR ACC IF ELSE FOR IN ACC2 CONST LAMB ADDEQ VARIADIC AS
+%token IDENT NUMBER STRING BOOL NIL EQ AND OR NOTEQ GT GTE LT LTE ORR ACC IF ELSE FOR IN ACC2 CONST LAMB ADDEQ SUBEQ MULEQ DIVEQ VARIADIC AS
 %left IDENT
 %left IF ELSE
 %left ';'
@@ -21,7 +21,7 @@ import (
 %right OR
 %right AND
 %left EQ   NOTEQ  GT GTE LT LTE IN  EQT NOTEQT
-%left ADDEQ ADDADD SUBSUB
+%left ADDEQ SUBEQ MULEQ DIVEQ ADDADD SUBSUB
 %left '+' '-'
 %left '*' '/'
 %left '%'
@@ -62,6 +62,15 @@ Expr:
 	| Ident  ADDEQ Expr        { $$.node = &Binary{Op:"+=", L: $1.node, R: $3.node} }
 	| Var  ADDEQ Expr        { $$.node = &Binary{Op:"+=", L: $1.node, R: $3.node} }
 	| ArrIndex  ADDEQ Expr        { $$.node = &Binary{Op:"+=", L: $1.node, R: $3.node} }
+	| Ident  SUBEQ Expr        { $$.node = &Binary{Op:"-=", L: $1.node, R: $3.node} }
+	| Var  SUBEQ Expr        { $$.node = &Binary{Op:"-=", L: $1.node, R: $3.node} }
+	| ArrIndex  SUBEQ Expr        { $$.node = &Binary{Op:"-=", L: $1.node, R: $3.node} }
+	| Ident  MULEQ Expr        { $$.node = &Binary{Op:"*=", L: $1.node, R: $3.node} }
+	| Var  MULEQ Expr        { $$.node = &Binary{Op:"*=", L: $1.node, R: $3.node} }
+	| ArrIndex  MULEQ Expr        { $$.node = &Binary{Op:"*=", L: $1.node, R: $3.node} }
+	| Ident  DIVEQ Expr        { $$.node = &Binary{Op:"/=", L: $1.node, R: $3.node} }
+	| Var  DIVEQ Expr        { $$.node = &Binary{Op:"/=", L: $1.node, R: $3.node} }
+	| ArrIndex  DIVEQ Expr        { $$.node = &Binary{Op:"/=", L: $1.node, R: $3.node} }
 	| Expr  AND Expr        { yyVAL.node = &Binary{Op:"&&", L: yyS[yypt-2].node, R: yyS[yypt-0].node} }
 	| Expr  OR Expr        { yyVAL.node = &Binary{Op:"||", L: yyS[yypt-2].node, R: yyS[yypt-0].node} }
 	| Expr  NOTEQ Expr        { yyVAL.node = &Binary{Op:"!=", L: yyS[yypt-2].node, R: yyS[yypt-0].node} }

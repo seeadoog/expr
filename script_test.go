@@ -1153,7 +1153,7 @@ $.name=='aaa' && $.from == 'xa' && $.to == 'xb' && $.route = '/xa_to';
 
 func TestLambda(t *testing.T) {
 	v, err := DefaultEnv.ParseValue(`
-
+a
 `)
 	if err != nil {
 		panic(err)
