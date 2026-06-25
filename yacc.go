@@ -1134,7 +1134,9 @@ func (a *accessVal) Val(ctx *Context) any {
 			if ok {
 				return data
 			}
-
+			if ctx.IgnoreFuncNotFoundError {
+				return nil
+			}
 			return newErrorf("var '%s' type '%v' do not define func '%s' ", nameOf(a.left), reflect.TypeOf(self), v.funcName)
 		}
 		//ff := f[v.funcName]
@@ -1150,7 +1152,9 @@ func (a *accessVal) Val(ctx *Context) any {
 			if ok {
 				return data
 			}
-
+			if ctx.IgnoreFuncNotFoundError {
+				return nil
+			}
 			return newErrorf("var '%s' type '%v' do not define func '%s'", nameOf(a.left), reflect.TypeOf(self), v.funcName)
 		}
 		return ff.fun(ctx, self, v.args...)

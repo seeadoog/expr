@@ -473,7 +473,7 @@ var orFunc ScriptFunc = func(ctx *Context, args ...Val) any {
 	return nil
 }
 
-var orrFunc = FuncDefine2(func(ctx *Context, a any, b any) any {
+var orrFunc = FuncDefine2(func(a any, b any) any {
 	if a != nil {
 		return a
 	}
@@ -489,7 +489,7 @@ var andFunc ScriptFunc = func(ctx *Context, args ...Val) any {
 	return true
 }
 
-var powFunc = FuncDefine2(func(ctx *Context, x, y float64) float64 { return math.Pow(x, y) })
+var powFunc = FuncDefine2(math.Pow)
 
 //var ifFunc ScriptFunc = func(ctx *Context, args ...Val) any {
 //	var v any
@@ -637,12 +637,12 @@ func FuncDefineN[T any, R any](f func(ctx *Context, a ...T) R) ScriptFunc {
 	}
 }
 
-var deleteFunc = FuncDefine2(func(ctx *Context, m map[string]any, b string) any {
+var deleteFunc = FuncDefine2(func(m map[string]any, b string) any {
 	delete(m, b)
 	return nil
 })
 
-var add2Func = FuncDefine2(func(ctx *Context, a, b any) any {
+var add2Func = FuncDefine2(func(a, b any) any {
 	return add2(a, b)
 })
 
@@ -664,28 +664,28 @@ func add2(a, b any) any {
 	}
 }
 
-var subFunc = FuncDefine2(func(ctx *Context, a, b float64) any {
+var subFunc = FuncDefine2(func(a, b float64) any {
 	return a - b
 })
-var divFunc = FuncDefine2(func(ctx *Context, a, b float64) any {
+var divFunc = FuncDefine2(func(a, b float64) any {
 	return a / b
 })
-var mulFunc = FuncDefine2(func(ctx *Context, a, b float64) any {
+var mulFunc = FuncDefine2(func(a, b float64) any {
 	return a * b
 })
-var modFunc = FuncDefine2(func(ctx *Context, a, b float64) any {
+var modFunc = FuncDefine2(func(a, b float64) any {
 	return float64(int(a) % int(b))
 })
-var hasPrefixFunc = FuncDefine2(func(ctx *Context, a, b string) any {
+var hasPrefixFunc = FuncDefine2(func(a, b string) any {
 	return strings.HasPrefix(a, b)
 })
 
-var hasSuffixFunc = FuncDefine2(func(ctx *Context, a, b string) any {
+var hasSuffixFunc = FuncDefine2(func(a, b string) any {
 	return strings.HasSuffix(a, b)
 })
 
-var trimFunc = FuncDefine1(func(ctx *Context, s string) string { return strings.TrimSpace(s) })
-var splitFunc = FuncDefine3(func(ctx *Context, a, b string, n float64) any {
+var trimFunc = FuncDefine1(strings.TrimSpace)
+var splitFunc = FuncDefine3(func(a, b string, n float64) any {
 	vals := strings.SplitAfterN(a, b, int(n))
 	va := make([]any, 0, len(vals))
 	for _, v := range vals {
@@ -694,11 +694,11 @@ var splitFunc = FuncDefine3(func(ctx *Context, a, b string, n float64) any {
 	return va
 })
 
-var toUpperFunc = FuncDefine1(func(ctx *Context, s string) string { return strings.ToUpper(s) })
+var toUpperFunc = FuncDefine1(strings.ToUpper)
 
-var toLowerFunc = FuncDefine1(func(ctx *Context, s string) string { return strings.ToLower(s) })
+var toLowerFunc = FuncDefine1(strings.ToLower)
 
-var jsonEncode = FuncDefine1(func(ctx *Context, a any) any {
+var jsonEncode = FuncDefine1(func(a any) any {
 	bf := bytes.NewBuffer(nil)
 	je := json.NewEncoder(bf)
 	je.SetEscapeHTML(false)
@@ -710,7 +710,7 @@ var jsonEncode = FuncDefine1(func(ctx *Context, a any) any {
 	return res
 })
 
-var jsonDecode = FuncDefine1(func(ctx *Context, a any) (res any) {
+var jsonDecode = FuncDefine1(func(a any) (res any) {
 	switch a := a.(type) {
 	case string:
 		err := json.Unmarshal(unsafe.Slice(unsafe.StringData(a), len(a)), &res)
@@ -730,27 +730,27 @@ var jsonDecode = FuncDefine1(func(ctx *Context, a any) (res any) {
 	return newErrorf("cannot decode type to json obj %s", reflect.TypeOf(a).String())
 })
 
-var timeFormat = FuncDefine2(func(ctx *Context, tim time.Time, format string) any {
+var timeFormat = FuncDefine2(func(tim time.Time, format string) any {
 	return tim.Format(format)
 })
 
-var timeNow = FuncDefine(func(ctx *Context) time.Time { return time.Now() })
+var timeNow = FuncDefine(time.Now)
 
-var notFunc = FuncDefine1(func(ctx *Context, a any) bool {
+var notFunc = FuncDefine1(func(a any) bool {
 	return !BoolCond(a)
 })
 
-var notEqFunc = FuncDefine2(func(ctx *Context, a any, b any) bool {
+var notEqFunc = FuncDefine2(func(a any, b any) bool {
 	return a != b
 })
-var notEqSFunc = FuncDefine2(func(ctx *Context, a any, b any) bool {
+var notEqSFunc = FuncDefine2(func(a any, b any) bool {
 	if a != b {
 		return true
 	}
 	return StringOf(a) != StringOf(b)
 })
 
-var largeFunc = FuncDefine2(func(ctx *Context, a any, b any) bool {
+var largeFunc = FuncDefine2(func(a any, b any) bool {
 	return compare(a, b) > 0
 })
 
@@ -784,13 +784,13 @@ func compare(a, b any) int {
 	}
 }
 
-var largeOrEqual = FuncDefine2(func(ctx *Context, a any, b any) bool {
+var largeOrEqual = FuncDefine2(func(a any, b any) bool {
 	return compare(a, b) >= 0
 })
-var lessFunc = FuncDefine2(func(ctx *Context, a any, b any) bool {
+var lessFunc = FuncDefine2(func(a any, b any) bool {
 	return compare(a, b) < 0
 })
-var lessOrEqual = FuncDefine2(func(ctx *Context, a any, b any) bool {
+var lessOrEqual = FuncDefine2(func(a any, b any) bool {
 	return compare(a, b) <= 0
 })
 
@@ -834,7 +834,7 @@ var newArrFunc ScriptFunc = func(ctx *Context, args ...Val) any {
 	return make([]any, size, cap)
 }
 
-var makeArrFunc = FuncDefine1(func(ctx *Context, a float64) any {
+var makeArrFunc = FuncDefine1(func(a float64) any {
 	return make([]any, int(a))
 })
 
@@ -846,7 +846,7 @@ var sliceInitFunc ScriptFunc = func(ctx *Context, args ...Val) any {
 	return arr
 }
 
-var arrSliceFunc = FuncDefine3(func(ctx *Context, arr []any, start, end float64) any {
+var arrSliceFunc = FuncDefine3(func(arr []any, start, end float64) any {
 	endi := int(end)
 	starti := int(start)
 	if len(arr) < endi {
@@ -873,7 +873,7 @@ var stringFunc ScriptFunc = func(ctx *Context, args ...Val) any {
 	return StringOf(args[0].Val(ctx))
 }
 
-var intFunc = FuncDefine1(func(ctx *Context, a float64) float64 {
+var intFunc = FuncDefine1(func(a float64) float64 {
 	return float64(int(a))
 })
 
@@ -902,7 +902,7 @@ var numberFunc ScriptFunc = func(ctx *Context, args ...Val) any {
 //	sb := &strings.Builder{}
 //}
 
-var base64Encode = FuncDefine1WithDef(func(ctx *Context, a any) string {
+var base64Encode = FuncDefine1WithDef(func(a any) string {
 	switch v := a.(type) {
 	case string:
 		return base64EncodeToString(ToBytes(v))
@@ -913,7 +913,7 @@ var base64Encode = FuncDefine1WithDef(func(ctx *Context, a any) string {
 	}
 }, "")
 
-var base64Decode = FuncDefine1WithDef(func(ctx *Context, a string) any {
+var base64Decode = FuncDefine1WithDef(func(a string) any {
 	bs, err := base64DecodeString(a)
 	if err != nil {
 		return newError(err)
@@ -921,7 +921,7 @@ var base64Decode = FuncDefine1WithDef(func(ctx *Context, a string) any {
 	return bs
 }, nil)
 
-var bytesFuncs = FuncDefine1(func(ctx *Context, v any) []byte { return BytesOf(v) })
+var bytesFuncs = FuncDefine1(BytesOf)
 
 var md5SumFunc ScriptFunc = func(ctx *Context, args ...Val) any {
 	var data []byte
@@ -942,11 +942,11 @@ var sha256Func ScriptFunc = func(ctx *Context, args ...Val) any {
 	return res.Sum(nil)
 }
 
-var hexEncodeFunc = FuncDefine1WithDef(func(ctx *Context, a any) string {
+var hexEncodeFunc = FuncDefine1WithDef(func(a any) string {
 	return hex.EncodeToString(BytesOf(a))
 }, "")
 
-var hexDecodeFunc = FuncDefine1WithDef(func(ctx *Context, a any) any {
+var hexDecodeFunc = FuncDefine1WithDef(func(a any) any {
 	data, err := hex.DecodeString(StringOf(a))
 	if err != nil {
 		return newError(err)
@@ -954,12 +954,12 @@ var hexDecodeFunc = FuncDefine1WithDef(func(ctx *Context, a any) any {
 	return data
 }, nil)
 
-var hmacSha266Func = FuncDefine2(func(ctx *Context, a any, b any) []byte {
+var hmacSha266Func = FuncDefine2(func(a any, b any) []byte {
 	h := hmac.New(sha256.New, BytesOf(b))
 	h.Write(BytesOf(a))
 	return h.Sum(nil)
 })
-var lenFunc = FuncDefine1(func(ctx *Context, a any) float64 {
+var lenFunc = FuncDefine1(func(a any) float64 {
 	switch a := a.(type) {
 	case string:
 		return float64(len(a))
@@ -1009,7 +1009,7 @@ var inFunc ScriptFunc = func(ctx *Context, args ...Val) any {
 	return false
 }
 
-var returnFunc = FuncDefineN(func(ctx *Context, a ...any) any {
+var returnFunc = FuncDefineN(func(a ...any) any {
 	return &Return{
 		Var: a,
 	}
@@ -1145,7 +1145,7 @@ var funcGo ScriptFunc = func(ctx *Context, args ...Val) any {
 	return gor
 }
 
-var funcTimeParse = FuncDefine2(func(ctx *Context, layout string, val string) any {
+var funcTimeParse = FuncDefine2(func(layout string, val string) any {
 	tm, err := time.Parse(layout, val)
 	if err != nil {
 		return newError(err)
@@ -1153,7 +1153,7 @@ var funcTimeParse = FuncDefine2(func(ctx *Context, layout string, val string) an
 	return tm
 })
 
-var funcCatch = FuncDefine1(func(ctx *Context, a any) any {
+var funcCatch = FuncDefine1(func(a any) any {
 
 	switch v := a.(type) {
 	case *Return, *Error:
@@ -1175,7 +1175,7 @@ var funcUnwrap = FuncDefine1WithCtx(func(ctx *Context, a any) any {
 	return a
 })
 
-var funcBool = FuncDefine1(func(ctx *Context, a any) any {
+var funcBool = FuncDefine1(func(a any) any {
 	return BoolOf(a)
 })
 
@@ -1243,12 +1243,12 @@ var funcRecoverS ScriptFunc = func(ctx *Context, args ...Val) (res any) {
 	res = args[0].Val(ctx)
 	return res
 }
-var funcSleep = FuncDefine1(func(ctx *Context, a float64) any {
+var funcSleep = FuncDefine1(func(a float64) any {
 	time.Sleep(time.Duration(a) * time.Millisecond)
 	return nil
 })
 
-var funcRange = FuncDefine1(func(ctx *Context, a float64) any {
+var funcRange = FuncDefine1(func(a float64) any {
 	return make([]any, int(a))
 })
 
@@ -1364,7 +1364,7 @@ func valTypeOf(v Val) string {
 	}
 }
 
-var funcIsEmpty = FuncDefine1(func(ctx *Context, a any) any {
+var funcIsEmpty = FuncDefine1(func(a any) any {
 	switch v := a.(type) {
 	case string:
 		return v == ""
@@ -1397,7 +1397,7 @@ var (
 	_randLock = sync.Mutex{}
 )
 
-var funcRand = FuncDefine1(func(ctx *Context, a float64) []byte {
+var funcRand = FuncDefine1(func(a float64) []byte {
 	_randLock.Lock()
 	defer _randLock.Unlock()
 	bs := make([]byte, int(a))
@@ -1504,11 +1504,11 @@ var funcShowEnv ScriptFunc = func(ctx *Context, args ...Val) any {
 	return nil
 }
 
-var funcLog10 = FuncDefine1(func(ctx *Context, a float64) float64 {
+var funcLog10 = FuncDefine1(func(a float64) float64 {
 	return math.Log10(a)
 })
 
-var funcSqrt = FuncDefine1(func(ctx *Context, a float64) float64 {
+var funcSqrt = FuncDefine1(func(a float64) float64 {
 	return math.Sqrt(a)
 })
 

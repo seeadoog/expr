@@ -643,7 +643,7 @@ func init() {
 		return self.Local()
 	})
 
-	DefaultEnv.RegisterFunc("regexp_new", FuncDefine1(func(a string) any {
+	DefaultEnv.RegisterFunc("regexp_new", FuncDefine1(func(ctx *Context, a string) any {
 		reg, err := regexp.Compile(a)
 		if err != nil {
 			return newError(err)
@@ -654,7 +654,7 @@ func init() {
 		return self.MatchString(src)
 	})
 
-	DefaultEnv.RegisterFunc("url_new_values", FuncDefine(func() url.Values {
+	DefaultEnv.RegisterFunc("url_new_values", FuncDefine(func(ctx *Context) url.Values {
 		uv := url.Values{}
 		return uv
 	}), 0)

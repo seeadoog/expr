@@ -24,6 +24,7 @@ type Context struct {
 	ForceType               bool // if false will disable convert struct type to vm type and improve performance
 	NewCallEnv              bool // if enabled , will use new env to call lambda which will cause extra performance cost
 	Debug                   bool
+	PanicWhenError          bool // if true, will panic when error occurs
 	Env                     *Env
 }
 
@@ -33,6 +34,7 @@ func (c *Context) Clone() *Context {
 		IgnoreFuncNotFoundError: c.IgnoreFuncNotFoundError,
 		ForceType:               c.ForceType,
 		NewCallEnv:              c.NewCallEnv,
+		PanicWhenError:          c.PanicWhenError,
 		pctx:                    c.pctx,
 		Env:                     c.Env,
 		//funcs:                   c.funcs,
@@ -56,6 +58,7 @@ func (e *Env) NewContext(table map[string]any) *Context {
 		IgnoreFuncNotFoundError: false,
 		ForceType:               false,
 		NewCallEnv:              false,
+		PanicWhenError:          true, // 默认为 true，保持向后兼容
 	}
 }
 
@@ -396,9 +399,17 @@ type Error struct {
 	Err any
 }
 
+// newError 创建错误（不带 Context，使用默认行为：panic）
 func newError(err any) *Error {
 	e := &Error{Err: err}
-	if PanicWhenError {
+	// 默认行为：panic（保持向后兼容）
+	panic(e)
+}
+
+// newErrorWithCtx 创建错误（带 Context，根据 Context.PanicWhenError 决定是否 panic）
+func newErrorWithCtx(err any, ctx *Context) *Error {
+	e := &Error{Err: err}
+	if ctx != nil && ctx.PanicWhenError {
 		panic(e)
 	}
 	return e

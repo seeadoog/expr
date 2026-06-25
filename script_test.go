@@ -869,6 +869,8 @@ func TestAllFunc(t *testing.T) {
 			Err:  "result err",
 		},
 	})
+	// 禁用 panic，使得 unwrap() 返回 Error 对象而不是 panic
+	c.PanicWhenError = false
 	err = c.Exec(e)
 	if err != nil {
 		re, ok := err.(*RuntimeError)
@@ -880,7 +882,7 @@ func TestAllFunc(t *testing.T) {
 	assertEqual(t, c, "e", nil)
 	assertEqual(t, c, "dt", reflect.TypeOf(data).String())
 	assertEqual(t, c, "rest", "hello world")
-	assertDeepEqual(t, c, "resterr", newError("result err"))
+	assertDeepEqual(t, c, "resterr", &Error{Err: "result err"})
 	assertDeepEqual(t, c, "mapp", map[string]any{"name": "he"})
 	//assertEqual(t, c, "name", "111")
 	//assertEqual(t, c, "age", 22.0)
@@ -889,9 +891,10 @@ func TestAllFunc(t *testing.T) {
 	//	Age:  33,
 	//})
 }
-func init() {
-	PanicWhenError = false
-}
+
+// 注意：PanicWhenError 已移动到 Context 中
+// 如果需要禁用 panic，请在创建 Context 后设置：ctx.PanicWhenError = false
+
 func TestGG(t *testing.T) {
 	for i := 0; i < 4e9; i++ {
 

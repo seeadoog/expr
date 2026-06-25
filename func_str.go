@@ -26,6 +26,6 @@ var timeFromUnix ScriptFunc = func(ctx *Context, args ...Val) any {
 	return time.Unix(int64(NumberOf(args[0].Val(ctx))), 0)
 }
 
-var fieldFunc = FuncDefine1(func(a string) []string {
+var fieldFunc = FuncDefine1(func(ctx *Context, a string) []string {
 	return strings.Fields(a)
 })

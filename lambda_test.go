@@ -225,3 +225,13 @@ func BenchmarkLock(b *testing.B) {
 		}
 	})
 }
+
+func TestExecNotFoundF(t *testing.T) {
+	v, err := DefaultEnv.parseValueV(`a.b.c()`)
+	if err != nil {
+		panic(err)
+	}
+	d := DefaultEnv.NewContext(nil)
+	d.IgnoreFuncNotFoundError = true
+	v.Val(d)
+}

@@ -2,6 +2,16 @@ package expr
 
 import "math"
 
+// withCtx1 适配单参数函数，添加 ctx 参数
+func withCtx1[T1, R any](f func(T1) R) func(*Context, T1) R {
+	return func(_ *Context, a T1) R { return f(a) }
+}
+
+// withCtx2 适配双参数函数，添加 ctx 参数
+func withCtx2[T1, T2, R any](f func(T1, T2) R) func(*Context, T1, T2) R {
+	return func(_ *Context, a T1, b T2) R { return f(a, b) }
+}
+
 func NewMathLib(name string) *Lib {
 	if name == "" {
 		name = "math"
@@ -121,57 +131,57 @@ func initMathLib(lib *Lib) {
 }
 
 func init() {
-	DefaultEnv.RegisterFunc("math_abs", FuncDefine1(math.Abs), 1)
-	DefaultEnv.RegisterFunc("math_ceil", FuncDefine1(math.Ceil), 1)
-	DefaultEnv.RegisterFunc("math_floor", FuncDefine1(math.Floor), 1)
+	DefaultEnv.RegisterFunc("math_abs", FuncDefine1(withCtx1(math.Abs)), 1)
+	DefaultEnv.RegisterFunc("math_ceil", FuncDefine1(withCtx1(math.Ceil)), 1)
+	DefaultEnv.RegisterFunc("math_floor", FuncDefine1(withCtx1(math.Floor)), 1)
 
 	//DefaultEnv.RegisterFunc("math_abs", FuncDefine1(math.Abs), 1)
-	DefaultEnv.RegisterFunc("math_acos", FuncDefine1(math.Acos), 1)
-	DefaultEnv.RegisterFunc("math_acosh", FuncDefine1(math.Acosh), 1)
-	DefaultEnv.RegisterFunc("math_asin", FuncDefine1(math.Asin), 1)
-	DefaultEnv.RegisterFunc("math_asinh", FuncDefine1(math.Asinh), 1)
-	DefaultEnv.RegisterFunc("math_atan", FuncDefine1(math.Atan), 1)
-	DefaultEnv.RegisterFunc("math_atanh", FuncDefine1(math.Atanh), 1)
-	DefaultEnv.RegisterFunc("math_cbrt", FuncDefine1(math.Cbrt), 1)
+	DefaultEnv.RegisterFunc("math_acos", FuncDefine1(withCtx1(math.Acos)), 1)
+	DefaultEnv.RegisterFunc("math_acosh", FuncDefine1(withCtx1(math.Acosh)), 1)
+	DefaultEnv.RegisterFunc("math_asin", FuncDefine1(withCtx1(math.Asin)), 1)
+	DefaultEnv.RegisterFunc("math_asinh", FuncDefine1(withCtx1(math.Asinh)), 1)
+	DefaultEnv.RegisterFunc("math_atan", FuncDefine1(withCtx1(math.Atan)), 1)
+	DefaultEnv.RegisterFunc("math_atanh", FuncDefine1(withCtx1(math.Atanh)), 1)
+	DefaultEnv.RegisterFunc("math_cbrt", FuncDefine1(withCtx1(math.Cbrt)), 1)
 	//DefaultEnv.RegisterFunc("math_ceil", FuncDefine1(math.Ceil), 1)
-	DefaultEnv.RegisterFunc("math_cos", FuncDefine1(math.Cos), 1)
-	DefaultEnv.RegisterFunc("math_cosh", FuncDefine1(math.Cosh), 1)
-	DefaultEnv.RegisterFunc("math_erf", FuncDefine1(math.Erf), 1)
-	DefaultEnv.RegisterFunc("math_erfc", FuncDefine1(math.Erfc), 1)
-	DefaultEnv.RegisterFunc("math_exp", FuncDefine1(math.Exp), 1)
-	DefaultEnv.RegisterFunc("math_exp2", FuncDefine1(math.Exp2), 1)
-	DefaultEnv.RegisterFunc("math_expm1", FuncDefine1(math.Expm1), 1)
+	DefaultEnv.RegisterFunc("math_cos", FuncDefine1(withCtx1(math.Cos)), 1)
+	DefaultEnv.RegisterFunc("math_cosh", FuncDefine1(withCtx1(math.Cosh)), 1)
+	DefaultEnv.RegisterFunc("math_erf", FuncDefine1(withCtx1(math.Erf)), 1)
+	DefaultEnv.RegisterFunc("math_erfc", FuncDefine1(withCtx1(math.Erfc)), 1)
+	DefaultEnv.RegisterFunc("math_exp", FuncDefine1(withCtx1(math.Exp)), 1)
+	DefaultEnv.RegisterFunc("math_exp2", FuncDefine1(withCtx1(math.Exp2)), 1)
+	DefaultEnv.RegisterFunc("math_expm1", FuncDefine1(withCtx1(math.Expm1)), 1)
 	//DefaultEnv.RegisterFunc("math_floor", FuncDefine1(math.Floor), 1)
-	DefaultEnv.RegisterFunc("math_gamma", FuncDefine1(math.Gamma), 1)
-	DefaultEnv.RegisterFunc("math_j0", FuncDefine1(math.J0), 1)
-	DefaultEnv.RegisterFunc("math_j1", FuncDefine1(math.J1), 1)
-	DefaultEnv.RegisterFunc("math_log", FuncDefine1(math.Log), 1)
-	DefaultEnv.RegisterFunc("math_log10", FuncDefine1(math.Log10), 1)
-	DefaultEnv.RegisterFunc("math_log1p", FuncDefine1(math.Log1p), 1)
-	DefaultEnv.RegisterFunc("math_log2", FuncDefine1(math.Log2), 1)
-	DefaultEnv.RegisterFunc("math_round", FuncDefine1(math.Round), 1)
-	DefaultEnv.RegisterFunc("math_roundtoeven", FuncDefine1(math.RoundToEven), 1)
-	DefaultEnv.RegisterFunc("math_signbit", FuncDefine1(math.Signbit), 1)
-	DefaultEnv.RegisterFunc("math_sin", FuncDefine1(math.Sin), 1)
-	DefaultEnv.RegisterFunc("math_sinh", FuncDefine1(math.Sinh), 1)
-	DefaultEnv.RegisterFunc("math_sqrt", FuncDefine1(math.Sqrt), 1)
-	DefaultEnv.RegisterFunc("math_tan", FuncDefine1(math.Tan), 1)
-	DefaultEnv.RegisterFunc("math_tanh", FuncDefine1(math.Tanh), 1)
-	DefaultEnv.RegisterFunc("math_trunc", FuncDefine1(math.Trunc), 1)
-	DefaultEnv.RegisterFunc("math_y0", FuncDefine1(math.Y0), 1)
-	DefaultEnv.RegisterFunc("math_y1", FuncDefine1(math.Y1), 1)
+	DefaultEnv.RegisterFunc("math_gamma", FuncDefine1(withCtx1(math.Gamma)), 1)
+	DefaultEnv.RegisterFunc("math_j0", FuncDefine1(withCtx1(math.J0)), 1)
+	DefaultEnv.RegisterFunc("math_j1", FuncDefine1(withCtx1(math.J1)), 1)
+	DefaultEnv.RegisterFunc("math_log", FuncDefine1(withCtx1(math.Log)), 1)
+	DefaultEnv.RegisterFunc("math_log10", FuncDefine1(withCtx1(math.Log10)), 1)
+	DefaultEnv.RegisterFunc("math_log1p", FuncDefine1(withCtx1(math.Log1p)), 1)
+	DefaultEnv.RegisterFunc("math_log2", FuncDefine1(withCtx1(math.Log2)), 1)
+	DefaultEnv.RegisterFunc("math_round", FuncDefine1(withCtx1(math.Round)), 1)
+	DefaultEnv.RegisterFunc("math_roundtoeven", FuncDefine1(withCtx1(math.RoundToEven)), 1)
+	DefaultEnv.RegisterFunc("math_signbit", FuncDefine1(withCtx1(math.Signbit)), 1)
+	DefaultEnv.RegisterFunc("math_sin", FuncDefine1(withCtx1(math.Sin)), 1)
+	DefaultEnv.RegisterFunc("math_sinh", FuncDefine1(withCtx1(math.Sinh)), 1)
+	DefaultEnv.RegisterFunc("math_sqrt", FuncDefine1(withCtx1(math.Sqrt)), 1)
+	DefaultEnv.RegisterFunc("math_tan", FuncDefine1(withCtx1(math.Tan)), 1)
+	DefaultEnv.RegisterFunc("math_tanh", FuncDefine1(withCtx1(math.Tanh)), 1)
+	DefaultEnv.RegisterFunc("math_trunc", FuncDefine1(withCtx1(math.Trunc)), 1)
+	DefaultEnv.RegisterFunc("math_y0", FuncDefine1(withCtx1(math.Y0)), 1)
+	DefaultEnv.RegisterFunc("math_y1", FuncDefine1(withCtx1(math.Y1)), 1)
 
-	DefaultEnv.RegisterFunc("math_atan2", FuncDefine2(math.Atan2), 2)
-	DefaultEnv.RegisterFunc("math_copysign", FuncDefine2(math.Copysign), 2)
-	DefaultEnv.RegisterFunc("math_dim", FuncDefine2(math.Dim), 2)
-	DefaultEnv.RegisterFunc("math_hypot", FuncDefine2(math.Hypot), 2)
-	DefaultEnv.RegisterFunc("math_max", FuncDefine2(math.Max), 2)
-	DefaultEnv.RegisterFunc("math_min", FuncDefine2(math.Min), 2)
-	DefaultEnv.RegisterFunc("math_mod", FuncDefine2(math.Mod), 2)
-	DefaultEnv.RegisterFunc("math_nextafter", FuncDefine2(math.Nextafter), 2)
-	DefaultEnv.RegisterFunc("math_pow", FuncDefine2(math.Pow), 2)
-	DefaultEnv.RegisterFunc("math_remainder", FuncDefine2(math.Remainder), 2)
+	DefaultEnv.RegisterFunc("math_atan2", FuncDefine2(withCtx2(math.Atan2)), 2)
+	DefaultEnv.RegisterFunc("math_copysign", FuncDefine2(withCtx2(math.Copysign)), 2)
+	DefaultEnv.RegisterFunc("math_dim", FuncDefine2(withCtx2(math.Dim)), 2)
+	DefaultEnv.RegisterFunc("math_hypot", FuncDefine2(withCtx2(math.Hypot)), 2)
+	DefaultEnv.RegisterFunc("math_max", FuncDefine2(withCtx2(math.Max)), 2)
+	DefaultEnv.RegisterFunc("math_min", FuncDefine2(withCtx2(math.Min)), 2)
+	DefaultEnv.RegisterFunc("math_mod", FuncDefine2(withCtx2(math.Mod)), 2)
+	DefaultEnv.RegisterFunc("math_nextafter", FuncDefine2(withCtx2(math.Nextafter)), 2)
+	DefaultEnv.RegisterFunc("math_pow", FuncDefine2(withCtx2(math.Pow)), 2)
+	DefaultEnv.RegisterFunc("math_remainder", FuncDefine2(withCtx2(math.Remainder)), 2)
 
-	DefaultEnv.RegisterFunc("math_jn", FuncDefine2(math.Jn), 2)
-	DefaultEnv.RegisterFunc("math_yn", FuncDefine2(math.Yn), 2)
+	DefaultEnv.RegisterFunc("math_jn", FuncDefine2(withCtx2(math.Jn)), 2)
+	DefaultEnv.RegisterFunc("math_yn", FuncDefine2(withCtx2(math.Yn)), 2)
 }
