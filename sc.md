@@ -30,3 +30,7 @@ log.2.file = log_dir + '/xxxx'  ;
 
 
 */
+
+
+优化下 Env.ParseValueFromNode 函数，改成调用 Env.parseValueFromNode，将里面的不同类型的解析函数拆分，用 RegisterParseFunc 注册对应的handler,
+拆分的handler 写入 parser_handler.go. 每一个handler 写到一个单独函数 。最后在 init 函数中RegisterParseFunc 注册这些函数，这些函数不用导出，小写开头即可

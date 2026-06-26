@@ -180,6 +180,24 @@ func NewParserContext() *ParserContext {
 	return pc
 }
 
+type parseFunc func(e *Env, node ast.Node, isAccess bool, ctx *ParserContext) (Val, error)
+
+var parseFuncs = map[reflect.Type]parseFunc{}
+
+func RegisterParseFunc[T ast.Node](f func(e *Env, node T, isAccess bool, ctx *ParserContext) (Val, error)) {
+	parseFuncs[reflect.TypeOf(new(T)).Elem()] = func(e *Env, node ast.Node, isAccess bool, ctx *ParserContext) (Val, error) {
+		return f(e, node.(T), isAccess, ctx)
+	}
+}
+
+func (e *Env) parseValueFromNode(node ast.Node, isAccess bool, pc *ParserContext) (Val, error) {
+	pf := parseFuncs[reflect.TypeOf(node)]
+	if pf == nil {
+		return nil, fmt.Errorf("parser function not found,type: '%s'", reflect.TypeOf(node))
+	}
+	return pf(e, node, isAccess, pc)
+}
+
 func (e *Env) ParseValueFromNode(node ast.Node, isAccess bool, pc *ParserContext) (Val, error) {
 
 	//if pc == nil {
