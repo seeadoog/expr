@@ -1,6 +1,7 @@
 package expr
 
 import (
+	"fmt"
 	"reflect"
 	"testing"
 )
@@ -275,6 +276,9 @@ func TestStringInterpolation(t *testing.T) {
 	}
 }
 
+func TestDefine(t *testing.T) {
+}
+
 // TestParseErrors 覆盖解析期的错误返回路径。
 func TestParseErrors(t *testing.T) {
 	bad := []string{
@@ -288,4 +292,47 @@ func TestParseErrors(t *testing.T) {
 			t.Errorf("expected parse error for %q, got nil", expr)
 		}
 	}
+}
+
+// auth 采样。
+
+func BenchmarkDefine(b *testing.B) {
+
+	jexp, err := DefaultEnv.ParseFromJSONStr(`
+
+`)
+	if err != nil {
+		b.Fatal(err)
+	}
+	type userCtx struct {
+		user string
+		rate float64
+	}
+	SelfDefine1[float64, *userCtx, any](DefaultEnv, "set_rate", func(ctx *Context, self *userCtx, a float64) any {
+		self.rate = a
+		return nil
+	})
+	SelfDefine0[*userCtx, any](DefaultEnv, "user", func(ctx *Context, self *userCtx) any {
+		return self.user
+	})
+	uc := &userCtx{user: "hello"}
+
+	//c := DefaultEnv.NewContext(map[string]any{
+	//	"ctx": uc,
+	//})
+	b.ReportAllocs()
+
+	ctxKey := NewKeyHash("ctx")
+	for i := 0; i < b.N; i++ {
+		c := DefaultEnv.GetContextFromPool()
+		c.IgnoreFuncNotFoundError = true
+		c.SetHash(ctxKey, uc)
+		err = jexp.Exec(c)
+		if err != nil {
+			b.Fatal(err)
+		}
+		DefaultEnv.PutContext2Pool(c)
+
+	}
+	fmt.Println(uc.user, uc.rate)
 }

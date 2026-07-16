@@ -34,6 +34,20 @@ func TestFF(t *testing.T) {
 	})
 }
 
+func TestMapCap(t *testing.T) {
+
+	e := newEnvMap(8)
+	for i := 0; i < 6; i++ {
+		e.putString(strconv.Itoa(i), i)
+	}
+
+	//fmt.Println(len(e.data))
+	for i, datum := range e.data {
+		if len(datum) > 0 {
+			fmt.Println(len(datum), i)
+		}
+	}
+}
 func TestFuncMap(t *testing.T) {
 	f := newFuncMap(4)
 	f.puts("a", nil)
@@ -120,4 +134,79 @@ func TestExpr(t *testing.T) {
 
 	fmt.Println(exp.Val(c))
 	fmt.Println(c.GetByString("$"))
+}
+
+/*
+route:[
+{
+	"define":{
+		"domain_route":{
+			"bm3.5":""
+		}
+	},
+},
+"domain_route[domain] or 'ent_domain'"
+]
+
+*/
+// [[user adddsd] split: -1]
+// service： channel
+func BenchmarkExpr33(b *testing.B) {
+
+	exp, err := DefaultEnv.ParseFromJSONStr(`
+[
+    {
+      "if": "model_id == 'x57904567'",
+      "then": [
+        "rand_n(100) < (ase_x597_rate)*100? model_id_2 = 's322'  :_"
+      ]
+    }
+  ]
+`)
+	if err != nil {
+		panic(err)
+	}
+	c := DefaultEnv.NewContext(map[string]interface{}{
+		"model_id":      "x57904567",
+		"ase_x597_rate": 1,
+	})
+
+	b.ReportAllocs()
+	b.ResetTimer()
+	for i := 0; i < b.N; i++ {
+		c.Exec(exp)
+	}
+	fmt.Println(c.GetByString("model_id_2"))
+}
+
+func TestRand100(t *testing.T) {
+	e, err := DefaultEnv.ParseValue(`
+rand_n(100) *rate * 100
+`)
+	if err != nil {
+		panic(err)
+	}
+
+	fmt.Println(DefaultEnv.NewContext(map[string]interface{}{
+		"rate": 0.001,
+	}).ExecValue(e))
+
+}
+
+func BenchmarkRand33(b *testing.B) {
+	e, err := DefaultEnv.ParseValue(`
+rand_n(100) < (rate)*100? model_id = 's322'  :_
+`)
+
+	if err != nil {
+		panic(err)
+	}
+	evn := DefaultEnv.NewContext(map[string]interface{}{
+		"rate": 0.001,
+	})
+	b.ReportAllocs()
+	for i := 0; i < b.N; i++ {
+
+		evn.ExecValue(e)
+	}
 }

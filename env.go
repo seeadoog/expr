@@ -17,6 +17,12 @@ type Env struct {
 	pool sync.Pool
 
 	libs *envMap
+
+	hashManager *hashManager
+}
+
+func (e *Env) calcHash(s string) uint64 {
+	return e.hashManager.getHash(s)
 }
 
 func (e *Env) GetContextFromPool() *Context {
@@ -47,6 +53,7 @@ func NewEnv() *Env {
 		allTypeFuncs: make(map[string]bool),
 		isDefault:    false,
 		libs:         newEnvMap(1024 * 4),
+		hashManager:  &hashManager{},
 	}
 	for key, val := range DefaultEnv.funtables {
 		env.funtables[key] = val

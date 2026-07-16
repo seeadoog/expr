@@ -123,6 +123,7 @@ var (
 		"cost":      {nil, 0, "", "", false, funcCost, "cost", 1},
 		"_debug":    {nil, 0, "", "", false, funcDebug, "_debug", -1},
 		"rand":      {nil, 0, "", "", false, funcRand, "rand", 1},
+		"rand_n":    {nil, 0, "", "", false, funcRandN, "rand_n", 1},
 		"is_empty":  {nil, 0, "", "", false, funcIsEmpty, "is_empty", 1},
 		"printf":    {nil, 0, "", "", false, funcPrintf, "printf", -1},
 		"set_to":    {nil, 0, "", "", false, funcSetTo, "set_to", 2},
@@ -1403,6 +1404,12 @@ var funcRand = FuncDefine1(func(ctx *Context, a float64) []byte {
 	bs := make([]byte, int(a))
 	_randseed.Read(bs)
 	return bs
+})
+
+var funcRandN = FuncDefine1(func(ctx *Context, a float64) float64 {
+	_randLock.Lock()
+	defer _randLock.Unlock()
+	return float64(_randseed.Intn(int(a)))
 })
 
 var funcSetTo ScriptFunc = func(ctx *Context, args ...Val) any {

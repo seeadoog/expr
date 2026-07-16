@@ -212,7 +212,7 @@ func (f *envMap) putHash(key uint64, skey string, val any) {
 		key:     skey,
 		val:     val,
 	})
-	if f.size > len(f.data)/2 {
+	if f.size > len(f.data)*3/4 {
 		f.reHash()
 	}
 }
@@ -220,7 +220,6 @@ func (f *envMap) putHash(key uint64, skey string, val any) {
 func (f *envMap) putHashOnly(key uint64, skey string, val any) {
 	idx := key & f.mod
 	for i, e := range f.data[idx] {
-
 		if e.keyHash == key {
 			//if e.key != skey {
 			//	panic(fmt.Sprintf("hash conflicted '%s' : '%s'  please rename func '%s'", e.key, skey, skey))
@@ -236,7 +235,7 @@ func (f *envMap) putHashOnly(key uint64, skey string, val any) {
 		key:     skey,
 		val:     val,
 	})
-	if f.size > len(f.data)/2 {
+	if f.size > len(f.data)*3/4 {
 		f.reHash()
 	}
 }
@@ -295,3 +294,7 @@ func (e *envMap) reset() {
 func (e *envMap) getString(key string) any {
 	return e.getHash(calcHash(key))
 }
+
+/*
+
+ */

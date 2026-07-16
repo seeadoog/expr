@@ -2,6 +2,8 @@ package expr
 
 import (
 	"fmt"
+	"math/rand"
+	"sync"
 	"sync/atomic"
 	"testing"
 )
@@ -234,4 +236,15 @@ func TestExecNotFoundF(t *testing.T) {
 	d := DefaultEnv.NewContext(nil)
 	d.IgnoreFuncNotFoundError = true
 	v.Val(d)
+}
+
+func BenchmarkRand(b *testing.B) {
+	r := rand.New(rand.NewSource(12))
+	l := sync.Mutex{}
+	for i := 0; i < b.N; i++ {
+
+		l.Lock()
+		r.Intn(100)
+		l.Unlock()
+	}
 }
