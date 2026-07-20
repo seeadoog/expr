@@ -100,7 +100,7 @@ var (
 func (e *Env) SetFuncForAllTypes(fun string) {
 	e.allTypeFuncs[fun] = true
 }
-func SelfDefine0[S any, R any](e *Env, name string, f func(ctx *Context, self S) R, opt ...selfDefineOptFunc) {
+func SelfDefine0[S any, R any](e *Env, name string, f func(ctx *Context, self S) R, opt ...SelfDefineOptFunc) {
 	fn := func(ctx *Context, self any, args ...Val) any {
 
 		sl, _ := self.(S)
@@ -124,7 +124,7 @@ type selfDefineOpt struct {
 	doc string
 }
 
-type selfDefineOptFunc func(opt *selfDefineOpt)
+type SelfDefineOptFunc func(opt *selfDefineOpt)
 
 func WithDoc(doc string) func(c *selfDefineOpt) {
 	return func(c *selfDefineOpt) {
@@ -132,7 +132,7 @@ func WithDoc(doc string) func(c *selfDefineOpt) {
 	}
 }
 
-func newOpts(f []selfDefineOptFunc) *selfDefineOpt {
+func newOpts(f []SelfDefineOptFunc) *selfDefineOpt {
 	opt := &selfDefineOpt{}
 	for _, f := range f {
 		f(opt)
@@ -140,7 +140,7 @@ func newOpts(f []selfDefineOptFunc) *selfDefineOpt {
 	return opt
 }
 
-func SelfDefine1[A any, S any, R any](e *Env, name string, f func(ctx *Context, self S, a A) R, opt ...selfDefineOptFunc) {
+func SelfDefine1[A any, S any, R any](e *Env, name string, f func(ctx *Context, self S, a A) R, opt ...SelfDefineOptFunc) {
 	fn := func(ctx *Context, self any, args ...Val) any {
 
 		a, _ := getFrom(ctx, args, 0).(A)
@@ -163,7 +163,7 @@ func SelfDefine1[A any, S any, R any](e *Env, name string, f func(ctx *Context, 
 //	RegisterObjFunc[S](name, fn, 1, doc)
 //}
 
-func SelfDefine2[A, B any, S any, R any](e *Env, name string, f func(ctx *Context, self S, a A, b B) R, opt ...selfDefineOptFunc) {
+func SelfDefine2[A, B any, S any, R any](e *Env, name string, f func(ctx *Context, self S, a A, b B) R, opt ...SelfDefineOptFunc) {
 	fn := func(ctx *Context, self any, args ...Val) any {
 		//if len(args) != 2 {
 		//	return newErrorf("func %s expects 1 arg, got %d", name, len(args))
@@ -191,7 +191,7 @@ func SelfDefine2[A, B any, S any, R any](e *Env, name string, f func(ctx *Contex
 //	RegisterObjFunc[S](name, fn, 2, fmt.Sprintf("%s( %v, %v)%v", name, typeOf[A](), typeOf[B](), typeOf[R]()))
 //}
 
-func SelfDefine3[A, B, C any, S any, R any](e *Env, name string, f func(ctx *Context, self S, a A, b B, c C) R, opt ...selfDefineOptFunc) {
+func SelfDefine3[A, B, C any, S any, R any](e *Env, name string, f func(ctx *Context, self S, a A, b B, c C) R, opt ...SelfDefineOptFunc) {
 	fn := func(ctx *Context, self any, args ...Val) any {
 		//if len(args) != 3 {
 		//	return newErrorf("func %s expects 1 arg, got %d", name, len(args))
@@ -220,7 +220,7 @@ func SelfDefine3[A, B, C any, S any, R any](e *Env, name string, f func(ctx *Con
 //	RegisterObjFunc[S](name, fn, 3, fmt.Sprintf("%s( %v, %v)%v", name, typeOf[A](), typeOf[B](), typeOf[R]()))
 //}
 
-func SelfDefine4[A, B, C, D any, S any, R any](e *Env, name string, f func(ctx *Context, self S, a A, b B, c C, d D) R, opt ...selfDefineOptFunc) {
+func SelfDefine4[A, B, C, D any, S any, R any](e *Env, name string, f func(ctx *Context, self S, a A, b B, c C, d D) R, opt ...SelfDefineOptFunc) {
 	fn := func(ctx *Context, self any, args ...Val) any {
 		//if len(args) != 4 {
 		//	return newErrorf("func %s expects 1 arg, got %d", name, len(args))

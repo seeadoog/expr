@@ -248,3 +248,17 @@ func BenchmarkRand(b *testing.B) {
 		l.Unlock()
 	}
 }
+func TestExecFailed(t *testing.T) {
+	e, err := DefaultEnv.ParseFromJSONStr(`["ctx.abc();","s3=1"]`)
+	if err != nil {
+		t.Fatal(err)
+	}
+	c := DefaultEnv.NewContext(nil)
+	c.IgnoreFuncNotFoundError = true
+
+	e.Exec(c)
+
+	fmt.Println(c.GetTable())
+
+	SelfDefine1()
+}

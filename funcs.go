@@ -211,15 +211,15 @@ type commonOpt struct {
 	inner []funcOpt
 }
 
-type commonFuncOpt func(c *commonOpt)
+type CommonFuncOpt func(c *commonOpt)
 
-func Doc(doc string) commonFuncOpt {
+func Doc(doc string) CommonFuncOpt {
 	return func(c *commonOpt) {
 		c.doc = doc
 	}
 }
 
-func FuncOpt(opt funcOpt) commonFuncOpt {
+func FuncOpt(opt funcOpt) CommonFuncOpt {
 	return func(c *commonOpt) {
 		c.inner = append(c.inner, opt)
 	}
@@ -267,7 +267,7 @@ func generateOptArgsAndReturn(ret any, args ...any) string {
 	return fmt.Sprintf("(%s)%s ", as, reflect.TypeOf(ret).Elem().String())
 }
 
-func docFromOpt(opt []commonFuncOpt) string {
+func docFromOpt(opt []CommonFuncOpt) string {
 	o := commonOpt{}
 	for _, opt := range opt {
 		opt(&o)
@@ -275,7 +275,7 @@ func docFromOpt(opt []commonFuncOpt) string {
 	return o.doc
 }
 
-func innerOptFromOpt(opt []commonFuncOpt) []funcOpt {
+func innerOptFromOpt(opt []CommonFuncOpt) []funcOpt {
 	o := commonOpt{}
 	for _, opt := range opt {
 		opt(&o)
@@ -283,7 +283,7 @@ func innerOptFromOpt(opt []commonFuncOpt) []funcOpt {
 	return o.inner
 }
 
-func WithCompiled[T any](n int, fun func(args ...any) T) commonFuncOpt {
+func WithCompiled[T any](n int, fun func(args ...any) T) CommonFuncOpt {
 	return func(f *commonOpt) {
 		f.inner = append(f.inner, func(iff *innerFunc) {
 			iff.compiledArgs = n
@@ -294,7 +294,7 @@ func WithCompiled[T any](n int, fun func(args ...any) T) commonFuncOpt {
 	}
 }
 
-func RegisterOptFuncDefine2[A any, B any, R any](e Register, fname string, f func(ctx *Context, a A, b B, opt *Options) R, opts ...commonFuncOpt) {
+func RegisterOptFuncDefine2[A any, B any, R any](e Register, fname string, f func(ctx *Context, a A, b B, opt *Options) R, opts ...CommonFuncOpt) {
 	e.RegisterFuncWithOpt(fname, func(ctx *Context, args []Val, opt *Options) any {
 		a, _ := args[0].Val(ctx).(A)
 		b, _ := args[1].Val(ctx).(B)
@@ -302,18 +302,18 @@ func RegisterOptFuncDefine2[A any, B any, R any](e Register, fname string, f fun
 	}, 2, generateOptArgsAndReturn(new(R), new(A), new(B))+docFromOpt(opts), innerOptFromOpt(opts)...)
 }
 
-func RegisterOptFuncDefine1[A any, R any](e Register, fname string, f func(ctx *Context, a A, opt *Options) R, opts ...commonFuncOpt) {
+func RegisterOptFuncDefine1[A any, R any](e Register, fname string, f func(ctx *Context, a A, opt *Options) R, opts ...CommonFuncOpt) {
 	e.RegisterFuncWithOpt(fname, func(ctx *Context, args []Val, opt *Options) any {
 		a, _ := args[0].Val(ctx).(A)
 		return f(ctx, a, opt)
 	}, 1, generateOptArgsAndReturn(new(R), new(A))+docFromOpt(opts), innerOptFromOpt(opts)...)
 }
-func RegisterOptFuncDefine0[R any](e Register, fname string, f func(ctx *Context, opt *Options) R, opts ...commonFuncOpt) {
+func RegisterOptFuncDefine0[R any](e Register, fname string, f func(ctx *Context, opt *Options) R, opts ...CommonFuncOpt) {
 	e.RegisterFuncWithOpt(fname, func(ctx *Context, args []Val, opt *Options) any {
 		return f(ctx, opt)
 	}, 0, generateOptArgsAndReturn(new(R))+docFromOpt(opts), innerOptFromOpt(opts)...)
 }
-func RegisterOptFuncDefine3[A any, B any, C any, R any](e Register, fname string, f func(ctx *Context, a A, b B, c C, opt *Options) R, opts ...commonFuncOpt) {
+func RegisterOptFuncDefine3[A any, B any, C any, R any](e Register, fname string, f func(ctx *Context, a A, b B, c C, opt *Options) R, opts ...CommonFuncOpt) {
 	e.RegisterFuncWithOpt(fname, func(ctx *Context, args []Val, opt *Options) any {
 		a, _ := args[0].Val(ctx).(A)
 		b, _ := args[1].Val(ctx).(B)
@@ -322,7 +322,7 @@ func RegisterOptFuncDefine3[A any, B any, C any, R any](e Register, fname string
 	}, 3, generateOptArgsAndReturn(new(R), new(A), new(B), new(C))+docFromOpt(opts), innerOptFromOpt(opts)...)
 }
 
-func RegisterOptFuncDefine4[A any, B any, C any, D any, R any](e Register, fname string, f func(ctx *Context, a A, b B, c C, d D, opt *Options) R, opts ...commonFuncOpt) {
+func RegisterOptFuncDefine4[A any, B any, C any, D any, R any](e Register, fname string, f func(ctx *Context, a A, b B, c C, d D, opt *Options) R, opts ...CommonFuncOpt) {
 
 	e.RegisterFuncWithOpt(fname, func(ctx *Context, args []Val, opt *Options) any {
 		a, _ := args[0].Val(ctx).(A)
