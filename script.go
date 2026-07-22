@@ -106,6 +106,40 @@ func (c *Context) Reset() {
 	c.table.reset()
 }
 
+func (c *Context) GetAsString(key HashKey) string {
+	res, _ := c.GetHash(key).(string)
+	return res
+}
+
+func (c *Context) GetAsArray(key HashKey) []any {
+	switch val := c.GetHash(key).(type) {
+	case []any:
+		return val
+	case ReadOnlyArray:
+		return val
+	default:
+		return nil
+	}
+}
+
+func (c *Context) GetAsNumber(key HashKey) float64 {
+	return NumberOf(c.GetHash(key))
+}
+
+func (c *Context) GetAsBool(key HashKey) bool {
+	return BoolOf(c.GetHash(key))
+}
+
+func (c *Context) GetAsObject(key HashKey) map[string]interface{} {
+	switch val := c.GetHash(key).(type) {
+	case map[string]interface{}:
+		return val
+	case ReadOnlyMap:
+		return val
+	}
+	return nil
+}
+
 //func (c *Context) SetFunc(key string, fn ScriptFunc) {
 //	if funtables[key] == nil {
 //		if !strings.HasPrefix(key, "$") {
