@@ -115,7 +115,7 @@ func parseNodeAccess(e *Env, n *ast.Access, isAccess bool, pc *ParserContext) (V
 					if !ok {
 						return nil, fmt.Errorf("binary parse val function '%s' last extra arg type should be const object", rf.funcName)
 					}
-					conv.value = newOption(conv.value.(map[string]any))
+					conv.value = newOption(conv.value)
 					rf.args[len(rf.args)-1] = conv
 
 				}
@@ -209,7 +209,7 @@ func parseNodeCall(e *Env, n *ast.Call, isAccess bool, pc *ParserContext) (Val, 
 		ov.isOpt = true
 		ovconst, ok := tryConvertToConst(ov).(*constraint)
 		if ok {
-			ovconst.value = newOption(ovconst.value.(map[string]any))
+			ovconst.value = newOption(ovconst.value)
 			args[len(args)-1] = ovconst
 		}
 

@@ -86,6 +86,7 @@ func TestHttp(t *testing.T) {
 				"p1":   request.Form.Get("p1"),
 				"body": i,
 			}
+			//fmt.Println(bd)
 			writer.Header().Set("Content-Type", "application/json")
 			writer.WriteHeader(http.StatusOK)
 			json.NewEncoder(writer).Encode(bd)

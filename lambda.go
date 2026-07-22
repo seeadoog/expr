@@ -83,7 +83,27 @@ func forRangeExec(doVal Val, ctx *Context, target any, f func(k, v any, val Val)
 
 		}
 		return forRangeMapExec(lm, ctx, vv, f)
+	case ReadOnlyMap:
+		if !ok {
+			lm = &lambda{
+				Lefts:     mapKeys,
+				Right:     doVal,
+				leftsHash: hashOfStrings(mapKeys),
+			}
+
+		}
+		return forRangeMapExec(lm, ctx, vv, f)
 	case []any:
+		if !ok {
+			lm = &lambda{
+				Lefts:     arrKeys,
+				Right:     doVal,
+				leftsHash: hashOfStrings(mapKeys),
+			}
+
+		}
+		return forRangeArr(lm, ctx, vv, f)
+	case ReadOnlyArray:
 		if !ok {
 			lm = &lambda{
 				Lefts:     arrKeys,
@@ -127,7 +147,7 @@ func forRangeMapExec(lv *lambda, ctx *Context, m map[string]any, f func(k, v any
 
 func forRangeArr(lv *lambda, ctx *Context, m []any, f func(k, v any, val Val) any) any {
 	for k, v := range m {
-		ka := any(k)
+		ka := any(float64(k))
 		lv.setMapKvForLambda(ctx, ka, v)
 		vv := f(ka, v, lv.Right)
 		if err := convertToError(vv); err != nil {

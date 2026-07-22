@@ -260,5 +260,4 @@ func TestExecFailed(t *testing.T) {
 
 	fmt.Println(c.GetTable())
 
-	SelfDefine1()
 }

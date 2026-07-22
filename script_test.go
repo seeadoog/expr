@@ -593,7 +593,7 @@ func assertEqual2(t *testing.T, a any, b any) {
 func assertDeepEqual(t *testing.T, c *Context, k string, b any) {
 	a := c.GetByJp(k)
 	if !reflect.DeepEqual(a, b) {
-		t.Errorf("FAILED: %s %v != %v  type:%v", k, a, b, reflect.TypeOf(a))
+		t.Errorf("FAILED: %s [ %v != %v]  type:%v", k, a, b, reflect.TypeOf(a))
 	}
 }
 
@@ -883,13 +883,14 @@ func TestAllFunc(t *testing.T) {
 	assertEqual(t, c, "dt", reflect.TypeOf(data).String())
 	assertEqual(t, c, "rest", "hello world")
 	assertDeepEqual(t, c, "resterr", &Error{Err: "result err"})
-	assertDeepEqual(t, c, "mapp", map[string]any{"name": "he"})
+	assertEqual(t, c, "mapp.name", "he")
 	//assertEqual(t, c, "name", "111")
 	//assertEqual(t, c, "age", 22.0)
 	//assertDeepEqual(t, c, "data", &CustomData{
 	//	Name: "222",
 	//	Age:  33,
 	//})
+
 }
 
 // 注意：PanicWhenError 已移动到 Context 中

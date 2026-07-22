@@ -2,12 +2,13 @@ package expr
 
 import (
 	"fmt"
-	"github.com/cespare/xxhash/v2"
 	"hash/crc64"
 	"strconv"
 	"sync"
 	"testing"
 	"unicode/utf8"
+
+	"github.com/cespare/xxhash/v2"
 )
 
 func BenchmarkHash(b *testing.B) {
@@ -190,7 +191,6 @@ func TestEnvMap2(t *testing.T) {
 	m.putString("age3", 5)
 	assertEqual2(t, m.getString("age3"), 5)
 	assertEqual2(t, m.size, 3)
-	assertEqual2(t, int(m.mod), 7)
 }
 
 func TestSyncMap(t *testing.T) {

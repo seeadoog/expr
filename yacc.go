@@ -478,6 +478,9 @@ func setForObject(left Val, lv any, right string, c *Context, val any) {
 		parent.SetField(c, right, val)
 	case map[string]string:
 		parent[right] = StringOf(val)
+	case ReadOnlyMap:
+
+	case ReadOnlyArray:
 
 	default:
 		setFieldOfStruct(c, reflect.ValueOf(lv), right, val)
@@ -590,6 +593,9 @@ func (a *accessVal) Val(ctx *Context) any {
 		switch data := lv.(type) {
 		case map[string]any:
 			return data[v.varName]
+
+		case ReadOnlyMap:
+			return data[v.varName]
 		case *Result:
 			switch v.varName {
 			case "data":
@@ -603,6 +609,7 @@ func (a *accessVal) Val(ctx *Context) any {
 
 		case map[string]string:
 			return data[v.varName]
+
 		case Getter:
 			return data.GetField(ctx, v.varName)
 		default:
@@ -698,25 +705,20 @@ func (a *arrAccessVal) Set(c *Context, val any) {
 		parent, ok := lv.([]any)
 		if !ok {
 			if lv != nil {
+				if _, ok := lv.(ReadOnlyArray); ok {
+					return
+				}
 				setIndexOfStruct(c, reflect.ValueOf(lv), idx, val)
 				return
 			}
 			parent = make([]any, idx+1)
 			a.left.Set(c, parent)
-			//set, ok := a.left.(parentValueSetter)
-			//if ok {
-			//	set.Set(c, parent)
-			//}
 		} else {
 			if len(parent) <= idx {
 				old := parent
 				parent = make([]any, idx+1)
 				copy(parent, old)
 				a.left.Set(c, parent)
-				//set, ok := a.left.(parentValueSetter)
-				//if ok {
-				//	set.Set(c, parent)
-				//}
 			}
 		}
 		parent[idx] = val
@@ -737,6 +739,9 @@ func (a *arrAccessVal) Val(ctx *Context) any {
 			return nil
 		}
 		return v[idx]
+	case ReadOnlyMap:
+		idx := StringOf(rv)
+		return v[idx]
 	case []string:
 		idx := int(NumberOf(rv))
 
@@ -756,14 +761,20 @@ func (a *arrAccessVal) Val(ctx *Context) any {
 	return nil
 }
 
-func tryConvertToConst(val Val) Val {
+func tryConvertToConst(val Val) (res Val) {
+
 	switch vv := val.(type) {
 	case *arrDefVal:
-		return tryCovertArrToConst(vv)
+		res = tryCovertArrToConst(vv)
+		convertExprReadOnlyVal(res)
+		return res
 	case *mapDefineVal:
-		return tryCovertMapToConst(vv)
+		res = tryCovertMapToConst(vv)
+		convertExprReadOnlyVal(res)
+		return res
 	case *setValue:
 		vv.val = tryConvertToConst(vv.val)
+		//convertExprReadOnlyVal(vv.val)
 	}
 	return val
 }

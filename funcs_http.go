@@ -145,10 +145,11 @@ func init() {
 			panic(res)
 			return res
 		}
-		headers, _ := opt.Get("header").(map[string]any)
-		for k, v := range headers {
+		headers := opt.GetAsObj("header")
+		headers.Range(func(k string, v any) bool {
 			req.Header.Set(k, StringOf(v))
-		}
+			return true
+		})
 
 		ip := opt.GetString("ip")
 		cli, _ := httpLib.Get(c, key{url: url, ip: ip, sslVerify: opt.GetBoolDef("ssl_verify", true)}, nil)
@@ -184,7 +185,7 @@ func init() {
 		return res
 	}, Doc("curl(url) options:{method:'GET' or 'POST'(when body not nil) ,header:{},body:nil, ip:''(force_ip), timeout:60000 (ms)})"))
 
-	SelfDefine1(DefaultEnv, "log", func(ctx *Context, self *httpResp, opt map[string]any) any {
+	SelfDefine1(DefaultEnv, "log", func(ctx *Context, self *httpResp, opt any) any {
 		o := NewOptions(opt)
 
 		if self.Err != nil {

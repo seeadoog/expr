@@ -183,13 +183,28 @@ type Options struct {
 	data map[string]interface{}
 }
 
-func NewOptions(data map[string]any) *Options {
-	return &Options{data: data}
+type Option interface {
 }
 
-func newOption(data map[string]any) *Options {
+func NewOptions(data Option) *Options {
+	switch v := data.(type) {
+	case map[string]interface{}:
+		return &Options{data: v}
+	case ReadOnlyMap:
+		return &Options{data: v}
+	}
+	return nil
+}
 
-	return &Options{data: data}
+func newOption(data any) *Options {
+
+	switch v := data.(type) {
+	case map[string]interface{}:
+		return &Options{data: v}
+	case ReadOnlyMap:
+		return &Options{data: v}
+	}
+	return nil
 }
 
 func (o *Options) Has(key string) bool {
@@ -205,6 +220,14 @@ func (o *Options) Get(key string) any {
 		return nil
 	}
 	return o.data[key]
+}
+
+func (o *Options) GetAsObj(key string) *Options {
+	if o == nil {
+		return nil
+	}
+	return NewOptions(o.data[key])
+
 }
 
 func (o *Options) GetString(key string) string {
@@ -254,14 +277,7 @@ func (o *Options) GetIntDef(key string, def int) int {
 }
 
 func (o *Options) RangeKey(key string, f func(k string, v any) bool) {
-	m, ok := o.Get(key).(map[string]any)
-	if ok {
-		for k, v := range m {
-			if !f(k, v) {
-				return
-			}
-		}
-	}
+	o.GetAsObj(key).Range(f)
 }
 
 //func (o *Options) UnmarshalTo(v any) error {
