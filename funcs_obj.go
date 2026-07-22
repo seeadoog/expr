@@ -555,6 +555,10 @@ func init() {
 				for _, a := range v {
 					ks[StringOf(a)] = true
 				}
+			case ReadOnlyArray:
+				for _, a := range v {
+					ks[StringOf(a)] = true
+				}
 			default:
 				ks[StringOf(v)] = true
 
@@ -575,6 +579,10 @@ func init() {
 		for _, v := range args {
 			switch v := v.Val(ctx).(type) {
 			case []any:
+				for _, a := range v {
+					ks[StringOf(a)] = true
+				}
+			case ReadOnlyArray:
 				for _, a := range v {
 					ks[StringOf(a)] = true
 				}

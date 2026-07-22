@@ -246,6 +246,10 @@ func cutterOf(v any) (func(st, ed int) any, int) {
 		return func(st, ed int) any {
 			return vs[st:ed]
 		}, len(vs)
+	case ReadOnlyArray:
+		return func(st, ed int) any {
+			return vs[st:ed]
+		}, len(vs)
 	default:
 		return nil, 0
 	}
@@ -623,32 +627,6 @@ func (a *accessVal) Val(ctx *Context) any {
 	}
 }
 
-func getFromObject(ctx *Context, key string, lv any) any {
-	switch data := lv.(type) {
-	case map[string]any:
-		return data[key]
-	case *Result:
-		switch key {
-		case "data":
-			return data.Data
-		case "err":
-			return data.Err
-		}
-		return nil
-	case nil:
-		return nil
-	//case []any:
-	case map[string]string:
-		return data[key]
-	case Getter:
-		return data.GetField(ctx, key)
-	default:
-		return getFieldOfStruct(ctx.ForceType, reflect.ValueOf(lv), key)
-	}
-
-	return nil
-}
-
 type Setter interface {
 	SetField(ctx *Context, name string, val any)
 }
@@ -741,6 +719,13 @@ func (a *arrAccessVal) Val(ctx *Context) any {
 		return v[idx]
 	case ReadOnlyMap:
 		idx := StringOf(rv)
+		return v[idx]
+	case ReadOnlyArray:
+		idx := int(NumberOf(rv))
+
+		if idx >= len(v) {
+			return nil
+		}
 		return v[idx]
 	case []string:
 		idx := int(NumberOf(rv))
@@ -1303,10 +1288,13 @@ type VariadicVal struct {
 
 func (v *VariadicVal) ArrVal(ctx *Context) []any {
 	e := v.V.Val(ctx)
-	res, ok := e.([]any)
-	if ok {
-		return res
+	switch e := e.(type) {
+	case []any:
+		return e
+	case ReadOnlyArray:
+		return e
 	}
+
 	return []any{e}
 
 }

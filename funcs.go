@@ -402,6 +402,11 @@ var joinFunc ScriptFunc = func(ctx *Context, args ...Val) any {
 		index = func(i int) string {
 			return StringOf(arg[i])
 		}
+	case ReadOnlyArray:
+		length = len(arg)
+		index = func(i int) string {
+			return StringOf(arg[i])
+		}
 	case []string:
 		length = len(arg)
 		index = func(i int) string {
@@ -811,8 +816,10 @@ var typeOfFunc ScriptFunc = func(ctx *Context, args ...Val) any {
 		return "boolean"
 	case nil:
 		return "nil"
-	case []any:
+	case []any, ReadOnlyArray:
 		return "array"
+	case map[string]interface{}, ReadOnlyMap:
+		return "object"
 	default:
 		return reflect.TypeOf(a).String()
 	}
@@ -974,6 +981,8 @@ var lenFunc = FuncDefine1(func(ctx *Context, a any) float64 {
 		return float64(len(a))
 	case nil:
 		return 0
+	case ReadOnlyArray:
+		return float64(len(a))
 	default:
 		return float64(lenOfStruct(reflect.ValueOf(a)))
 	}
@@ -993,7 +1002,19 @@ var inFunc ScriptFunc = func(ctx *Context, args ...Val) any {
 					return true
 				}
 			}
+		case ReadOnlyArray:
+			for _, a := range tgt {
+				if arg == a {
+					return true
+				}
+			}
 		case map[string]interface{}:
+			sarg := StringOf(arg)
+			_, ok := tgt[sarg]
+			if ok {
+				return true
+			}
+		case ReadOnlyMap:
 			sarg := StringOf(arg)
 			_, ok := tgt[sarg]
 			if ok {
@@ -1373,7 +1394,11 @@ var funcIsEmpty = FuncDefine1(func(ctx *Context, a any) any {
 		return true
 	case []any:
 		return len(v) == 0
+	case ReadOnlyArray:
+		return len(v) == 0
 	case []byte:
+		return len(v) == 0
+	case []string:
 		return len(v) == 0
 	default:
 		return false

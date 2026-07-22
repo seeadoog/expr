@@ -50,6 +50,12 @@ func TestNewReadOnlyVal(t *testing.T) {
 	parseAndExec(DefaultEnv, `sname = sess.get({name:"oss"})`, c)
 	assertEqual(t, c, "sname", "oss")
 
+	parseAndExec(DefaultEnv, `arr = 1; arreq = arr in [1];arrdef = const [1,2,3]; `, c)
+	assertEqual(t, c, "arreq", true)
+
+	parseAndExec(DefaultEnv, `arre1 = arrdef[1]`, c)
+	assertEqual(t, c, "arre1==2", true)
+
 }
 
 func parseAndExec(env *Env, valExpr string, ctx *Context) {

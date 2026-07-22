@@ -210,3 +210,44 @@ rand_n(100) < (rate)*100? model_id = 's322'  :_
 		evn.ExecValue(e)
 	}
 }
+
+var (
+	_ss = ""
+	ss1 = "helo"
+)
+
+func BenchmarkCutter(b *testing.B) {
+	m := map[string]interface{}{
+		"ss": _ss,
+	}
+	for i := 0; i < b.N; i++ {
+		getterOf(m)("ss")
+	}
+}
+func BenchmarkCutter2(b *testing.B) {
+	arr := []any{1, 2, 3}
+
+	for i := 0; i < b.N; i++ {
+		f, _ := cutterOf(arr)
+		f(1, 2)
+	}
+}
+
+func getVal(m any, k string) any {
+	switch m := m.(type) {
+	case map[string]interface{}:
+		return m[k]
+	default:
+		return nil
+	}
+}
+
+func getterOf(m any) func(k string) any {
+	switch m := m.(type) {
+	case map[string]interface{}:
+		return func(k string) any {
+			return m[k]
+		}
+	}
+	return nil
+}

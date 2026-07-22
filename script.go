@@ -488,7 +488,25 @@ func (f *forRange) Exec(c *Context) error {
 			}
 		}
 		return nil
+	case ReadOnlyMap:
+		for i, a := range v {
+			c.Set(f.keyHash, f.keyName, i)
+			c.Set(f.valHash, f.valName, a)
+			err := f.do.Exec(c)
+			if err == errBreak {
+				return nil
+			}
+			if err != nil {
+				return err
+			}
+		}
+	case ReadOnlyArray:
+		length = len(v)
+		valueOf = func(i int) any {
+			return v[i]
+		}
 	}
+
 	if valueOf != nil {
 		for i := 0; i < length; i++ {
 			c.Set(f.keyHash, f.keyName, i)

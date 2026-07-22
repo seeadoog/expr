@@ -6,7 +6,6 @@ import (
 	"io"
 	"net/http"
 	"os"
-	"reflect"
 	"testing"
 	"time"
 	"unsafe"
@@ -117,26 +116,6 @@ func TestHttp(t *testing.T) {
 	assertDeepEqual(t, c, "res2.h1", "h1")
 	assertDeepEqual(t, c, "res2.p1", "p1")
 	assertDeepEqual(t, c, "res2.body.name", "xn")
-}
-
-func mapEq(a, b map[string]interface{}) bool {
-	if len(a) != len(b) {
-		return false
-	}
-	for k, v := range a {
-		bv := b[k]
-		switch vv := bv.(type) {
-		case map[string]interface{}:
-			if !mapEq(b, vv) {
-				return false
-			}
-		default:
-			if !reflect.DeepEqual(v, vv) {
-				return false
-			}
-		}
-	}
-	return true
 }
 
 func TestTime(t *testing.T) {
