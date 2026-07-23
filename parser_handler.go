@@ -3,6 +3,7 @@ package expr
 import (
 	"fmt"
 	"reflect"
+	"strings"
 
 	"github.com/seeadoog/expr/ast"
 )
@@ -193,7 +194,10 @@ func parseNodeCall(e *Env, n *ast.Call, isAccess bool, pc *ParserContext) (Val, 
 				return nil, fmt.Errorf("func '%s' args num should be '%d' but '%d'", n.Name, fun.argsNum, len(n.Args))
 			}
 		}
-
+	} else {
+		if !strings.HasPrefix(n.Name, "$") {
+			return nil, fmt.Errorf("func '%s' not defined", n.Name)
+		}
 	}
 
 	args := make([]Val, 0, len(n.Args))

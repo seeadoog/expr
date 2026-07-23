@@ -597,3 +597,10 @@ func BenchmarkMapSet1(b *testing.B) {
 		m["name"] = 1
 	}
 }
+
+func TestFuncNotFound(t *testing.T) {
+	_, err := DefaultEnv.ParseValue(`acsd()`)
+	assertEqual2(t, err != nil, true)
+	_, err = DefaultEnv.ParseValue(`$acsd()`)
+	assertEqual2(t, err == nil, true)
+}
