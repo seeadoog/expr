@@ -385,3 +385,22 @@ func TestMathOpsWithArrayAccess(t *testing.T) {
 		})
 	}
 }
+
+func TestEquals(t *testing.T) {
+	c := DefaultEnv.NewContext(nil)
+	parseAndExec(DefaultEnv, `
+a = [1,2,3] .equals([1,2,3]);
+af = [1,2,3,4] .equals([1,2,3]);
+b = {name:2}.equals({name:2});
+bf = {name:2}.equals({name:3});
+c =  d.equals(g);
+e = (1).equals(1);
+`, c)
+
+	assertEqual(t, c, "a", true)
+	assertEqual(t, c, "af", false)
+	assertEqual(t, c, "b", true)
+	assertEqual(t, c, "bf", false)
+	assertEqual(t, c, "c", true)
+	assertEqual(t, c, "e", true)
+}

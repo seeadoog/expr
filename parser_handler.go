@@ -324,9 +324,13 @@ func parseNodeBinary(e *Env, n *ast.Binary, isAccess bool, pc *ParserContext) (V
 	case "orr":
 		return newBinaryValue("orr", lv, rv, func(ctx *Context, a, b Val) any {
 			v := a.Val(ctx)
-			switch v.(type) {
+			switch v := v.(type) {
 			case nil:
 				return b.Val(ctx)
+			case string:
+				if v == "" {
+					return b.Val(ctx)
+				}
 			}
 			return v
 		}), nil

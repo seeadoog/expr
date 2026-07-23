@@ -90,6 +90,7 @@ var (
 		"repeats":     true,
 		"for":         true,
 		"len":         true,
+		"equals":      true,
 
 		//"has_prefix":  true,
 		//"has_suffix":  true,
@@ -337,26 +338,47 @@ func init() {
 	SelfDefine1(DefaultEnv, "contains", func(ctx *Context, self string, s string) bool {
 		return strings.Contains(self, s)
 	})
+	SelfDefine1(DefaultEnv, "str_contains", func(ctx *Context, self string, s string) bool {
+		return strings.Contains(self, s)
+	})
+
+	SelfDefine0(DefaultEnv, "str_trim_space", func(ctx *Context, self string) string {
+		return strings.TrimSpace(self)
+	})
 
 	SelfDefine0(DefaultEnv, "trim_space", func(ctx *Context, self string) string {
 		return strings.TrimSpace(self)
 	})
 
+	SelfDefine1(DefaultEnv, "str_trim", func(ctx *Context, self string, cutset string) string {
+		return strings.Trim(self, cutset)
+	})
 	SelfDefine1(DefaultEnv, "trim", func(ctx *Context, self string, cutset string) string {
 		return strings.Trim(self, cutset)
 	})
 
+	SelfDefine1(DefaultEnv, "str_trim_left", func(ctx *Context, self string, cutset string) string {
+		return strings.TrimLeft(self, cutset)
+	})
 	SelfDefine1(DefaultEnv, "trim_left", func(ctx *Context, self string, cutset string) string {
 		return strings.TrimLeft(self, cutset)
 	})
 
+	SelfDefine1(DefaultEnv, "str_trim_right", func(ctx *Context, self string, cutset string) string {
+		return strings.TrimRight(self, cutset)
+	})
 	SelfDefine1(DefaultEnv, "trim_right", func(ctx *Context, self string, cutset string) string {
 		return strings.TrimRight(self, cutset)
+	})
+	SelfDefine1(DefaultEnv, "str_trim_prefix", func(ctx *Context, self string, cutset string) string {
+		return strings.TrimPrefix(self, cutset)
 	})
 	SelfDefine1(DefaultEnv, "trim_prefix", func(ctx *Context, self string, cutset string) string {
 		return strings.TrimPrefix(self, cutset)
 	})
-
+	SelfDefine1(DefaultEnv, "str_trim_suffix", func(ctx *Context, self string, cutset string) string {
+		return strings.TrimSuffix(self, cutset)
+	})
 	SelfDefine1(DefaultEnv, "trim_suffix", func(ctx *Context, self string, cutset string) string {
 		return strings.TrimSuffix(self, cutset)
 	})
@@ -444,6 +466,9 @@ func init() {
 	SelfDefine2(DefaultEnv, "replace", func(ctx *Context, self string, a string, b string) string {
 		return strings.Replace(self, a, b, -1)
 	})
+	SelfDefine2(DefaultEnv, "str_replace", func(ctx *Context, self string, a string, b string) string {
+		return strings.Replace(self, a, b, -1)
+	})
 	SelfDefine1(DefaultEnv, "index", func(ctx *Context, self string, a string) float64 {
 		return float64(strings.Index(self, a))
 	})
@@ -524,10 +549,19 @@ func init() {
 		return dst
 	})
 
-	SelfDefine1(DefaultEnv, "equals", func(ctx *Context, self map[string]any, b map[string]any) bool {
-		return reflect.DeepEqual(self, b)
-	})
+	//SelfDefine1(DefaultEnv, "equals", func(ctx *Context, self map[string]any, b map[string]any) bool {
+	//	return reflect.DeepEqual(self, b)
+	//})
 
+	RegisterOptFuncDefine2(DefaultEnv, "equals", func(ctx *Context, a any, b any, opt *Options) bool {
+
+		switch a.(type) {
+		case string, float64, bool, int, nil:
+			return a == b
+		default:
+			return reflect.DeepEqual(a, b)
+		}
+	})
 	//SelfDefine1("exclude", func(ctx *Context, self map[string]any, keys []any) map[string]any {
 	//	dst := make(map[string]any, len(self)-len(keys))
 	//	for k, v := range self {

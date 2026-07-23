@@ -604,3 +604,14 @@ func TestFuncNotFound(t *testing.T) {
 	_, err = DefaultEnv.ParseValue(`$acsd()`)
 	assertEqual2(t, err == nil, true)
 }
+
+func TestErrorExec(t *testing.T) {
+	e, err := DefaultEnv.ParseFromJSONStr(`["$avc()"]`)
+	if err != nil {
+		panic(err)
+	}
+	c := DefaultEnv.NewContext(nil)
+
+	err = c.SafeExec(e)
+	assertEqual2(t, err != nil, true)
+}

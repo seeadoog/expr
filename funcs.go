@@ -1400,6 +1400,10 @@ var funcIsEmpty = FuncDefine1(func(ctx *Context, a any) any {
 		return len(v) == 0
 	case []string:
 		return len(v) == 0
+	case map[string]any:
+		return len(v) == 0
+	case ReadOnlyMap:
+		return len(v) == 0
 	default:
 		return false
 	}
