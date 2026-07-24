@@ -284,12 +284,12 @@ func innerOptFromOpt(opt []CommonFuncOpt) []funcOpt {
 	return o.inner
 }
 
-func WithCompiled[T any](n int, fun func(args ...any) T) CommonFuncOpt {
+func WithCompiled[T any](n int, fun func(args ...any) (T, error)) CommonFuncOpt {
 	return func(f *commonOpt) {
 		f.inner = append(f.inner, func(iff *innerFunc) {
 			iff.compiledArgs = n
 			iff.compileFunc = func(args ...any) (result any, err error) {
-				return fun(args...), nil
+				return fun(args...)
 			}
 		})
 	}
