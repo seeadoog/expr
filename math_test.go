@@ -403,4 +403,11 @@ e = (1).equals(1);
 	assertEqual(t, c, "bf", false)
 	assertEqual(t, c, "c", true)
 	assertEqual(t, c, "e", true)
+
+	c.SetByJp("name.age", 6)
+	c.SetByJp("name.ase[0]", 6)
+
+	assertEqual(t, c, "name.age", 6)
+	assertEqual(t, c, "name.ase[0]", 6)
+	// name:"router.zh_cn_en","566"
 }

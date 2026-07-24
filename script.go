@@ -80,13 +80,20 @@ func (c *Context) GetByString(key string) interface{} {
 }
 
 func (c *Context) GetByJp(key string) any {
-
 	v, err := c.Env.parseValueV(key)
 	if err != nil {
 		return nil
 	}
 	return v.Val(c)
+}
 
+func (c *Context) SetByJp(key string, val any) error {
+	v, err := c.Env.parseValueV(key)
+	if err != nil {
+		return err
+	}
+	v.Set(c, val)
+	return nil
 }
 
 func (c *Context) Set(key uint64, skey string, value interface{}) {

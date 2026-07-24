@@ -104,34 +104,35 @@ var (
 		"http_request":   {nil, 0, "", "(method string ,url string,headers obj,body any,timeout_ms number)map[string]any", false, httpRequest, "http_request", 5},
 		"return":         {nil, 0, "", "(...any) terminate exec expr", false, returnFunc, "return", -1},
 		//"orr":            {nil, 0, "", "", false, orrFunc, "orr", 2},
-		"new":       {nil, 0, "", "()map[string]any return new map", false, newFunc, "new", 0},
-		"all":       {nil, 0, "", "", false, funcAll, "all", 2},
-		"for":       {nil, 0, "", "", false, funcFor, "for", 2},
-		"loop":      {nil, 0, "", "", false, funcLoop, "loop", -1},
-		"go":        {nil, 0, "", "", false, funcGo, "go", 1},
-		"catch":     {nil, 0, "", "", false, funcCatch, "catch", 1},
-		"unwrap":    {nil, 0, "", "", false, funcUnwrap, "unwrap", 1},
-		"boolean":   {nil, 0, "", "", false, funcBool, "boolean", 1},
-		"recover":   {nil, 0, "", "", false, funcRecover, "recover", 1},
-		"recovers":  {nil, 0, "", "", false, funcRecoverS, "recovers", 1},
-		"recoverd":  {nil, 0, "", "", false, funcRecoverD, "recoverd", 1},
-		"sleep":     {nil, 0, "", "(millsec)", false, funcSleep, "sleep", 1},
-		"repeat":    {nil, 0, "", "", false, funcRepeat, "repeat", 2},
-		"repeats":   {nil, 0, "", "", false, funcRepeats, "repeats", 2},
-		"range":     {nil, 0, "", "", false, funcRange, "range", 1},
-		"exec":      {nil, 0, "", "", false, funcExec, "exec", -1},
-		"cost":      {nil, 0, "", "", false, funcCost, "cost", 1},
-		"_debug":    {nil, 0, "", "", false, funcDebug, "_debug", -1},
-		"rand":      {nil, 0, "", "", false, funcRand, "rand", 1},
-		"rand_n":    {nil, 0, "", "", false, funcRandN, "rand_n", 1},
-		"is_empty":  {nil, 0, "", "", false, funcIsEmpty, "is_empty", 1},
-		"printf":    {nil, 0, "", "", false, funcPrintf, "printf", -1},
-		"set_to":    {nil, 0, "", "", false, funcSetTo, "set_to", 2},
-		"seto":      {nil, 0, "", "", false, funcSetTo, "seto", 2},
-		"benchmark": {nil, 0, "", "", false, funcBenchmark, "benchmark", 1},
-		"defer":     {nil, 0, "", "(do,defer)", false, funcDefer, "defer", 2},
-		"log10":     {nil, 0, "", "(number)number", false, funcLog10, "log10", 1},
-		"sqrt":      {nil, 0, "", "(number)number", false, funcSqrt, "sqrt", 1},
+		"new":          {nil, 0, "", "()map[string]any return new map", false, newFunc, "new", 0},
+		"all":          {nil, 0, "", "", false, funcAll, "all", 2},
+		"for":          {nil, 0, "", "", false, funcFor, "for", 2},
+		"loop":         {nil, 0, "", "", false, funcLoop, "loop", -1},
+		"go":           {nil, 0, "", "", false, funcGo, "go", 1},
+		"catch":        {nil, 0, "", "", false, funcCatch, "catch", 1},
+		"unwrap":       {nil, 0, "", "", false, funcUnwrap, "unwrap", 1},
+		"boolean":      {nil, 0, "", "", false, funcBool, "boolean", 1},
+		"recover":      {nil, 0, "", "", false, funcRecover, "recover", 1},
+		"recovers":     {nil, 0, "", "", false, funcRecoverS, "recovers", 1},
+		"recoverd":     {nil, 0, "", "", false, funcRecoverD, "recoverd", 1},
+		"sleep":        {nil, 0, "", "(millsec)", false, funcSleep, "sleep", 1},
+		"repeat":       {nil, 0, "", "", false, funcRepeat, "repeat", 2},
+		"repeats":      {nil, 0, "", "", false, funcRepeats, "repeats", 2},
+		"range":        {nil, 0, "", "", false, funcRange, "range", 1},
+		"exec":         {nil, 0, "", "", false, funcExec, "exec", -1},
+		"cost":         {nil, 0, "", "", false, funcCost, "cost", 1},
+		"_debug":       {nil, 0, "", "", false, funcDebug, "_debug", -1},
+		"rand":         {nil, 0, "", "", false, funcRand, "rand", 1},
+		"rand_n":       {nil, 0, "", "", false, funcRandN, "rand_n", 1},
+		"is_empty":     {nil, 0, "", "", false, funcIsEmpty, "is_empty", 1},
+		"is_not_empty": {nil, 0, "", "", false, funcIsNotEmpty, "is_not_empty", 1},
+		"printf":       {nil, 0, "", "", false, funcPrintf, "printf", -1},
+		"set_to":       {nil, 0, "", "", false, funcSetTo, "set_to", 2},
+		"seto":         {nil, 0, "", "", false, funcSetTo, "seto", 2},
+		"benchmark":    {nil, 0, "", "", false, funcBenchmark, "benchmark", 1},
+		"defer":        {nil, 0, "", "(do,defer)", false, funcDefer, "defer", 2},
+		"log10":        {nil, 0, "", "(number)number", false, funcLog10, "log10", 1},
+		"sqrt":         {nil, 0, "", "(number)number", false, funcSqrt, "sqrt", 1},
 	}
 )
 
@@ -1385,8 +1386,7 @@ func valTypeOf(v Val) string {
 		return "()"
 	}
 }
-
-var funcIsEmpty = FuncDefine1(func(ctx *Context, a any) any {
+func isEmpty(a any) bool {
 	switch v := a.(type) {
 	case string:
 		return v == ""
@@ -1407,6 +1407,14 @@ var funcIsEmpty = FuncDefine1(func(ctx *Context, a any) any {
 	default:
 		return false
 	}
+}
+
+var funcIsEmpty = FuncDefine1(func(ctx *Context, a any) any {
+	return isEmpty(a)
+})
+
+var funcIsNotEmpty = FuncDefine1(func(ctx *Context, a any) any {
+	return !isEmpty(a)
 })
 
 var funcPrintf ScriptFunc = func(ctx *Context, args ...Val) any {
