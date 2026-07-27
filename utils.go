@@ -46,6 +46,8 @@ func BoolCond(v interface{}) bool {
 		return vv
 	case nil:
 		return false
+	case string:
+		return vv != ""
 	default:
 		return true
 	}
