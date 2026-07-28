@@ -927,7 +927,7 @@ var parseDefine = func(e *Env, o map[string]any, val any) (exp, error) {
 	for key, val := range parentMap {
 		defexp.defs = append(defexp.defs, defineElem{
 			hash: CalcHash(key),
-			val:  val,
+			val:  NewReadOnlyVal(val),
 		})
 	}
 	return defexp, nil
