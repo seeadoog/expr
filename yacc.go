@@ -251,6 +251,13 @@ func cutterOf(v any) (func(st, ed int) any, int) {
 			return vs[st:ed]
 		}, len(vs)
 	default:
+		refv := reflect.ValueOf(v)
+		if refv.Kind() != reflect.Slice {
+			return nil, 0
+		}
+		return func(st, ed int) any {
+			return refv.Slice(st, ed).Interface()
+		}, refv.Len()
 		return nil, 0
 	}
 }

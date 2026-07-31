@@ -356,6 +356,16 @@ var appendFunc ScriptFunc = func(ctx *Context, args ...Val) any {
 		}
 		return sb.String()
 	case []byte:
+		for _, v := range args[1:] {
+			switch a := v.Val(ctx).(type) {
+			case []byte:
+				a1 = append(a1, a...)
+			case string:
+				a1 = append(a1, a...)
+			default:
+			}
+		}
+		return a1
 
 	case []any:
 		for _, v := range args[1:] {

@@ -615,3 +615,12 @@ func TestErrorExec(t *testing.T) {
 	err = c.SafeExec(e)
 	assertEqual2(t, err != nil, true)
 }
+
+func TestAppend(t *testing.T) {
+	c := DefaultEnv.NewContext(nil)
+	c.SetByString("a", []byte("he"))
+	parseAndExec(DefaultEnv, `a = append(a,'llo','world')`, c)
+
+	assertDeepEqual(t, c, "a", []byte("helloworld"))
+	NewLambda()
+}
