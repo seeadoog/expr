@@ -6,8 +6,19 @@ type exprValue struct {
 	data any
 }
 
+func ValueOf(data any) exprValue {
+	return exprValue{data: data}
+}
+
 func (e exprValue) String() string {
 	return StringOf(e.data)
+}
+
+func (e exprValue) Number() float64 {
+	return NumberOf(e.data)
+}
+func (e exprValue) Bool() bool {
+	return BoolOf(e.data)
 }
 func (e exprValue) Set(ctx *Context, k string, val any) {
 	switch m := e.data.(type) {
@@ -85,6 +96,45 @@ func (e exprValue) RangeMap(f func(k string, v any) bool) {
 				return
 			}
 		}
+
+	}
+}
+
+func (e exprValue) Len() int {
+	switch m := e.data.(type) {
+	case []any:
+		return len(m)
+	case ReadOnlyArray:
+		return len(m)
+	case ReadOnlyMap:
+		return len(m)
+	case []float64:
+		return len(m)
+	default:
+		v := reflect.ValueOf(e.data)
+		if v.Kind() == reflect.Slice {
+			return v.Len()
+		}
+		return 0
+	}
+}
+
+func (e exprValue) IndexGet(i int) any {
+	switch m := e.data.(type) {
+	case []any:
+		return m[i]
+	case ReadOnlyArray:
+		return m[i]
+	case []float64:
+		return m[i]
+	case []int:
+		return m[i]
+	default:
+		v := reflect.ValueOf(e.data)
+		if v.Kind() == reflect.Slice {
+			return v.Index(i).Interface()
+		}
+		return 0
 	}
 }
 
@@ -97,6 +147,23 @@ func (e exprValue) RangeArr(f func(k int, v any) bool) {
 			}
 		}
 	case ReadOnlyArray:
+		for i, ev := range m {
+			if !f(i, ev) {
+				return
+			}
+		}
+	case []int:
+		for i, ev := range m {
+			if !f(i, ev) {
+				return
+			}
+		}
+	case []string:
+		for i, ev := range m {
+			if !f(i, ev) {
+			}
+		}
+	case []float64:
 		for i, ev := range m {
 			if !f(i, ev) {
 				return

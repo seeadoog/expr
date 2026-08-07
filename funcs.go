@@ -797,7 +797,16 @@ func compare(a, b any) int {
 		bb := StringOf(b)
 		return strings.Compare(aa, bb)
 	default:
-		return 0
+		ai := NumberOf(a)
+		bi := NumberOf(b)
+		switch {
+		case ai == bi:
+			return 0
+		case ai < bi:
+			return -1
+		default:
+			return 1
+		}
 	}
 }
 

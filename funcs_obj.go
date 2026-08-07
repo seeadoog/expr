@@ -339,14 +339,14 @@ func init() {
 	SelfDefine1(DefaultEnv, "contains", func(ctx *Context, self string, s string) bool {
 		return strings.Contains(self, s)
 	})
-	SelfDefine1(DefaultEnv, "str_contains", func(ctx *Context, self string, s string) bool {
-		return strings.Contains(self, s)
+
+	RegisterOptFuncDefine2(DefaultEnv, "str_contains", func(ctx *Context, a string, b string, opt *Options) bool {
+		return strings.Contains(a, b)
 	})
 
-	SelfDefine0(DefaultEnv, "str_trim_space", func(ctx *Context, self string) string {
-		return strings.TrimSpace(self)
+	RegisterOptFuncDefine1(DefaultEnv, "str_trim_space", func(ctx *Context, a string, opt *Options) string {
+		return strings.TrimSpace(a)
 	})
-
 	SelfDefine0(DefaultEnv, "trim_space", func(ctx *Context, self string) string {
 		return strings.TrimSpace(self)
 	})
