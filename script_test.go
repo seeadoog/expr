@@ -1194,3 +1194,385 @@ o=$;$={};$.a = {a:o.a,b:o.b or 15,c: o.c>0?o.c:5 }
 		env.PutContext2Pool(ctx)
 	}
 }
+
+func TestIfExtend(t *testing.T) {
+	e, err := DefaultEnv.ParseFromJSONStr(`
+[
+{
+	"if":["true","false"],
+	"then":"a  =  1"
+},
+{
+	"if":["true","true"],
+	"then":"b  =  1"
+},
+{
+	"if":{
+		"$or":["true","false"]
+	},
+	"then":"c  =  1"
+},
+{
+	"if":{
+		"$and":["true","false"]
+	},
+	"then":"d  =  1"
+}
+,
+{
+	"if":{
+		"b" :"1.0",
+		"d" :"nil"
+	},
+	"then":"e  =  1"
+}
+,
+{
+	"if":{
+		"$or":[
+			[
+				" a == 1"
+			],
+			[
+				" b == 1"
+			]
+		]
+	},
+	"then":"g  =  1"
+}
+]
+`)
+	if err != nil {
+		panic(err)
+	}
+
+	c := DefaultEnv.NewContext(nil)
+
+	err = c.Exec(e)
+	if err != nil {
+		t.Fatal("err parse:", err)
+	}
+
+	assertEqual(t, c, `a`, nil)
+	assertEqual(t, c, `b`, 1.0)
+	assertEqual(t, c, `c`, 1.0)
+	assertEqual(t, c, `d`, nil)
+	assertEqual(t, c, `e`, 1.0)
+	assertEqual(t, c, `g`, 1.0)
+}
+
+func TestIfExtend1(t *testing.T) {
+	e, err := DefaultEnv.ParseFromJSONStr(`
+[
+{
+	"if":["true","false"],
+	"then":"a  =  1",
+	"else":"a_else = 1"
+},
+{
+	"if":["true","true"],
+	"then":"b  =  1",
+	"else":"b_else = 1"
+},
+{
+	"if":{
+		"$or":["true","false"]
+	},
+	"then":"c  =  1",
+	"else":"c_else = 1"
+},
+{
+	"if":{
+		"$and":["true","false"]
+	},
+	"then":"d  =  1",
+	"else":"d_else = 1"
+},
+{
+	"if":{
+		"b" :"1.0",
+		"d" :"nil"
+	},
+	"then":"e  =  1",
+	"else":"e_else = 1"
+},
+{
+	"if":{
+		"$or":[
+			[
+				" a == 1"
+			],
+			[
+				" b == 1"
+			]
+		]
+	},
+	"then":"g  =  1",
+	"else":"g_else = 1"
+},
+{
+	"if":{
+		"$and":[
+			[
+				" b == 1"
+			],
+			[
+				" d == 1"
+			]
+		]
+	},
+	"then":"h = 1",
+	"else":"h = 2"
+}
+]
+`)
+	if err != nil {
+		panic(err)
+	}
+
+	c := DefaultEnv.NewContext(nil)
+
+	err = c.Exec(e)
+	if err != nil {
+		t.Fatal("err parse:", err)
+	}
+
+	// if false -> else
+	assertEqual(t, c, `a`, nil)
+	assertEqual(t, c, `a_else`, 1.0)
+
+	// if true -> then, else 不执行
+	assertEqual(t, c, `b`, 1.0)
+	assertEqual(t, c, `b_else`, nil)
+
+	// $or true -> then
+	assertEqual(t, c, `c`, 1.0)
+	assertEqual(t, c, `c_else`, nil)
+
+	// $and false -> else
+	assertEqual(t, c, `d`, nil)
+	assertEqual(t, c, `d_else`, 1.0)
+
+	// 条件满足 -> then
+	assertEqual(t, c, `e`, 1.0)
+	assertEqual(t, c, `e_else`, nil)
+
+	// $or 表达式满足 -> then
+	assertEqual(t, c, `g`, 1.0)
+	assertEqual(t, c, `g_else`, nil)
+
+	// 复杂条件 false -> else
+	assertEqual(t, c, `h`, 2.0)
+}
+
+func TestIfExtend3(t *testing.T) {
+	e, err := DefaultEnv.ParseFromJSONStr(`
+[
+{
+	"if":["true","false"],
+	"then":"a  =  1",
+	"else":"a_else = 1"
+},
+{
+	"if":["true","true"],
+	"then":"b  =  1",
+	"else":"b_else = 1"
+},
+{
+	"if":{
+		"$or":["true","false"]
+	},
+	"then":"c  =  1",
+	"else":"c_else = 1"
+},
+{
+	"if":{
+		"$and":["true","false"]
+	},
+	"then":"d  =  1",
+	"else":"d_else = 1"
+},
+{
+	"if":{
+		"b" :"1.0",
+		"d" :"nil"
+	},
+	"then":"e  =  1",
+	"else":"e_else = 1"
+},
+{
+	"if":{
+		"$or":[
+			[
+				" a == 1"
+			],
+			[
+				" b == 1"
+			]
+		]
+	},
+	"then":"g  =  1",
+	"else":"g_else = 1"
+},
+
+{
+	"if":{
+		"$or":[
+			{
+				"$and":[
+					"true",
+					"false"
+				]
+			},
+			"true"
+		]
+	},
+	"then":"i = 1",
+	"else":"i = 2"
+},
+
+{
+	"if":{
+		"$and":[
+			{
+				"$or":[
+					"false",
+					"true"
+				]
+			},
+			"true"
+		]
+	},
+	"then":"j = 1",
+	"else":"j = 2"
+},
+
+{
+	"if":{
+		"$or":[
+			{
+				"$and":[
+					"false",
+					"false"
+				]
+			},
+			{
+				"$and":[
+					"true",
+					"true"
+				]
+			}
+		]
+	},
+	"then":"k = 1",
+	"else":"k = 2"
+},
+
+{
+	"if":{
+		"$and":[
+			{
+				"$or":[
+					"false",
+					"false"
+				]
+			},
+			{
+				"$or":[
+					"true",
+					"false"
+				]
+			}
+		]
+	},
+	"then":"l = 1",
+	"else":"l = 2"
+},
+
+{
+	"if":{
+		"$or":[
+			[
+				"b == 1"
+			],
+			{
+				"$and":[
+					"false",
+					"true"
+				]
+			}
+		]
+	},
+	"then":"m = 1",
+	"else":"m = 2"
+},
+
+{
+	"if":{
+		"$and":[
+			[
+				"b == 1"
+			],
+			{
+				"$or":[
+					"d == 1",
+					"true"
+				]
+			}
+		]
+	},
+	"then":"n = 1",
+	"else":"n = 2"
+}
+]
+`)
+	if err != nil {
+		panic(err)
+	}
+
+	c := DefaultEnv.NewContext(nil)
+
+	err = c.Exec(e)
+	if err != nil {
+		t.Fatal("err parse:", err)
+	}
+
+	// 原始 if/else
+	assertEqual(t, c, `a`, nil)
+	assertEqual(t, c, `a_else`, 1.0)
+
+	assertEqual(t, c, `b`, 1.0)
+	assertEqual(t, c, `b_else`, nil)
+
+	assertEqual(t, c, `c`, 1.0)
+	assertEqual(t, c, `c_else`, nil)
+
+	assertEqual(t, c, `d`, nil)
+	assertEqual(t, c, `d_else`, 1.0)
+
+	assertEqual(t, c, `e`, 1.0)
+	assertEqual(t, c, `e_else`, nil)
+
+	assertEqual(t, c, `g`, 1.0)
+	assertEqual(t, c, `g_else`, nil)
+
+	// $or 内嵌 $and
+	// (true && false) || true
+	assertEqual(t, c, `i`, 1.0)
+
+	// $and 内嵌 $or
+	// (false || true) && true
+	assertEqual(t, c, `j`, 1.0)
+
+	// (false && false) || (true && true)
+	assertEqual(t, c, `k`, 1.0)
+
+	// (false || false) && (true || false)
+	assertEqual(t, c, `l`, 2.0)
+
+	// b == 1 || (false && true)
+	assertEqual(t, c, `m`, 1.0)
+
+	// b == 1 && (d == 1 || true)
+	assertEqual(t, c, `n`, 1.0)
+}

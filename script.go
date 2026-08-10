@@ -636,11 +636,15 @@ func RegisterExp(name string, exp ExpParseFunc) {
 }
 
 var parseIf ExpParseFunc = func(e *Env, o map[string]any, val any) (exp, error) {
-	s, ok := val.(string)
-	if !ok {
-		return nil, fmt.Errorf("if val must be a string,but %v", val)
-	}
-	v, err := e.parseValueV(s)
+	//s, ok := val.(string)
+	//if !ok {
+	//	return nil, fmt.Errorf("if val must be a string,but %v", val)
+	//}
+	//v, err := e.parseValueV(s)
+	//if err != nil {
+	//	return nil, fmt.Errorf("parse if value error:%w %v", err, val)
+	//}
+	v, err := parseIfVal(e, val)
 	if err != nil {
 		return nil, fmt.Errorf("parse if value error:%w %v", err, val)
 	}
@@ -706,6 +710,125 @@ var parseForRange ExpParseFunc = func(ev *Env, o map[string]any, val any) (exp, 
 		do:      do,
 	}
 	return e, nil
+}
+
+type orValue struct {
+	vals []Val
+}
+
+func (a *orValue) Val(c *Context) any {
+	for _, val := range a.vals {
+		if BoolCond(val.Val(c)) {
+			return true
+		}
+	}
+	return false
+}
+
+func (a *orValue) Set(c *Context, val any) {
+
+}
+
+type andValue struct {
+	vals []Val
+}
+
+func (a *andValue) Val(c *Context) any {
+	for _, val := range a.vals {
+		if !BoolCond(val.Val(c)) {
+			return false
+		}
+	}
+	return true
+}
+
+func (a *andValue) Set(c *Context, val any) {
+
+}
+
+func parseArrToVals(e *Env, vals []any) (res []Val, err error) {
+	for _, val := range vals {
+		pv, err := parseIfVal(e, val)
+		if err != nil {
+			return nil, err
+		}
+		res = append(res, pv)
+	}
+	return res, nil
+}
+
+type eqValue struct {
+	key Val
+	val Val
+}
+
+func (e *eqValue) Val(c *Context) any {
+	return e.key.Val(c) == e.val.Val(c)
+}
+
+func (e *eqValue) Set(c *Context, val any) {
+	//TODO implement me
+	panic("implement me")
+}
+
+func parseIfVal(e *Env, val any) (Val, error) {
+	switch v := val.(type) {
+	case string:
+		return e.ParseValue(v)
+	case []any:
+		res, err := parseArrToVals(e, v)
+		if err != nil {
+			return nil, err
+		}
+		return &andValue{res}, nil
+	case map[string]interface{}:
+		res := make([]Val, 0, len(v))
+		for key, mv := range v {
+			switch key {
+			case "$or":
+				arr, ok := mv.([]any)
+				if !ok {
+					return nil, fmt.Errorf("val of '$or' must be a []any,but %T", mv)
+				}
+				vs, err := parseArrToVals(e, arr)
+				if err != nil {
+					return nil, err
+				}
+				res = append(res, &orValue{vals: vs})
+			case "$and":
+				arr, ok := mv.([]any)
+				if !ok {
+					return nil, fmt.Errorf("val of '$and' must be a []any,but %T", mv)
+				}
+				vs, err := parseArrToVals(e, arr)
+				if err != nil {
+					return nil, err
+				}
+				res = append(res, &andValue{vals: vs})
+			default:
+				kv, err := e.ParseValue(key)
+				if err != nil {
+					return nil, fmt.Errorf("parse key of eqMap error:%w key:'%s'", err, key)
+				}
+				vv, ok := mv.(string)
+				if !ok {
+					return nil, fmt.Errorf("parse val of eqMap error, val type should be string but %T", mv)
+				}
+				vvv, err := e.ParseValue(vv)
+				if err != nil {
+					return nil, fmt.Errorf("parse val of eqMap error:%w key:'%s'", err, key)
+				}
+				res = append(res, &eqValue{
+					key: kv,
+					val: vvv,
+				})
+			}
+		}
+		return &andValue{
+			vals: res,
+		}, nil
+	}
+	return nil, fmt.Errorf("type of value of if is invalid:%T ", val)
 }
 
 type casesExprs struct {
