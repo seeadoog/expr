@@ -1362,3 +1362,46 @@ func (a *asVal) Val(c *Context) any {
 func (a *asVal) Set(c *Context, val any) {
 
 }
+
+type elseIfs struct {
+	If   Val
+	Then Val
+}
+
+func (e *elseIfs) Val(c *Context) any {
+	return nil
+}
+
+func (e *elseIfs) Set(c *Context, val any) {
+
+}
+
+type ifThenElse struct {
+	If      Val
+	Then    Val
+	Elseifs []*elseIfs
+	Else    Val
+}
+
+func (i *ifThenElse) Val(c *Context) any {
+	if BoolOf(i.If.Val(c)) {
+		if i.Then != nil {
+			return i.Then.Val(c)
+		}
+	}
+	for _, elseif := range i.Elseifs {
+		if BoolOf(elseif.If.Val(c)) {
+			if elseif.Then != nil {
+				return elseif.Then.Val(c)
+			}
+		}
+	}
+	if i.Else != nil {
+		return i.Else.Val(c)
+	}
+	return nil
+}
+
+func (i *ifThenElse) Set(c *Context, val any) {
+
+}

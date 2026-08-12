@@ -31,6 +31,8 @@ func init() {
 	RegisterParseFunc(parseNodeTernary)
 	RegisterParseFunc(parseNodeConst)
 	RegisterParseFunc(parseNodeNotNil)
+	RegisterParseFunc(parseIFElse)
+	RegisterParseFunc(parserForRangeVal)
 }
 
 func parseNodeString(e *Env, n *ast.String, isAccess bool, pc *ParserContext) (Val, error) {
@@ -590,5 +592,97 @@ func parseNodeNotNil(e *Env, n *ast.NotNil, isAccess bool, pc *ParserContext) (V
 
 	return &notNil{
 		val: lv,
+	}, nil
+}
+
+func parseIFElse(e *Env, n *ast.IfElse, isAccess bool, pc *ParserContext) (Val, error) {
+
+	res := &ifThenElse{
+		If:      nil,
+		Then:    nil,
+		Elseifs: nil,
+		Else:    nil,
+	}
+	var err error
+	res.If, err = e.parseValueFromNode(n.Cond, false, pc)
+	if err != nil {
+		return nil, fmt.Errorf("if-else parse if error:%w %v", err, n.Cond)
+	}
+	if n.Then != nil {
+		res.Then, err = e.parseValueFromNode(n.Then, false, pc)
+		if err != nil {
+			return nil, fmt.Errorf("if-else parse then error:%w %v", err, n.Then)
+		}
+	}
+
+	if n.Else != nil {
+		res.Else, err = e.parseValueFromNode(n.Else, false, pc)
+		if err != nil {
+			return nil, fmt.Errorf("if-else parse else error:%w %v", err, n.Else)
+		}
+	}
+
+	for _, elseif := range n.Elseifs {
+
+		efl, ok := elseif.(*ast.ElseIf)
+		if !ok {
+			return nil, fmt.Errorf("if-else parse elseif error,elseif is not valid:%T", elseif)
+		}
+
+		cond, err := e.parseValueFromNode(efl.Cond, false, pc)
+		if err != nil {
+			return nil, fmt.Errorf("if-else-elseif parse condition error:%w %v", err, efl.Cond)
+		}
+		th, err := e.parseValueFromNode(efl.Then, false, pc)
+		if err != nil {
+			return nil, fmt.Errorf("if-else-elseif parse then error:%w %v", err, efl.Then)
+		}
+		res.Elseifs = append(res.Elseifs, &elseIfs{
+			If:   cond,
+			Then: th,
+		})
+	}
+	return res, nil
+}
+
+type forRangeVal struct {
+	lm  *lambda
+	val Val
+}
+
+func (f *forRangeVal) Val(c *Context) any {
+
+	return forRangeExec(f.lm, c, f.val.Val(c), func(k, v any, val Val) any {
+
+		return val.Val(c)
+	})
+}
+
+func (f *forRangeVal) Set(c *Context, val any) {
+
+}
+
+func parserForRangeVal(e *Env, n *ast.ForRange, isAccess bool, pc *ParserContext) (Val, error) {
+
+	lefts := []string{n.KName, n.VName}
+	leftsHash := hashOfStrings(lefts)
+
+	doo, err := e.parseValueFromNode(n.Do, false, pc)
+	if err != nil {
+		return nil, fmt.Errorf("for-range parse do error:%w %v", err, n.KName)
+	}
+
+	val, err := e.parseValueFromNode(n.Var, false, pc)
+	if err != nil {
+		return nil, fmt.Errorf("for-range parse var error:%w %v", err, n.KName)
+	}
+
+	return &forRangeVal{
+		lm: &lambda{
+			leftsHash: leftsHash,
+			Lefts:     lefts,
+			Right:     doo,
+		},
+		val: val,
 	}, nil
 }

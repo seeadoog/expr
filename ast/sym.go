@@ -230,3 +230,37 @@ func (n *NodeList) String() string {
 	//TODO implement me
 	return "node list"
 }
+
+type IfElse struct {
+	Cond    Node
+	Then    Node
+	Elseifs []Node
+	Else    Node
+}
+
+func (i *IfElse) String() string {
+	//TODO implement me
+	return "ifElse"
+}
+
+type ElseIf struct {
+	Cond Node
+	Then Node
+}
+
+func (e *ElseIf) String() string {
+	//TODO implement me
+	return "else ifs"
+}
+
+type ForRange struct {
+	KName string
+	VName string
+	Var   Node
+	Do    Node
+}
+
+func (f *ForRange) String() string {
+	//TODO implement me
+	return "for range"
+}

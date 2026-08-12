@@ -9,7 +9,7 @@ import (
 %}
 %token IDENT NUMBER STRING BOOL NIL EQ AND OR NOTEQ GT GTE LT LTE ORR ACC IF ELSE FOR IN ACC2 CONST LAMB ADDEQ SUBEQ MULEQ DIVEQ VARIADIC AS
 %left IDENT
-%left IF ELSE
+%left IF ELSE END DO ELSEIF THEN FOR SWITCH CASE DEFAULT
 %left ';'
 %left LAMB
 %left AS
@@ -91,6 +91,12 @@ Expr:
 	| Expr '@'  { $$.node = &NotNil{$1.node}}
 	| '{' Ids '}' LAMB  Expr  {  $$.node = &Lambda{L: $2.strs , R:$5.node } }
 	| Expr LAMB '{' Expr '}'  {  $$.node = &Lambda2{L: $1.node , R:$4.node } }
+	| FOR IDENT ',' IDENT IN Expr  DO Expr END {  $$.node = &ForRange{KName: $2.str, VName:$4.str,Var:$6.node,Do:$8.node }   }
+	| IF Expr THEN Expr END   {  $$.node = &IfElse{Cond: $2.node,Then: $4.node } }
+	| IF Expr THEN Expr ELSE Expr END   {  $$.node = &IfElse{Cond: $2.node,Then: $4.node,Else: $6.node } }
+	| IF Expr THEN Expr Elseifs END {  $$.node = &IfElse{Cond: $2.node,Then: $4.node,Elseifs: $5.nodes } }
+	| IF Expr THEN Expr Elseifs ELSE Expr END {  $$.node = &IfElse{Cond: $2.node,Then: $4.node,Elseifs: $5.nodes ,Else: $7.node} }
+	| SWITCH Expr DO Cases END
 
 //	| '(' ArgListOpt ')' LAMB  Expr  {  $$.node = &Lambda{L: $2.strs , R:$5.node } }
 //	| '(' ArgList ')' LAMB Expr %prec LAMB {  $$.node = &Lambda{L: $2.strs , R:$5.node } }
@@ -101,11 +107,21 @@ Expr:
 	| Expr IN Expr  { $$.node = &Binary{Op: "in",L:$1.node,R:$3.node } }
 	| Ident               { $$.node = $1.node }
 	| Primary             { yyVAL.node = yyS[yypt-0].node }
-
 	;
 
+Elseifs:
+    elseif  { $$.nodes = []Node{$1.node}}
+    | Elseifs elseif { $$.nodes = append($1.nodes, $2.node)}
 
+elseif:
+    ELSEIF Expr THEN Expr  { $$.node = &ElseIf{Cond: $2.node ,Then: $4.node} }
 
+Cases:
+    Case
+    | Cases Case
+Case:
+    CASE Expr ':' Expr
+    | DEFAULT ':' Expr
 
 Ids:
     Ident { $$.strs = []string{$1.str} }

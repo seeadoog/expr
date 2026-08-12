@@ -2,8 +2,9 @@ package expr
 
 import (
 	"fmt"
-	"github.com/seeadoog/expr/ast"
 	"strconv"
+
+	"github.com/seeadoog/expr/ast"
 )
 
 type tokenV struct {
@@ -137,6 +138,20 @@ func (t *tokenizer) getTknKind(seg string) int {
 		kind = ast.IN
 	case "as":
 		kind = ast.AS
+		//case "end":
+		//	kind = ast.END
+		//case "do":
+		//	kind = ast.DO
+		//case "if":
+		//	kind = ast.IF
+		//case "else":
+		//	kind = ast.ELSE
+		//case "then":
+		//	kind = ast.THEN
+		//case "elseif":
+		//	kind = ast.ELSEIF
+		//case "for":
+		//	kind = ast.FOR
 	}
 	return kind
 }

@@ -630,3 +630,31 @@ func TestAppend(t *testing.T) {
 	assertEqual(t, c, `a1 > 3`, true)
 	assertEqual(t, c, `a1 > 6`, false)
 }
+
+func TestIFFThen(t *testing.T) {
+	//
+	//	c := DefaultEnv.NewContext(nil)
+	//	parseAndExec(DefaultEnv, `
+	//b = 5;
+	//if a == 5 then
+	//	acc = 1
+	//end;
+	//if a == 5 then
+	//   acc = 5
+	//elseif a == 6 then
+	//	acc = 6
+	//elseif a == 7 then
+	//	acc =7
+	//else
+	//	acc = 100
+	//end;
+	//
+	//for k,v in const [1,2,3,4,5] do
+	//_
+	//end;
+	//
+	//`, c)
+
+	//assertDeepEqual(t, c, "acc", 100.0)
+
+}
