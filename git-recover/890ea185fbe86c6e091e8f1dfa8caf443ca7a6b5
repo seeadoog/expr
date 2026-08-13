@@ -1,0 +1,45 @@
+package main
+
+import (
+	"github.com/seeadoog/expr"
+	"testing"
+)
+
+var (
+	env = expr.NewEnv()
+)
+
+func init() {
+
+	expr.SelfDefine2(env, "cnt", func(ctx *expr.Context, self *ExprCtx, channel string, fun string) any {
+
+		return expr.True
+	})
+
+	expr.SelfDefine2(env, "flow", func(ctx *expr.Context, self *ExprCtx, c string, f string) bool {
+		return true
+	})
+}
+
+type ExprCtx struct {
+}
+
+func BenchmarkExpr(b *testing.B) {
+
+	e, err := env.ParseValue(" ctx.flow('channel','fff') && ctx.cnt('xx','xxx') || ctx.cnt('xx2','x3') && ctx.flow('xx1','xx5')")
+	if err != nil {
+		b.Fatal(err)
+	}
+	b.ReportAllocs()
+	b.ResetTimer()
+
+	for i := 0; i < b.N; i++ {
+		ctx := env.GetContextFromPool()
+		ctx.SetByString("ctx", &ExprCtx{})
+		_, err := ctx.SafeValue(e)
+		if err != nil {
+			panic(err)
+		}
+		env.PutContext2Pool(ctx)
+	}
+}

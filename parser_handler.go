@@ -33,6 +33,7 @@ func init() {
 	RegisterParseFunc(parseNodeNotNil)
 	RegisterParseFunc(parseIFElse)
 	RegisterParseFunc(parserForRangeVal)
+	RegisterParseFunc(parseSwitchVar)
 }
 
 func parseNodeString(e *Env, n *ast.String, isAccess bool, pc *ParserContext) (Val, error) {
@@ -633,10 +634,15 @@ func parseIFElse(e *Env, n *ast.IfElse, isAccess bool, pc *ParserContext) (Val, 
 		if err != nil {
 			return nil, fmt.Errorf("if-else-elseif parse condition error:%w %v", err, efl.Cond)
 		}
-		th, err := e.parseValueFromNode(efl.Then, false, pc)
-		if err != nil {
-			return nil, fmt.Errorf("if-else-elseif parse then error:%w %v", err, efl.Then)
+
+		var th Val
+		if efl.Then != nil {
+			th, err = e.parseValueFromNode(efl.Then, false, pc)
+			if err != nil {
+				return nil, fmt.Errorf("if-else-elseif parse then error:%w %v", err, efl.Then)
+			}
 		}
+
 		res.Elseifs = append(res.Elseifs, &elseIfs{
 			If:   cond,
 			Then: th,
@@ -685,4 +691,39 @@ func parserForRangeVal(e *Env, n *ast.ForRange, isAccess bool, pc *ParserContext
 		},
 		val: val,
 	}, nil
+}
+
+func parseSwitchVar(e *Env, n *ast.Switch, isAccess bool, pc *ParserContext) (Val, error) {
+	varCond, err := e.parseValueFromNode(n.Var, false, pc)
+	if err != nil {
+		return nil, fmt.Errorf("parse switch var error:%w %v", err, n.Var)
+	}
+	rs := &switchCtx{}
+	rs.sw = varCond
+	for _, node := range n.Cases {
+		cas := node.(*ast.Case)
+		cavar, err := e.parseValueFromNode(cas.Var, false, pc)
+		if err != nil {
+			return nil, fmt.Errorf("parse switch case var error:%w %v", err, cas.Var)
+		}
+		var doval Val
+		if cas.Do != nil {
+			doval, err = e.parseValueFromNode(cas.Do, true, pc)
+			if err != nil {
+				return nil, fmt.Errorf("parse switch case do error:%w %v", err, cas.Do)
+			}
+		}
+		rs.cases = append(rs.cases, elfs{
+			cond: cavar,
+			Do:   doval,
+		})
+	}
+	if n.Default != nil {
+		defvar, err := e.parseValueFromNode(n.Default, false, pc)
+		if err != nil {
+			return nil, fmt.Errorf("parse switch default error:%w %v", err, n.Default)
+		}
+		rs.def = defvar
+	}
+	return rs, nil
 }

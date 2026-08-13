@@ -194,7 +194,7 @@ func TestStruct(t *testing.T) {
 "usr2->Age = 3",
 "usr2->Friends[0]->Age = 6",
 "usr2->Friends[0]->Name = 'jk'",
-"sum=0;for(arrs,e=>sum=sum+e)",
+"sum=0;foreach(arrs,e=>sum=sum+e)",
 "has = str_contains('aa','a')"
 ]
 `)

@@ -224,13 +224,13 @@ func TestIFF(t *testing.T) {
 	DefaultEnv := NewEnv()
 	e, err := DefaultEnv.ParseFromJSONStr(`
 [
-"if(a=='5').then(c1=5).elseif(a=='6',c1=6).elseif(a=='7',c1=7).else(c1=9).end()",
-"if(b=='5').then(c2=5).elseif(b=='6',c2=6).elseif(b=='7',c2=7).else(c2=9).end()",
-"if(c=='5').then(c3=5).elseif(c=='6',c3=6).elseif(c=='7',c3=7).else(c3=9).end()",
-"if(d=='5').then(c4=5).elseif(d=='6',c4=6).elseif(d=='7',c4=7).else(c4=9).end()",
-"switch(dc).case(nil,b1=1).case(1,b1=2).default(b1=9).end()",
-"switch(1).case(nil,b2=1).case(1,b2=1).default(b2=9).end()",
-"switch(3).case(nil,b3=1).case(1,b3=1).default(b3=9).end()"
+"ifs(a=='5').thens(c1=5).elseifs(a=='6',c1=6).elseifs(a=='7',c1=7).elses(c1=9).ends()",
+"ifs(b=='5').thens(c2=5).elseifs(b=='6',c2=6).elseifs(b=='7',c2=7).elses(c2=9).ends()",
+"ifs(c=='5').thens(c3=5).elseifs(c=='6',c3=6).elseifs(c=='7',c3=7).elses(c3=9).ends()",
+"ifs(d=='5').thens(c4=5).elseifs(d=='6',c4=6).elseifs(d=='7',c4=7).elses(c4=9).ends()",
+"switchs(dc).cases(nil,b1=1).cases(1,b1=2).defaults(b1=9).ends()",
+"switchs(1).cases(nil,b2=1).cases(1,b2=1).defaults(b2=9).ends()",
+"switchs(3).cases(nil,b3=1).cases(1,b3=1).defaults(b3=9).ends()"
 ]
 `)
 	if err != nil {

@@ -51,7 +51,7 @@ var (
 		//"not":    {nil, 0, "", "", false, notFunc, "not", 1},
 		//"or":     {nil, 0, "", "(any,any)any", false, orFunc, "or", -1},
 		//"and":    {nil, 0, "", "", false, andFunc, "and", -1},
-		//"if":             {nil, 0, "", "", false, ifFunc, "if", -1},
+		//"if":  {nil, 0, "", "", false, ifFunc, "if", -1},
 		"len": {nil, 0, "", "", false, lenFunc, "len", 1},
 		//"inn":            {nil, 0, "", "", false, inFunc, "inn", -1},
 		"print": {nil, 0, "", "", false, printFunc, "print", -1},
@@ -106,7 +106,7 @@ var (
 		//"orr":            {nil, 0, "", "", false, orrFunc, "orr", 2},
 		"new":          {nil, 0, "", "()map[string]any return new map", false, newFunc, "new", 0},
 		"all":          {nil, 0, "", "", false, funcAll, "all", 2},
-		"for":          {nil, 0, "", "", false, funcFor, "for", 2},
+		"foreach":      {nil, 0, "", "", false, funcFor, "for", 2},
 		"loop":         {nil, 0, "", "", false, funcLoop, "loop", -1},
 		"go":           {nil, 0, "", "", false, funcGo, "go", 1},
 		"catch":        {nil, 0, "", "", false, funcCatch, "catch", 1},
@@ -1645,26 +1645,26 @@ func (s *switchCtx) Val(c *Context) any {
 }
 
 func init() {
-	DefaultEnv.RegisterFunc("if", func(ctx *Context, args ...Val) any {
-		return newErrorf("'if' called unexpected: you may lose .end() at end of if expr")
+	DefaultEnv.RegisterFunc("ifs", func(ctx *Context, args ...Val) any {
+		return newErrorf("'if' called unexpected: you may lose .ends() at end of if expr")
 		//return &ifctx{
 		//	cond: args[0],
 		//}
 	}, -1, WithArgsString("(cond,then?)"))
 
-	RegisterObjFunc[*ifctx](DefaultEnv, "then", func(ctx *Context, self any, args ...Val) any {
-		return newErrorf("'then' called unexpected: you may lose .end() at end of if expr")
+	RegisterObjFunc[*ifctx](DefaultEnv, "thens", func(ctx *Context, self any, args ...Val) any {
+		return newErrorf("'then' called unexpected: you may lose .ends() at end of if expr")
 		//self.(*ifctx).then = args[0]
 		//return self
 	}, 1, "then(action)")
-	RegisterObjFunc[*ifctx](DefaultEnv, "else", func(ctx *Context, self any, args ...Val) any {
-		return newErrorf("'else' called unexpected: you may lose .end() at end of if expr")
+	RegisterObjFunc[*ifctx](DefaultEnv, "elses", func(ctx *Context, self any, args ...Val) any {
+		return newErrorf("'else' called unexpected: you may lose .ends() at end of if expr")
 		//self.(*ifctx).EL = args[0]
 		//return self
 	}, 1, "else(action)")
-	RegisterObjFunc[*ifctx](DefaultEnv, "elseif", func(ctx *Context, self any, args ...Val) any {
+	RegisterObjFunc[*ifctx](DefaultEnv, "elseifs", func(ctx *Context, self any, args ...Val) any {
 
-		return newErrorf("'elseif' called unexpected: you may lose .end() at end of if expr")
+		return newErrorf("'elseif' called unexpected: you may lose .ends() at end of if expr")
 		//
 		//f := self.(*ifctx)
 		//switch len(args) {
@@ -1681,19 +1681,19 @@ func init() {
 
 		//return self
 	}, 2, "elseif(cond,action)")
-	RegisterObjFunc[*ifctx](DefaultEnv, "end", func(ctx *Context, self any, args ...Val) any {
+	RegisterObjFunc[*ifctx](DefaultEnv, "ends", func(ctx *Context, self any, args ...Val) any {
 		return self.(*ifctx).do(ctx)
 	}, 0, "end()")
 
-	DefaultEnv.RegisterFunc("switch", func(ctx *Context, args ...Val) any {
-		return newErrorfWithCtx(ctx, "'switch' called unexpected: you may lose .end() at end of if expr")
+	DefaultEnv.RegisterFunc("switchs", func(ctx *Context, args ...Val) any {
+		return newErrorfWithCtx(ctx, "'switchs' called unexpected: you may lose .ends() at end of if expr")
 		//return &switchCtx{
 		//	sw: args[0],
 		//}
 	}, 1, WithArgsString("(val)"))
 
-	RegisterObjFunc[*switchCtx](DefaultEnv, "case", func(ctx *Context, self any, args ...Val) any {
-		return newErrorfWithCtx(ctx, "'case' called unexpected: you may lose .end() at end of switch expr")
+	RegisterObjFunc[*switchCtx](DefaultEnv, "cases", func(ctx *Context, self any, args ...Val) any {
+		return newErrorfWithCtx(ctx, "'case' called unexpected: you may lose .ends() at end of switch expr")
 		//sw := self.(*switchCtx)
 		//
 		//switch len(args) {
@@ -1710,8 +1710,8 @@ func init() {
 		//return self
 	}, 2, "case(v,action)")
 
-	RegisterObjFunc[*switchCtx](DefaultEnv, "default", func(ctx *Context, self any, args ...Val) any {
-		return newErrorfWithCtx(ctx, "'default' called unexpected: you may lose .end() at end of switch expr")
+	RegisterObjFunc[*switchCtx](DefaultEnv, "defaults", func(ctx *Context, self any, args ...Val) any {
+		return newErrorfWithCtx(ctx, "'default' called unexpected: you may lose .ends() at end of switch expr")
 		//sw := self.(*switchCtx)
 		//if len(args) > 0 {
 		//	sw.def = args[0]
@@ -1719,12 +1719,12 @@ func init() {
 		//return self
 	}, 1, "case(v,action)")
 
-	RegisterObjFunc[*switchCtx](DefaultEnv, "end", func(ctx *Context, self any, args ...Val) any {
+	RegisterObjFunc[*switchCtx](DefaultEnv, "ends", func(ctx *Context, self any, args ...Val) any {
 		return self.(*switchCtx).Val(ctx)
 	}, 0, "end()")
 
-	RegisterObjFunc[*switchCtx](DefaultEnv, "case", func(ctx *Context, self any, args ...Val) any {
-		return newErrorfWithCtx(ctx, "'case' called unexpected: you may lose .end() at end of switch expr")
+	RegisterObjFunc[*switchCtx](DefaultEnv, "cases", func(ctx *Context, self any, args ...Val) any {
+		return newErrorfWithCtx(ctx, "'case' called unexpected: you may lose .ends() at end of switch expr")
 		//return self
 	}, 1, "case(v,action)")
 

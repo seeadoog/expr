@@ -1133,7 +1133,7 @@ func shouldCompileIf(v *accessVal) bool {
 	switch rv := v.right.(type) {
 	case *objFuncVal:
 		switch rv.funcName {
-		case "end":
+		case "ends":
 			return true
 		}
 	}
@@ -1143,13 +1143,13 @@ func shouldCompileIf(v *accessVal) bool {
 func tryCompileVal(v *accessVal) Val {
 	name := getTopFuncName(v)
 	switch name {
-	case "if":
+	case "ifs":
 		ifc := &ifctx{}
 		if compileIF(ifc, v) {
 			return ifc
 		}
 		return v
-	case "switch":
+	case "switchs":
 		swc := &switchCtx{}
 		if compileSwitch(swc, v) {
 			return swc
@@ -1175,7 +1175,7 @@ func compileSwitch(ctx *switchCtx, v *accessVal) bool {
 	switch rv := v.right.(type) {
 	case *objFuncVal:
 		switch rv.funcName {
-		case "case":
+		case "cases":
 			switch len(rv.args) {
 			case 1:
 				ctx.cases = append([]elfs{{cond: rv.args[0]}}, ctx.cases...)
@@ -1183,11 +1183,11 @@ func compileSwitch(ctx *switchCtx, v *accessVal) bool {
 				ctx.cases = append([]elfs{{cond: rv.args[0], Do: rv.args[1]}}, ctx.cases...)
 			}
 
-		case "default":
+		case "defaults":
 			if len(rv.args) > 0 {
 				ctx.def = rv.args[0]
 			}
-		case "end":
+		case "ends":
 
 		default:
 			return false
@@ -1200,7 +1200,7 @@ func compileSwitch(ctx *switchCtx, v *accessVal) bool {
 		}
 		return true
 	case *funcVariable:
-		if lv.funcName == "switch" {
+		if lv.funcName == "switchs" {
 			ctx.sw = lv.args[0]
 			return true
 		} else {
@@ -1216,17 +1216,17 @@ func compileIF(ctx *ifctx, v *accessVal) bool {
 	switch rv := v.right.(type) {
 	case *objFuncVal:
 		switch rv.funcName {
-		case "then":
+		case "thens":
 			if len(rv.args) > 0 {
 				ctx.then = rv.args[0]
 			}
 
-		case "else":
+		case "elses":
 			if len(rv.args) > 0 {
 				ctx.EL = rv.args[0]
 			}
 
-		case "elseif":
+		case "elseifs":
 			switch len(rv.args) {
 			case 1:
 				ctx.Elfs = append([]elfs{{
@@ -1240,7 +1240,7 @@ func compileIF(ctx *ifctx, v *accessVal) bool {
 				}}, ctx.Elfs...)
 			}
 
-		case "end":
+		case "ends":
 
 		default:
 			return false
@@ -1253,7 +1253,7 @@ func compileIF(ctx *ifctx, v *accessVal) bool {
 		}
 		return true
 	case *funcVariable:
-		if lv.funcName == "if" {
+		if lv.funcName == "ifs" {
 
 			switch len(lv.args) {
 			case 1:

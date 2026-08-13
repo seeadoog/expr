@@ -442,13 +442,13 @@ func TestHTTP(t *testing.T) {
    "header2 = new()::set('content-type', 'text/csv')",
 	"now = time_now(); date = '${now::year()}-${now::month()}-${now::day()}' ",
    "mmaps = {'name':'5','age':6,'bdy':{'xm':3},name:name,name::type() : name::type(),'xx1': age == 5?'gg':'xx'}",
-  "for($2.data,$val.id in const['aa','bb']? $$.status = $val.data.status ; $$::set($val.id,$val.data) : ( !$$.status? $$.status = $val.status ; $$.result = $val.data : _))",
+  "foreach($2.data,$val.id in const['aa','bb']? $$.status = $val.data.status ; $$::set($val.id,$val.data) : ( !$$.status? $$.status = $val.status ; $$.result = $val.data : _))",
   "hddef =  {name: 'hello', age:36, bios: {name:'atm', age:34},'fail': name or 1}",
   "$2::delete('data')",
   "assd = adf or names or 4",
   "assd2 = adf or name or 4",
   "str2 = \"helloworld\" ",
-  "$map_to_str = {_ss}=>( _sb=str_builder(); for(_ss, _sb::write($key,'=',$val,';')); _sb::string()::trim_right(';') )",
+  "$map_to_str = {_ss}=>( _sb=str_builder(); foreach(_ss, _sb::write($key,'=',$val,';')); _sb::string()::trim_right(';') )",
   "mapstr1 = $map_to_str(kv.c)",
   "mapstr1 = $map_to_str(kv.c)",
   "callbool = nil::boolean()",
@@ -466,7 +466,7 @@ func TestHTTP(t *testing.T) {
   "kv::get('c')['e']='x2'",
   "$add = {$a,$b}=> $a + $b",
   "lmadd = $add(3,4)",
-  "sbb=str_builder(); {d:'x'}::for({k,v}=>sbb::write(k,v));sbbs=sbb::string()",
+  "sbb=str_builder(); {d:'x'}::foreach({k,v}=>sbb::write(k,v));sbbs=sbb::string()",
   "return(1)",
   "cbg=2"
 ]
@@ -933,7 +933,7 @@ func TestString(t *testing.T) {
 [
 "a = str_builder();b = a.write('hello').write('world','1').string()",
 "str=[1,2,'3'];d = join(str,'.')",
-"e={};for(mm,{k,v}=>e[k]=v)"
+"e={};foreach(mm,{k,v}=>e[k]=v)"
 ]
 `)
 	if err != nil {

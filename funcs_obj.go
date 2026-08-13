@@ -89,7 +89,7 @@ var (
 		"go":           true,
 		"repeat":       true,
 		"repeats":      true,
-		"for":          true,
+		"foreach":      true,
 		"len":          true,
 		"equals":       true,
 

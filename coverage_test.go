@@ -196,7 +196,7 @@ func TestStringConcat(t *testing.T) {
 
 // TestForLoop 覆盖 for + lambda 的累加路径（func + lambda 解析）。
 func TestForLoop(t *testing.T) {
-	got := mustEval(t, `sum = 0; for([1,2,3,4], v => sum = sum + v); sum`, nil)
+	got := mustEval(t, `sum = 0; foreach([1,2,3,4], v => sum = sum + v); sum`, nil)
 	if got != 10.0 {
 		t.Errorf("for sum = %v, want 10", got)
 	}

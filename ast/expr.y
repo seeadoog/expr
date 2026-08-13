@@ -92,11 +92,12 @@ Expr:
 	| '{' Ids '}' LAMB  Expr  {  $$.node = &Lambda{L: $2.strs , R:$5.node } }
 	| Expr LAMB '{' Expr '}'  {  $$.node = &Lambda2{L: $1.node , R:$4.node } }
 	| FOR IDENT ',' IDENT IN Expr  DO Expr END {  $$.node = &ForRange{KName: $2.str, VName:$4.str,Var:$6.node,Do:$8.node }   }
-	| IF Expr THEN Expr END   {  $$.node = &IfElse{Cond: $2.node,Then: $4.node } }
-	| IF Expr THEN Expr ELSE Expr END   {  $$.node = &IfElse{Cond: $2.node,Then: $4.node,Else: $6.node } }
-	| IF Expr THEN Expr Elseifs END {  $$.node = &IfElse{Cond: $2.node,Then: $4.node,Elseifs: $5.nodes } }
-	| IF Expr THEN Expr Elseifs ELSE Expr END {  $$.node = &IfElse{Cond: $2.node,Then: $4.node,Elseifs: $5.nodes ,Else: $7.node} }
-	| SWITCH Expr DO Cases END
+	| IF Expr THEN EExpr END   {  $$.node = &IfElse{Cond: $2.node,Then: $4.node } }
+	| IF Expr THEN EExpr ELSE EExpr END   {  $$.node = &IfElse{Cond: $2.node,Then: $4.node,Else: $6.node } }
+	| IF Expr THEN EExpr Elseifs END {  $$.node = &IfElse{Cond: $2.node,Then: $4.node,Elseifs: $5.nodes } }
+	| IF Expr THEN EExpr Elseifs ELSE EExpr END {  $$.node = &IfElse{Cond: $2.node,Then: $4.node,Elseifs: $5.nodes ,Else: $7.node} }
+	| SWITCH Expr Cases END { $$.node = &Switch{Var :$2.node , Cases: $3.nodes}}
+	| SWITCH Expr Cases DEFAULT ':' EExpr END { $$.node = &Switch{Var :$2.node , Cases: $3.nodes ,Default: $6.node}}
 
 //	| '(' ArgListOpt ')' LAMB  Expr  {  $$.node = &Lambda{L: $2.strs , R:$5.node } }
 //	| '(' ArgList ')' LAMB Expr %prec LAMB {  $$.node = &Lambda{L: $2.strs , R:$5.node } }
@@ -114,14 +115,18 @@ Elseifs:
     | Elseifs elseif { $$.nodes = append($1.nodes, $2.node)}
 
 elseif:
-    ELSEIF Expr THEN Expr  { $$.node = &ElseIf{Cond: $2.node ,Then: $4.node} }
+    ELSEIF Expr THEN EExpr  { $$.node = &ElseIf{Cond: $2.node ,Then: $4.node} }
 
 Cases:
-    Case
-    | Cases Case
+    Case { $$.nodes = []Node{$1.node}}
+    | Cases Case { $$.nodes = append($1.nodes,$2.node)}
 Case:
-    CASE Expr ':' Expr
-    | DEFAULT ':' Expr
+    CASE Expr ':' EExpr { $$.node = &Case{Var: $2.node, Do: $4.node}}
+
+ EExpr:
+    { $$.node = nil }
+    |Expr { $$.node = $1.node}
+
 
 Ids:
     Ident { $$.strs = []string{$1.str} }

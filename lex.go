@@ -74,10 +74,12 @@ func parseTokenizer(exp string) ([]tokenV, error) {
 		if t.currentStat == stateInString {
 			return nil, fmt.Errorf("string is not closed: '%s'  at %d:%d", string(t.tkn), t.Y(), t.X())
 		}
+		s := string(t.tkn)
 		t.tokens = append(t.tokens, tokenV{
-			tkn: string(t.tkn),
-			x:   t.X(),
-			y:   t.Y(),
+			tkn:  s,
+			x:    t.X(),
+			y:    t.Y(),
+			kind: t.getTknKind(s),
 		})
 	}
 	return t.tokens, nil
@@ -138,20 +140,26 @@ func (t *tokenizer) getTknKind(seg string) int {
 		kind = ast.IN
 	case "as":
 		kind = ast.AS
-		//case "end":
-		//	kind = ast.END
-		//case "do":
-		//	kind = ast.DO
-		//case "if":
-		//	kind = ast.IF
-		//case "else":
-		//	kind = ast.ELSE
-		//case "then":
-		//	kind = ast.THEN
-		//case "elseif":
-		//	kind = ast.ELSEIF
-		//case "for":
-		//	kind = ast.FOR
+	case "end":
+		kind = ast.END
+	case "do":
+		kind = ast.DO
+	case "if":
+		kind = ast.IF
+	case "else":
+		kind = ast.ELSE
+	case "then":
+		kind = ast.THEN
+	case "elseif":
+		kind = ast.ELSEIF
+	case "for":
+		kind = ast.FOR
+	case "case":
+		kind = ast.CASE
+	case "default":
+		kind = ast.DEFAULT
+	case "switch":
+		kind = ast.SWITCH
 	}
 	return kind
 }

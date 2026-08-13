@@ -1,0 +1,338 @@
+
+state 0
+	$accept: .Input $end 
+
+	IF  shift 8
+	IDENT  shift 7
+	.  error
+
+	Input  goto 1
+	Stmts  goto 2
+	Stmt  goto 3
+	If  goto 4
+	Assign  goto 5
+	FuncCall  goto 6
+
+state 1
+	$accept:  Input.$end 
+
+	$end  accept
+	.  error
+
+
+state 2
+	Input:  Stmts.    (1)
+	Stmts:  Stmts.Stmt 
+
+	IF  shift 8
+	IDENT  shift 7
+	.  reduce 1 (src line 15)
+
+	Stmt  goto 9
+	If  goto 4
+	Assign  goto 5
+	FuncCall  goto 6
+
+state 3
+	Stmts:  Stmt.    (2)
+	Stmt:  Stmt.';' 
+
+	';'  shift 10
+	.  reduce 2 (src line 18)
+
+
+state 4
+	Stmt:  If.    (4)
+
+	.  reduce 4 (src line 23)
+
+
+state 5
+	Stmt:  Assign.    (5)
+
+	.  reduce 5 (src line 25)
+
+
+state 6
+	Stmt:  FuncCall.    (7)
+
+	.  reduce 7 (src line 27)
+
+
+state 7
+	Stmt:  IDENT.'=' If 
+	FuncCall:  IDENT.'(' ')' 
+	Assign:  IDENT.'=' Expr 
+
+	'='  shift 11
+	'('  shift 12
+	.  error
+
+
+state 8
+	If:  IF.Expr THEN Stmts END 
+
+	IDENT  shift 14
+	'['  shift 16
+	.  error
+
+	FuncCall  goto 15
+	Expr  goto 13
+
+state 9
+	Stmts:  Stmts Stmt.    (3)
+	Stmt:  Stmt.';' 
+
+	';'  shift 10
+	.  reduce 3 (src line 20)
+
+
+state 10
+	Stmt:  Stmt ';'.    (6)
+
+	.  reduce 6 (src line 26)
+
+
+state 11
+	Stmt:  IDENT '='.If 
+	Assign:  IDENT '='.Expr 
+
+	IF  shift 8
+	IDENT  shift 14
+	'['  shift 16
+	.  error
+
+	If  goto 17
+	FuncCall  goto 15
+	Expr  goto 18
+
+state 12
+	FuncCall:  IDENT '('.')' 
+
+	')'  shift 19
+	.  error
+
+
+state 13
+	If:  IF Expr.THEN Stmts END 
+	Expr:  Expr.'+' Expr 
+	Expr:  Expr.'-' Expr 
+	Expr:  Expr.'.' Expr 
+
+	THEN  shift 20
+	'+'  shift 21
+	'-'  shift 22
+	'.'  shift 23
+	.  error
+
+
+state 14
+	Expr:  IDENT.    (10)
+	FuncCall:  IDENT.'(' ')' 
+
+	'('  shift 12
+	.  reduce 10 (src line 33)
+
+
+state 15
+	Expr:  FuncCall.    (14)
+
+	.  reduce 14 (src line 38)
+
+
+state 16
+	Expr:  '['.ArgListOpt ']' 
+	ArgListOpt: .    (18)
+
+	IDENT  shift 14
+	'['  shift 16
+	.  reduce 18 (src line 47)
+
+	FuncCall  goto 15
+	Expr  goto 26
+	ArgListOpt  goto 24
+	ArgList  goto 25
+
+state 17
+	Stmt:  IDENT '=' If.    (8)
+
+	.  reduce 8 (src line 28)
+
+
+state 18
+	Expr:  Expr.'+' Expr 
+	Expr:  Expr.'-' Expr 
+	Expr:  Expr.'.' Expr 
+	Assign:  IDENT '=' Expr.    (17)
+
+	'+'  shift 21
+	'-'  shift 22
+	'.'  shift 23
+	.  reduce 17 (src line 44)
+
+
+state 19
+	FuncCall:  IDENT '(' ')'.    (16)
+
+	.  reduce 16 (src line 41)
+
+
+state 20
+	If:  IF Expr THEN.Stmts END 
+
+	IF  shift 8
+	IDENT  shift 7
+	.  error
+
+	Stmts  goto 27
+	Stmt  goto 3
+	If  goto 4
+	Assign  goto 5
+	FuncCall  goto 6
+
+state 21
+	Expr:  Expr '+'.Expr 
+
+	IDENT  shift 14
+	'['  shift 16
+	.  error
+
+	FuncCall  goto 15
+	Expr  goto 28
+
+state 22
+	Expr:  Expr '-'.Expr 
+
+	IDENT  shift 14
+	'['  shift 16
+	.  error
+
+	FuncCall  goto 15
+	Expr  goto 29
+
+state 23
+	Expr:  Expr '.'.Expr 
+
+	IDENT  shift 14
+	'['  shift 16
+	.  error
+
+	FuncCall  goto 15
+	Expr  goto 30
+
+state 24
+	Expr:  '[' ArgListOpt.']' 
+
+	']'  shift 31
+	.  error
+
+
+state 25
+	ArgListOpt:  ArgList.    (19)
+	ArgList:  ArgList.',' Expr 
+
+	','  shift 32
+	.  reduce 19 (src line 48)
+
+
+state 26
+	Expr:  Expr.'+' Expr 
+	Expr:  Expr.'-' Expr 
+	Expr:  Expr.'.' Expr 
+	ArgList:  Expr.    (20)
+
+	'+'  shift 21
+	'-'  shift 22
+	'.'  shift 23
+	.  reduce 20 (src line 50)
+
+
+state 27
+	Stmts:  Stmts.Stmt 
+	If:  IF Expr THEN Stmts.END 
+
+	IF  shift 8
+	END  shift 33
+	IDENT  shift 7
+	.  error
+
+	Stmt  goto 9
+	If  goto 4
+	Assign  goto 5
+	FuncCall  goto 6
+
+state 28
+	Expr:  Expr.'+' Expr 
+	Expr:  Expr '+' Expr.    (11)
+	Expr:  Expr.'-' Expr 
+	Expr:  Expr.'.' Expr 
+
+	'.'  shift 23
+	.  reduce 11 (src line 35)
+
+
+state 29
+	Expr:  Expr.'+' Expr 
+	Expr:  Expr.'-' Expr 
+	Expr:  Expr '-' Expr.    (12)
+	Expr:  Expr.'.' Expr 
+
+	'.'  shift 23
+	.  reduce 12 (src line 36)
+
+
+state 30
+	Expr:  Expr.'+' Expr 
+	Expr:  Expr.'-' Expr 
+	Expr:  Expr.'.' Expr 
+	Expr:  Expr '.' Expr.    (13)
+
+	.  reduce 13 (src line 37)
+
+
+state 31
+	Expr:  '[' ArgListOpt ']'.    (15)
+
+	.  reduce 15 (src line 39)
+
+
+state 32
+	ArgList:  ArgList ','.Expr 
+
+	IDENT  shift 14
+	'['  shift 16
+	.  error
+
+	FuncCall  goto 15
+	Expr  goto 34
+
+state 33
+	If:  IF Expr THEN Stmts END.    (9)
+
+	.  reduce 9 (src line 30)
+
+
+state 34
+	Expr:  Expr.'+' Expr 
+	Expr:  Expr.'-' Expr 
+	Expr:  Expr.'.' Expr 
+	ArgList:  ArgList ',' Expr.    (21)
+
+	'+'  shift 21
+	'-'  shift 22
+	'.'  shift 23
+	.  reduce 21 (src line 52)
+
+
+18 terminals, 10 nonterminals
+22 grammar rules, 35/16000 states
+0 shift/reduce, 0 reduce/reduce conflicts reported
+59 working sets used
+memory: parser 32/240000
+30 extra closures
+47 shift entries, 1 exceptions
+23 goto entries
+13 entries saved by goto default
+Optimizer space used: output 51/240000
+51 table entries, 3 zero
+maximum spread: 18, maximum offset: 32

@@ -18,11 +18,11 @@ func TestNewReadOnlyVal(t *testing.T) {
 	assertEqual(t, c, "a1", "a1")
 	assertEqual(t, c, "m1", "hello")
 
-	parseAndExec(DefaultEnv, `readmap.for({k,v}=>_)`, c)
+	parseAndExec(DefaultEnv, `readmap.foreach({k,v}=>_)`, c)
 	assertEqual(t, c, "k", "name")
 	assertEqual(t, c, "v", "hello")
 
-	parseAndExec(DefaultEnv, `readarr.for({k,v}=>_)`, c)
+	parseAndExec(DefaultEnv, `readarr.foreach({k,v}=>_)`, c)
 	assertEqual(t, c, "k==0", true)
 	assertEqual(t, c, "v", "a1")
 

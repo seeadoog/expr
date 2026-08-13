@@ -264,3 +264,22 @@ func (f *ForRange) String() string {
 	//TODO implement me
 	return "for range"
 }
+
+type Case struct {
+	Var Node
+	Do  Node
+}
+
+func (c *Case) String() string {
+	return "case"
+}
+
+type Switch struct {
+	Var     Node
+	Cases   []Node
+	Default Node
+}
+
+func (s *Switch) String() string {
+	return "switch"
+}
