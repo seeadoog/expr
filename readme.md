@@ -213,7 +213,7 @@ arr.get(2)                    // 获取元素
 arr.slice(1, 3)               // 切片
 arr.sort(compare_func)        // 排序
 arr.all(condition)            // 过滤
-arr.for({k, v} => print(k, v)) // 遍历
+arr.foreach({k, v} => print(k, v)) // 遍历
 ```
 
 ### 8. 对象/Map 操作
@@ -239,7 +239,7 @@ obj.get('name')              // 获取值
 obj.set('key', 'value')      // 设置值
 obj.delete('key')            // 删除键
 obj.len()                    // 长度
-obj.for({k, v} => print(k, v)) // 遍历
+obj.foreach({k, v} => print(k, v)) // 遍历
 ```
 
 ### 9. 三元运算符
@@ -273,7 +273,7 @@ $func_def = {a, b} => (a + b)
 $func_def(1, 2)  // 调用自定义函数
 
 // Lambda 用于数组操作
-arr.for({k, v} => print(k, v))
+arr.foreach({k, v} => print(k, v))
 arr.all({item} => item > 10)
 ```
 
@@ -281,18 +281,11 @@ arr.all({item} => item > 10)
 
 ```go
 // if-elseif-else 链式调用
-if(a == 5, c = 5).
-  elseif(a == 6, c = 6).
-  elseif(a == 7, c = 8).
-  else(c = 9).
-  end()
-
-// switch-case
-switch(a).
-  case(1, c = 1).
-  case(2, c = 2).
-  default(c = 9).
-  end()
+if a == b then
+   c= d 
+elseif c == d then 
+   
+end 
 ```
 
 ### 12. 变量赋值
@@ -373,7 +366,7 @@ get(arr, index)              // 获取元素
 set(arr, index, value)       // 设置元素
 set_index(arr, index, value) // 同 set
 slice_cut(arr, start, end)   // 切片
-for(arr, lambda)             // 遍历
+foreach(arr, lambda)             // 遍历
 all(arr, condition)          // 过滤
 range(n)                     // 生成 0 到 n-1 的数组
 ```
