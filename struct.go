@@ -412,7 +412,7 @@ func callFunc(ctx *Context, fv reflect.Value, args []Val) (ress any) {
 
 		v, ok := structValConvert(ctx, argi, argv)
 		if !ok {
-			return newErrorf("faile to call '%s' arg  type is not support: %v", argi.Name(), argi.String())
+			return newErrorfWithCtx(ctx, "faile to call '%s' arg  type is not support: %v", argi.Name(), argi.String())
 		}
 		fvls = append(fvls, v)
 	}

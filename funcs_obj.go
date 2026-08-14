@@ -721,7 +721,7 @@ func init() {
 	//)
 	RegisterObjFunc[[]any](DefaultEnv, "all", func(ctx *Context, self any, args ...Val) any {
 		if len(args) != 1 {
-			return newErrorf("all expects 1 arg")
+			return newErrorfWithCtx(ctx, "all expects 1 arg")
 		}
 		dst := make([]any, 0, len(args))
 		forRangeExec(args[0], ctx, self, func(k, v any, val Val) any {
@@ -734,7 +734,7 @@ func init() {
 	}, 1, "all(cond)[]any")
 	RegisterObjFunc[[]any](DefaultEnv, "filter", func(ctx *Context, self any, args ...Val) any {
 		if len(args) != 1 {
-			return newErrorf("filter expects 1 arg")
+			return newErrorfWithCtx(ctx, "filter expects 1 arg")
 		}
 
 		dst := make([]any, 0, len(self.([]any)))
@@ -803,10 +803,10 @@ func init() {
 	SelfDefine1(DefaultEnv, "sort", func(ctx *Context, self []any, cond Val) any {
 		lm, ok := cond.(*lambda)
 		if !ok {
-			return newErrorf("sort expect lambda args")
+			return newErrorfWithCtx(ctx, "sort expect lambda args")
 		}
 		if len(lm.Lefts) != 2 {
-			return newErrorf("sort  lambda expect 2 args")
+			return newErrorfWithCtx(ctx, "sort  lambda expect 2 args")
 		}
 		if self == nil {
 			return nil

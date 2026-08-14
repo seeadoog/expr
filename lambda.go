@@ -203,7 +203,7 @@ func forRangeStruct(lv *lambda, ctx *Context, v reflect.Value, f func(k, v any, 
 		if ctx.IgnoreFuncNotFoundError {
 			return nil
 		}
-		return newErrorf("for range at known type %v", v.Type())
+		return newErrorfWithCtx(ctx, "for range at known type %v", v.Type())
 	}
 	return nil
 }
@@ -215,7 +215,7 @@ var (
 func RunLambda(ctx *Context, v Val, args ...any) any {
 	ctx.stackCallNum++
 	if ctx.stackCallNum > MaxStackCallNum {
-		return newErrorf("max func call number exceeded")
+		return newErrorfWithCtx(ctx, "max func call number exceeded")
 	}
 	lm, ok := v.(*lambda)
 	if !ok {

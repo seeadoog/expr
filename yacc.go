@@ -574,7 +574,7 @@ func (a *accessVal) Val(ctx *Context) any {
 			if ctx.IgnoreFuncNotFoundError {
 				return nil
 			}
-			return newErrorf("var '%s' type '%v' do not define func '%s' ", nameOf(a.left), reflect.TypeOf(self), v.funcName)
+			return newErrorfWithCtx(ctx, "var '%s' type '%v' do not define func '%s' ", nameOf(a.left), reflect.TypeOf(self), v.funcName)
 		}
 		//ff := f[v.funcName]
 		ff := f.get(v.funNameHash)
@@ -592,7 +592,7 @@ func (a *accessVal) Val(ctx *Context) any {
 			if ctx.IgnoreFuncNotFoundError {
 				return nil
 			}
-			return newErrorf("var '%s' type '%v' do not define func '%s'", nameOf(a.left), reflect.TypeOf(self), v.funcName)
+			return newErrorfWithCtx(ctx, "var '%s' type '%v' do not define func '%s'", nameOf(a.left), reflect.TypeOf(self), v.funcName)
 		}
 		return ff.fun(ctx, self, v.args...)
 	case *variable:
@@ -911,7 +911,7 @@ func (n *notNil) Val(c *Context) any {
 	if v != nil {
 		return v
 	}
-	return newErrorf("%v", nameOf(n.val)+" val is nil")
+	return newErrorfWithCtx(c, "%v", nameOf(n.val)+" val is nil")
 }
 
 func (n *notNil) Set(c *Context, val any) {
@@ -1313,7 +1313,7 @@ func (v *VariadicVal) ArrVal(ctx *Context) []any {
 func (v *VariadicVal) Val(c *Context) any {
 	//TODO implement me
 	//return v.v.Val(c)
-	return newErrorf("variadicVar called unexpeced: %s", nameOf(v.V))
+	return newErrorfWithCtx(c, "variadicVar called unexpeced: %s", nameOf(v.V))
 }
 
 func (v *VariadicVal) Set(c *Context, val any) {

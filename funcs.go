@@ -744,7 +744,7 @@ var jsonDecode = FuncDefine1(func(ctx *Context, a any) (res any) {
 	case nil:
 		return nil
 	}
-	return newErrorf("cannot decode type to json obj %s", reflect.TypeOf(a).String())
+	return newErrorfWithCtx(ctx, "cannot decode type to json obj %s", reflect.TypeOf(a).String())
 })
 
 var timeFormat = FuncDefine2(func(ctx *Context, tim time.Time, format string) any {
@@ -1094,7 +1094,7 @@ var funcFor ScriptFunc = func(ctx *Context, args ...Val) any {
 func lambaCall(lm *lambda, ctx *Context, as []Val) any {
 	ctx.stackCallNum++
 	if ctx.stackCallNum > MaxStackCallNum {
-		return newErrorf("max func call number exceeded")
+		return newErrorfWithCtx(ctx, "max func call number exceeded")
 	}
 
 	argNames := lm.Lefts
@@ -1136,7 +1136,7 @@ var funcLoop ScriptFunc = func(ctx *Context, args ...Val) any {
 		shouldContinue = args[0]
 		doVar = args[1]
 	default:
-		return newErrorf("func loop expects 1 or 2, got %d", len(args))
+		return newErrorfWithCtx(ctx, "func loop expects 1 or 2, got %d", len(args))
 	}
 	for BoolCond(shouldContinue.Val(ctx)) {
 		o := doVar.Val(ctx)
