@@ -215,7 +215,7 @@ var (
 func RunLambda(ctx *Context, v Val, args ...any) any {
 	ctx.stackCallNum++
 	if ctx.stackCallNum > MaxStackCallNum {
-		return newErrorfWithCtx(ctx, "max func call number exceeded")
+		return newErrorfWithCtx(ctx, "stack overflow")
 	}
 	lm, ok := v.(*lambda)
 	if !ok {
