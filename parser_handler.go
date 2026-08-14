@@ -34,6 +34,7 @@ func init() {
 	RegisterParseFunc(parseIFElse)
 	RegisterParseFunc(parserForRangeVal)
 	RegisterParseFunc(parseSwitchVar)
+	RegisterParseFunc(parseRangeValue)
 }
 
 func parseNodeString(e *Env, n *ast.String, isAccess bool, pc *ParserContext) (Val, error) {
@@ -706,12 +707,57 @@ func parseSwitchVar(e *Env, n *ast.Switch, isAccess bool, pc *ParserContext) (Va
 		if err != nil {
 			return nil, fmt.Errorf("parse switch case var error:%w %v", err, cas.Var)
 		}
+		_, ok := cavar.(*rangeValue)
+		if ok {
+			return parseSwitchRange(e, n, isAccess, pc)
+		}
 		var doval Val
 		if cas.Do != nil {
 			doval, err = e.parseValueFromNode(cas.Do, true, pc)
 			if err != nil {
 				return nil, fmt.Errorf("parse switch case do error:%w %v", err, cas.Do)
 			}
+		}
+
+		rs.cases = append(rs.cases, elfs{
+			cond: cavar,
+			Do:   doval,
+		})
+	}
+	if n.Default != nil {
+		defvar, err := e.parseValueFromNode(n.Default, false, pc)
+		if err != nil {
+			return nil, fmt.Errorf("parse switch default error:%w %v", err, n.Default)
+		}
+		rs.def = defvar
+	}
+	return rs, nil
+}
+
+func parseSwitchRange(e *Env, n *ast.Switch, isAccess bool, pc *ParserContext) (Val, error) {
+	varCond, err := e.parseValueFromNode(n.Var, false, pc)
+	if err != nil {
+		return nil, fmt.Errorf("parse switch var error:%w %v", err, n.Var)
+	}
+	rs := &switchRange{}
+	rs.sw = varCond
+	for _, node := range n.Cases {
+		cas := node.(*ast.Case)
+		cavar, err := e.parseValueFromNode(cas.Var, false, pc)
+		if err != nil {
+			return nil, fmt.Errorf("parse switch case var error:%w %v", err, cas.Var)
+		}
+		_, ok := cavar.(*rangeValue)
+		if !ok {
+			return nil, fmt.Errorf("parse switch  range case var error ,type should be a ~ b,but %v", cas.Var)
+		}
+		var doval Val
+		if cas.Do != nil {
+			doval, err = e.parseValueFromNode(cas.Do, true, pc)
+			if err != nil {
+				return nil, fmt.Errorf("parse switch case do error:%w %v", err, cas.Do)
+			}
+
 		}
 		rs.cases = append(rs.cases, elfs{
 			cond: cavar,
@@ -726,4 +772,12 @@ func parseSwitchVar(e *Env, n *ast.Switch, isAccess bool, pc *ParserContext) (Va
 		rs.def = defvar
 	}
 	return rs, nil
+}
+
+func parseRangeValue(e *Env, n *ast.RangeValue, isAccess bool, pc *ParserContext) (Val, error) {
+
+	return &rangeValue{
+		l: n.L,
+		r: n.R,
+	}, nil
 }

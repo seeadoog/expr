@@ -160,6 +160,8 @@ func (t *tokenizer) getTknKind(seg string) int {
 		kind = ast.DEFAULT
 	case "switch":
 		kind = ast.SWITCH
+	case "func":
+		kind = ast.FUNCTION
 	}
 	return kind
 }
@@ -180,7 +182,7 @@ func (t *tokenizer) appendId() {
 
 func (t *tokenizer) statStart(r rune) error {
 	switch r {
-	case '(', ')', ';', '{', '}', '[', ']', '%':
+	case '(', ')', ';', '{', '}', '[', ']', '%', '~':
 		t.appendToken(int(r), string(r))
 
 	case '?':

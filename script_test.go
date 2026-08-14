@@ -241,6 +241,21 @@ func BenchmarkExec(b *testing.B) {
 	fmt.Println(tb)
 }
 
+func BenchmarkExec2(b *testing.B) {
+	val, err := DefaultEnv.parseValueV(`aa`)
+	if err != nil {
+		panic(err)
+	}
+	c := DefaultEnv.NewContext(map[string]any{})
+
+	ev := ValToExpr(val)
+
+	//c.Exec()
+	for i := 0; i < b.N; i++ {
+		c.Exec(ev)
+	}
+}
+
 func BenchmarkParseExp(b *testing.B) {
 	for i := 0; i < b.N; i++ {
 		DefaultEnv.ParseFromJSONObj(`$.route = $.name == '500' && $.age > 30 ? '/abc/def' : '/default'`)

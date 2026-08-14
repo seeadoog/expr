@@ -766,7 +766,11 @@ func tryConvertToConst(val Val) (res Val) {
 		return res
 	case *setValue:
 		vv.val = tryConvertToConst(vv.val)
-		//convertExprReadOnlyVal(vv.val)
+	//convertExprReadOnlyVal(vv.val)
+	case *lambda:
+		return &constraint{
+			value: vv,
+		}
 	}
 	return val
 }
@@ -1394,6 +1398,7 @@ func (i *ifThenElse) Val(c *Context) any {
 			if elseif.Then != nil {
 				return elseif.Then.Val(c)
 			}
+			return nil
 		}
 	}
 	if i.Else != nil {
@@ -1404,4 +1409,18 @@ func (i *ifThenElse) Val(c *Context) any {
 
 func (i *ifThenElse) Set(c *Context, val any) {
 
+}
+
+type rangeValue struct {
+	l float64
+	r float64
+}
+
+func (r *rangeValue) Val(c *Context) any {
+	//TODO implement me
+	return nil
+}
+
+func (r *rangeValue) Set(c *Context, val any) {
+	//TODO implement me
 }

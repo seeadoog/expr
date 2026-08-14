@@ -312,6 +312,20 @@ type exp interface {
 	Exec(c *Context) error
 }
 
+type ValExpr struct {
+	val Val
+}
+
+func ValToExpr(val Val) Expr {
+	return &ValExpr{val: val}
+}
+
+func (v *ValExpr) Exec(c *Context) error {
+
+	o := v.val.Val(c)
+	return convertToError(o)
+}
+
 type Val interface {
 	Val(c *Context) any
 	parentValueSetter

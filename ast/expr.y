@@ -9,7 +9,7 @@ import (
 %}
 %token IDENT NUMBER STRING BOOL NIL EQ AND OR NOTEQ GT GTE LT LTE ORR ACC IF ELSE FOR IN ACC2 CONST LAMB ADDEQ SUBEQ MULEQ DIVEQ VARIADIC AS
 %left IDENT
-%left IF ELSE END DO ELSEIF THEN FOR SWITCH CASE DEFAULT
+%left IF ELSE END DO ELSEIF THEN FOR SWITCH CASE DEFAULT FUNCTION
 %left ';'
 %left LAMB
 %left AS
@@ -108,6 +108,9 @@ Expr:
 	| Expr IN Expr  { $$.node = &Binary{Op: "in",L:$1.node,R:$3.node } }
 	| Ident               { $$.node = $1.node }
 	| Primary             { yyVAL.node = yyS[yypt-0].node }
+	| FUNCTION Ident '(' Idss ')' EExpr END  {  $$.node = &Set{L:$2.node, R:&Lambda{L: $4.strs , R:$6.node }} }
+	| FUNCTION '(' Idss ')' EExpr END {  $$.node = &Lambda{L: $3.strs , R:$5.node } }
+	| NUMBER '~' NUMBER { $$.node = &RangeValue{L: $1.num , R: $3.num} }
 	;
 
 Elseifs:
@@ -132,6 +135,10 @@ Ids:
     Ident { $$.strs = []string{$1.str} }
     |Ids ',' Ident {  $$.strs = append($1.strs,$3.str) }
 
+Idss:
+       { $$.strs = []string{}}
+    |Ident { $$.strs = []string{$1.str} }
+    |Idss ',' Ident {  $$.strs = append($1.strs,$3.str) }
 Var:
     Expr ACC Ident  %prec ACC  { $$.node = &Access{L: $1.node,R:$3.node}}
     |Expr ACC ArrIndex  %prec ACC  { $$.node = &Access{L: $1.node,R:$3.node}}

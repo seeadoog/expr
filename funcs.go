@@ -1463,9 +1463,9 @@ var funcRand = FuncDefine1(func(ctx *Context, a float64) []byte {
 })
 
 var funcRandN = FuncDefine1(func(ctx *Context, a float64) float64 {
-	_randLock.Lock()
-	defer _randLock.Unlock()
-	return float64(_randseed.Intn(int(a)))
+
+	return float64(rand.Intn(int(a)))
+
 })
 
 var funcSetTo ScriptFunc = func(ctx *Context, args ...Val) any {
@@ -1631,17 +1631,49 @@ func (s *switchCtx) Set(c *Context, val any) {
 func (s *switchCtx) Val(c *Context) any {
 	v := s.sw.Val(c)
 	for _, e := range s.cases {
+
 		if e.cond.Val(c) == v {
 			if e.Do != nil {
 				return e.Do.Val(c)
 			}
 			return nil
 		}
+
 	}
 	if s.def != nil {
 		return s.def.Val(c)
 	}
 	return nil
+}
+
+type switchRange struct {
+	sw    Val
+	cases []elfs
+	def   Val
+}
+
+func (s *switchRange) Val(c *Context) any {
+	v := NumberOf(s.sw.Val(c))
+	for _, e := range s.cases {
+
+		rv := e.cond.(*rangeValue)
+
+		if rv.l <= v && v < rv.r {
+			if e.Do != nil {
+				return e.Do.Val(c)
+			}
+			return nil
+		}
+
+	}
+	if s.def != nil {
+		return s.def.Val(c)
+	}
+	return nil
+}
+
+func (s *switchRange) Set(c *Context, val any) {
+
 }
 
 func init() {

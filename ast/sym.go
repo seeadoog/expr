@@ -283,3 +283,12 @@ type Switch struct {
 func (s *Switch) String() string {
 	return "switch"
 }
+
+type RangeValue struct {
+	L float64
+	R float64
+}
+
+func (r *RangeValue) String() string {
+	return fmt.Sprintf("%v ~ %v", r.L, r.R)
+}
