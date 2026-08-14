@@ -26,6 +26,7 @@ type Context struct {
 	Debug                   bool
 	PanicWhenError          bool // if true, will panic when error occurs
 	Env                     *Env
+	stackCallNum            int // 防止无限递归
 }
 
 func (c *Context) Clone() *Context {
@@ -110,6 +111,7 @@ func (c *Context) Delete(key string) {
 func (c *Context) Reset() {
 	c.pctx = nil
 	c.returnVal = nil
+	c.stackCallNum = 0
 	c.table.reset()
 }
 
@@ -391,7 +393,7 @@ func (c *funcVariable) Val(ctx *Context) any {
 		if ctx.IgnoreFuncNotFoundError {
 			return nil
 		}
-		return newErrorf("function '%s' not found in table", c.funcName)
+		return newErrorfWithCtx(ctx, "function '%s' not found in table", c.funcName)
 	}
 	return c.fun(ctx, c.args...)
 }

@@ -1092,6 +1092,11 @@ var funcFor ScriptFunc = func(ctx *Context, args ...Val) any {
 }
 
 func lambaCall(lm *lambda, ctx *Context, as []Val) any {
+	ctx.stackCallNum++
+	if ctx.stackCallNum > MaxStackCallNum {
+		return newErrorf("max func call number exceeded")
+	}
+
 	argNames := lm.Lefts
 	newC := ctx
 	if ctx.NewCallEnv {
@@ -1109,7 +1114,9 @@ func lambaCall(lm *lambda, ctx *Context, as []Val) any {
 		}
 
 	}
-	return lm.Right.Val(newC)
+	res := lm.Right.Val(newC)
+	ctx.stackCallNum--
+	return res
 }
 
 var (
@@ -1678,25 +1685,25 @@ func (s *switchRange) Set(c *Context, val any) {
 
 func init() {
 	DefaultEnv.RegisterFunc("ifs", func(ctx *Context, args ...Val) any {
-		return newErrorf("'if' called unexpected: you may lose .ends() at end of if expr")
+		return newErrorfWithCtx(ctx, "'if' called unexpected: you may lose .ends() at end of if expr")
 		//return &ifctx{
 		//	cond: args[0],
 		//}
 	}, -1, WithArgsString("(cond,then?)"))
 
 	RegisterObjFunc[*ifctx](DefaultEnv, "thens", func(ctx *Context, self any, args ...Val) any {
-		return newErrorf("'then' called unexpected: you may lose .ends() at end of if expr")
+		return newErrorfWithCtx(ctx, "'then' called unexpected: you may lose .ends() at end of if expr")
 		//self.(*ifctx).then = args[0]
 		//return self
 	}, 1, "then(action)")
 	RegisterObjFunc[*ifctx](DefaultEnv, "elses", func(ctx *Context, self any, args ...Val) any {
-		return newErrorf("'else' called unexpected: you may lose .ends() at end of if expr")
+		return newErrorfWithCtx(ctx, "'else' called unexpected: you may lose .ends() at end of if expr")
 		//self.(*ifctx).EL = args[0]
 		//return self
 	}, 1, "else(action)")
 	RegisterObjFunc[*ifctx](DefaultEnv, "elseifs", func(ctx *Context, self any, args ...Val) any {
 
-		return newErrorf("'elseif' called unexpected: you may lose .ends() at end of if expr")
+		return newErrorfWithCtx(ctx, "'elseif' called unexpected: you may lose .ends() at end of if expr")
 		//
 		//f := self.(*ifctx)
 		//switch len(args) {

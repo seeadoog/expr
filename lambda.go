@@ -208,7 +208,15 @@ func forRangeStruct(lv *lambda, ctx *Context, v reflect.Value, f func(k, v any, 
 	return nil
 }
 
+var (
+	MaxStackCallNum = 1000
+)
+
 func RunLambda(ctx *Context, v Val, args ...any) any {
+	ctx.stackCallNum++
+	if ctx.stackCallNum > MaxStackCallNum {
+		return newErrorf("max func call number exceeded")
+	}
 	lm, ok := v.(*lambda)
 	if !ok {
 		return v.Val(ctx)
@@ -224,6 +232,7 @@ func RunLambda(ctx *Context, v Val, args ...any) any {
 	}
 	ret := lm.Right.Val(ctx)
 
+	ctx.stackCallNum--
 	va, ok := ret.(*Return)
 	if ok {
 		if len(va.Var) > 0 {

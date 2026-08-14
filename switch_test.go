@@ -155,7 +155,6 @@ $hd();
 func BenchmarkIFF(b *testing.B) {
 	c := DefaultEnv.NewContext(nil)
 	b.ReportAllocs()
-	c.SetByString("status", 4.0)
 	v, err := DefaultEnv.ParseValue(`
 
 app_id_rules = const {
@@ -177,6 +176,27 @@ $hd = app_id_rules["name"] or func()
 		a = 10
 	end;
 $hd();
+rule_table2 = const{
+	s1: {
+		name: func()
+				b = 1
+		       end,
+	},
+
+	s2: {
+  		name: func() 
+                   b = 2
+               end,
+        ass5: func()
+                   b = 3
+              end,
+    }
+};
+$hd = rule_table2["s1"]["name"];
+$hd();
+
+
+
 `)
 	if err != nil {
 		b.Fatal(err)
@@ -185,8 +205,10 @@ $hd();
 	for i := 0; i < b.N; i++ {
 
 		c.ExecValue(v)
+		c.Reset()
 
 	}
+
 }
 
 func TestConstLambda(t *testing.T) {
@@ -205,6 +227,15 @@ $hd = app_id_rules[name];
 $hd();
 
 app_id_rules.age = 1;
+
+
+rule_table2 = const{
+	s578902: {
+		name: func()
+				b = 1
+			  end
+	}
+}
 
 `)
 	if err != nil {

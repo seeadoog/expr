@@ -14,8 +14,7 @@ func (r *RuntimeError) Error() string {
 // newErrorf 创建错误（不带 Context，使用默认行为：panic）
 func newErrorf(format string, args ...interface{}) *Error {
 	err := &Error{Err: &RuntimeError{Err: fmt.Sprintf(format, args...)}}
-	// 默认行为：panic（保持向后兼容）
-	panic(err)
+	return err
 }
 
 // newErrorfWithCtx 创建错误（带 Context，根据 Context.PanicWhenError 决定是否 panic）
