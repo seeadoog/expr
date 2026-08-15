@@ -112,9 +112,8 @@ app_id_rules = const {
 	end,
 };
 
-$hd = app_id_rules["name"];
-$hd();
-
+call(app_id_rules["name"]);
+call(func() callVal  = 3 end)
 `
 	parseAndExec(DefaultEnv, str, c)
 	assertEqual(t, c, "c", 2.0)
@@ -133,6 +132,7 @@ $hd();
 	assertEqual(t, c, "sw1", 1.0)
 	assertEqual(t, c, "sw2", 2.0)
 	assertEqual(t, c, "funcexec", 1.0)
+	assertEqual(t, c, "callVal", 3.0)
 	assertDeepEqual(t, c, "m2", map[string]any{"name": "1", "age": "2"})
 
 	res := testing.Benchmark(func(b *testing.B) {
@@ -172,28 +172,7 @@ end
 
 };
 
-$hd = app_id_rules["name"] or func()
-		a = 10
-	end;
-$hd();
-rule_table2 = const{
-	s1: {
-		name: func()
-				b = 1
-		       end,
-	},
-
-	s2: {
-  		name: func() 
-                   b = 2
-               end,
-        ass5: func()
-                   b = 3
-              end,
-    }
-};
-$hd = rule_table2["s1"]["name"];
-$hd();
+call(app_id_rules["name"])
 
 
 
@@ -205,7 +184,6 @@ $hd();
 	for i := 0; i < b.N; i++ {
 
 		c.ExecValue(v)
-		c.Reset()
 
 	}
 
@@ -235,7 +213,7 @@ rule_table2 = const{
 				b = 1
 			  end
 	}
-}
+};
 
 `)
 	if err != nil {

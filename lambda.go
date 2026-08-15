@@ -261,6 +261,19 @@ func NewLambdaArgs(f func(ctx *Context, args ...Val) any) *LambdaVal {
 	}
 }
 
+func init() {
+	DefaultEnv.RegisterFunc("call", func(ctx *Context, args ...Val) any {
+		if len(args) == 0 {
+			return nil
+		}
+		f, ok := args[0].Val(ctx).(*LambdaVal)
+		if !ok {
+			return nil
+		}
+		return lambaCall(f, ctx, args[1:])
+	}, -1)
+}
+
 //a=5;b=5;a.for({a,b}=>a+b)
 //func (c *Context) stackSet(i int, val any) {
 //	i = c.sp - i
