@@ -112,7 +112,7 @@ state 3
 	Expr:  Ident.SUBEQ Expr 
 	Expr:  Ident.MULEQ Expr 
 	Expr:  Ident.DIVEQ Expr 
-	Expr:  Ident.    (59)
+	Expr:  Ident.    (60)
 	Primary:  Ident.'(' ArgListOpt ')' 
 
 	ADDEQ  shift 55
@@ -121,7 +121,7 @@ state 3
 	DIVEQ  shift 58
 	'='  shift 54
 	'('  shift 59
-	.  reduce 59 (src line 109)
+	.  reduce 60 (src line 110)
 
 
 state 4
@@ -145,14 +145,14 @@ state 5
 	Expr:  ArrIndex.SUBEQ Expr 
 	Expr:  ArrIndex.MULEQ Expr 
 	Expr:  ArrIndex.DIVEQ Expr 
-	Primary:  ArrIndex.    (89)
+	Primary:  ArrIndex.    (90)
 
 	ADDEQ  shift 66
 	SUBEQ  shift 67
 	MULEQ  shift 68
 	DIVEQ  shift 69
 	'='  shift 65
-	.  reduce 89 (src line 161)
+	.  reduce 90 (src line 162)
 
 
 state 6
@@ -212,7 +212,7 @@ state 7
 state 8
 	Expr:  '{'.Ids '}' LAMB Expr 
 	Primary:  '{'.KvsOpt '}' 
-	KvsOpt: .    (95)
+	KvsOpt: .    (96)
 
 	IDENT  shift 12
 	NUMBER  shift 16
@@ -229,7 +229,7 @@ state 8
 	'['  shift 21
 	'{'  shift 8
 	'('  shift 20
-	.  reduce 95 (src line 177)
+	.  reduce 96 (src line 178)
 
 	Expr  goto 77
 	Ident  goto 74
@@ -244,6 +244,7 @@ state 8
 
 state 9
 	Expr:  FOR.IDENT ',' IDENT IN Expr DO Expr END 
+	Expr:  FOR.IDENT IN Expr DO Expr END 
 
 	IDENT  shift 78
 	.  error
@@ -309,10 +310,10 @@ state 11
 
 state 12
 	Expr:  IDENT.LAMB Expr 
-	Ident:  IDENT.    (80)
+	Ident:  IDENT.    (81)
 
 	LAMB  shift 81
-	.  reduce 80 (src line 149)
+	.  reduce 81 (src line 150)
 
 
 state 13
@@ -343,9 +344,9 @@ state 13
 	Acc  goto 22
 
 state 14
-	Expr:  Primary.    (60)
+	Expr:  Primary.    (61)
 
-	.  reduce 60 (src line 110)
+	.  reduce 61 (src line 111)
 
 
 state 15
@@ -360,28 +361,28 @@ state 15
 
 state 16
 	Expr:  NUMBER.'~' NUMBER 
-	Primary:  NUMBER.    (81)
+	Primary:  NUMBER.    (82)
 
 	'~'  shift 86
-	.  reduce 81 (src line 152)
+	.  reduce 82 (src line 153)
 
 
 state 17
-	Primary:  BOOL.    (82)
-
-	.  reduce 82 (src line 154)
-
-
-state 18
-	Primary:  STRING.    (83)
+	Primary:  BOOL.    (83)
 
 	.  reduce 83 (src line 155)
 
 
-state 19
-	Primary:  NIL.    (84)
+state 18
+	Primary:  STRING.    (84)
 
 	.  reduce 84 (src line 156)
+
+
+state 19
+	Primary:  NIL.    (85)
+
+	.  reduce 85 (src line 157)
 
 
 state 20
@@ -413,7 +414,7 @@ state 20
 
 state 21
 	Primary:  '['.ArgListOpt ']' 
-	ArgListOpt: .    (101)
+	ArgListOpt: .    (102)
 
 	IDENT  shift 12
 	NUMBER  shift 16
@@ -430,7 +431,7 @@ state 21
 	'['  shift 21
 	'{'  shift 8
 	'('  shift 20
-	.  reduce 101 (src line 190)
+	.  reduce 102 (src line 191)
 
 	Expr  goto 90
 	Ident  goto 3
@@ -442,9 +443,9 @@ state 21
 	ArgList  goto 89
 
 state 22
-	Primary:  Acc.    (90)
+	Primary:  Acc.    (91)
 
-	.  reduce 90 (src line 162)
+	.  reduce 91 (src line 163)
 
 
 state 23
@@ -1119,7 +1120,7 @@ state 52
 state 53
 	Primary:  Expr '['.SliceN ':' SliceN ']' 
 	ArrIndex:  Expr '['.Expr ']' 
-	SliceN: .    (92)
+	SliceN: .    (93)
 
 	IDENT  shift 12
 	NUMBER  shift 16
@@ -1136,7 +1137,7 @@ state 53
 	'['  shift 21
 	'{'  shift 8
 	'('  shift 20
-	.  reduce 92 (src line 170)
+	.  reduce 93 (src line 171)
 
 	Expr  goto 119
 	Ident  goto 3
@@ -1283,7 +1284,7 @@ state 58
 
 state 59
 	Primary:  Ident '('.ArgListOpt ')' 
-	ArgListOpt: .    (101)
+	ArgListOpt: .    (102)
 
 	IDENT  shift 12
 	NUMBER  shift 16
@@ -1300,7 +1301,7 @@ state 59
 	'['  shift 21
 	'{'  shift 8
 	'('  shift 20
-	.  reduce 101 (src line 190)
+	.  reduce 102 (src line 191)
 
 	Expr  goto 90
 	Ident  goto 3
@@ -1691,8 +1692,8 @@ state 74
 	Expr:  Ident.SUBEQ Expr 
 	Expr:  Ident.MULEQ Expr 
 	Expr:  Ident.DIVEQ Expr 
-	Expr:  Ident.    (59)
-	Ids:  Ident.    (72)
+	Expr:  Ident.    (60)
+	Ids:  Ident.    (73)
 	Primary:  Ident.'(' ArgListOpt ')' 
 
 	ADDEQ  shift 55
@@ -1700,25 +1701,25 @@ state 74
 	MULEQ  shift 57
 	DIVEQ  shift 58
 	'='  shift 54
-	'}'  reduce 72 (src line 134)
-	','  reduce 72 (src line 134)
+	'}'  reduce 73 (src line 135)
+	','  reduce 73 (src line 135)
 	'('  shift 59
-	.  reduce 59 (src line 109)
+	.  reduce 60 (src line 110)
 
 
 state 75
-	KvsOpt:  Kvs.    (96)
+	KvsOpt:  Kvs.    (97)
 	Kvs:  Kvs.',' Kv 
 	Kvs:  Kvs.',' 
 
 	','  shift 139
-	.  reduce 96 (src line 179)
+	.  reduce 97 (src line 180)
 
 
 state 76
-	Kvs:  Kv.    (97)
+	Kvs:  Kv.    (98)
 
-	.  reduce 97 (src line 181)
+	.  reduce 98 (src line 182)
 
 
 state 77
@@ -1796,7 +1797,9 @@ state 77
 
 state 78
 	Expr:  FOR IDENT.',' IDENT IN Expr DO Expr END 
+	Expr:  FOR IDENT.IN Expr DO Expr END 
 
+	IN  shift 142
 	','  shift 141
 	.  error
 
@@ -1856,7 +1859,7 @@ state 79
 	LAMB  shift 50
 	VARIADIC  shift 46
 	AS  shift 43
-	THEN  shift 142
+	THEN  shift 143
 	';'  shift 34
 	'?'  shift 47
 	EQT  shift 31
@@ -1930,7 +1933,7 @@ state 80
 	LAMB  shift 50
 	VARIADIC  shift 46
 	AS  shift 43
-	CASE  shift 145
+	CASE  shift 146
 	';'  shift 34
 	'?'  shift 47
 	EQT  shift 31
@@ -1950,8 +1953,8 @@ state 80
 	'['  shift 53
 	.  error
 
-	Cases  goto 143
-	Case  goto 144
+	Cases  goto 144
+	Case  goto 145
 
 state 81
 	Expr:  IDENT LAMB.Expr 
@@ -1973,7 +1976,7 @@ state 81
 	'('  shift 20
 	.  error
 
-	Expr  goto 146
+	Expr  goto 147
 	Ident  goto 3
 	Var  goto 4
 	ArrIndex  goto 5
@@ -2010,7 +2013,7 @@ state 82
 	Expr:  Expr.NONIL 
 	Expr:  Expr.'@' 
 	Expr:  Expr.LAMB '{' Expr '}' 
-	Expr:  CONST Expr.    (57)
+	Expr:  CONST Expr.    (58)
 	Expr:  Expr.IN Expr 
 	Var:  Expr.ACC Ident 
 	Var:  Expr.ACC ArrIndex 
@@ -2018,36 +2021,36 @@ state 82
 	Primary:  Expr.'[' SliceN ':' SliceN ']' 
 	ArrIndex:  Expr.'[' Expr ']' 
 
-	.  reduce 57 (src line 107)
+	.  reduce 58 (src line 108)
 
 
 state 83
 	Expr:  FUNCTION Ident.'(' Idss ')' EExpr END 
 
-	'('  shift 147
+	'('  shift 148
 	.  error
 
 
 state 84
 	Expr:  FUNCTION '('.Idss ')' EExpr END 
-	Idss: .    (74)
+	Idss: .    (75)
 
 	IDENT  shift 85
-	.  reduce 74 (src line 138)
+	.  reduce 75 (src line 139)
 
-	Ident  goto 149
-	Idss  goto 148
+	Ident  goto 150
+	Idss  goto 149
 
 state 85
-	Ident:  IDENT.    (80)
+	Ident:  IDENT.    (81)
 
-	.  reduce 80 (src line 149)
+	.  reduce 81 (src line 150)
 
 
 state 86
 	Expr:  NUMBER '~'.NUMBER 
 
-	NUMBER  shift 150
+	NUMBER  shift 151
 	.  error
 
 
@@ -2120,24 +2123,24 @@ state 87
 	'@'  shift 49
 	NONIL  shift 48
 	'['  shift 53
-	')'  shift 151
+	')'  shift 152
 	.  error
 
 
 state 88
 	Primary:  '[' ArgListOpt.']' 
 
-	']'  shift 152
+	']'  shift 153
 	.  error
 
 
 state 89
-	ArgListOpt:  ArgList.    (102)
+	ArgListOpt:  ArgList.    (103)
 	ArgList:  ArgList.',' Expr 
 	ArgList:  ArgList.',' 
 
-	','  shift 153
-	.  reduce 102 (src line 192)
+	','  shift 154
+	.  reduce 103 (src line 193)
 
 
 state 90
@@ -2176,7 +2179,7 @@ state 90
 	Acc:  Expr.ACC Expr 
 	Primary:  Expr.'[' SliceN ':' SliceN ']' 
 	ArrIndex:  Expr.'[' Expr ']' 
-	ArgList:  Expr.    (103)
+	ArgList:  Expr.    (104)
 
 	EQ  shift 30
 	AND  shift 35
@@ -2209,7 +2212,7 @@ state 90
 	'@'  shift 49
 	NONIL  shift 48
 	'['  shift 53
-	.  reduce 103 (src line 195)
+	.  reduce 104 (src line 196)
 
 
 state 91
@@ -3304,6 +3307,7 @@ state 110
 	GTE  shift 39
 	LT  shift 40
 	LTE  shift 41
+	ORR  shift 42
 	ACC  shift 52
 	IN  shift 51
 	VARIADIC  shift 46
@@ -3385,7 +3389,7 @@ state 112
 	AS  shift 43
 	';'  shift 34
 	'?'  shift 47
-	':'  shift 154
+	':'  shift 155
 	EQT  shift 31
 	NOTEQT  shift 32
 	ADDADD  shift 44
@@ -3424,7 +3428,7 @@ state 113
 	'('  shift 20
 	.  error
 
-	Expr  goto 155
+	Expr  goto 156
 	Ident  goto 3
 	Var  goto 4
 	ArrIndex  goto 5
@@ -3462,7 +3466,7 @@ state 114
 	Expr:  Expr.'@' 
 	Expr:  Expr.LAMB '{' Expr '}' 
 	Expr:  Expr.IN Expr 
-	Expr:  Expr IN Expr.    (58)
+	Expr:  Expr IN Expr.    (59)
 	Var:  Expr.ACC Ident 
 	Var:  Expr.ACC ArrIndex 
 	Acc:  Expr.ACC Expr 
@@ -3484,7 +3488,7 @@ state 114
 	'@'  shift 49
 	NONIL  shift 48
 	'['  shift 53
-	.  reduce 58 (src line 108)
+	.  reduce 59 (src line 109)
 
 
 state 115
@@ -3493,17 +3497,17 @@ state 115
 	Expr:  Ident.SUBEQ Expr 
 	Expr:  Ident.MULEQ Expr 
 	Expr:  Ident.DIVEQ Expr 
-	Expr:  Ident.    (59)
-	Var:  Expr ACC Ident.    (77)
+	Expr:  Ident.    (60)
+	Var:  Expr ACC Ident.    (78)
 	Primary:  Ident.'(' ArgListOpt ')' 
 
-	ADDEQ  reduce 77 (src line 142)
-	SUBEQ  reduce 77 (src line 142)
-	MULEQ  reduce 77 (src line 142)
-	DIVEQ  reduce 77 (src line 142)
-	'='  reduce 77 (src line 142)
+	ADDEQ  reduce 78 (src line 143)
+	SUBEQ  reduce 78 (src line 143)
+	MULEQ  reduce 78 (src line 143)
+	DIVEQ  reduce 78 (src line 143)
+	'='  reduce 78 (src line 143)
 	'('  shift 59
-	.  reduce 59 (src line 109)
+	.  reduce 60 (src line 110)
 
 
 state 116
@@ -3512,15 +3516,15 @@ state 116
 	Expr:  ArrIndex.SUBEQ Expr 
 	Expr:  ArrIndex.MULEQ Expr 
 	Expr:  ArrIndex.DIVEQ Expr 
-	Var:  Expr ACC ArrIndex.    (78)
-	Primary:  ArrIndex.    (89)
+	Var:  Expr ACC ArrIndex.    (79)
+	Primary:  ArrIndex.    (90)
 
-	ADDEQ  reduce 78 (src line 144)
-	SUBEQ  reduce 78 (src line 144)
-	MULEQ  reduce 78 (src line 144)
-	DIVEQ  reduce 78 (src line 144)
-	'='  reduce 78 (src line 144)
-	.  reduce 89 (src line 161)
+	ADDEQ  reduce 79 (src line 145)
+	SUBEQ  reduce 79 (src line 145)
+	MULEQ  reduce 79 (src line 145)
+	DIVEQ  reduce 79 (src line 145)
+	'='  reduce 79 (src line 145)
+	.  reduce 90 (src line 162)
 
 
 state 117
@@ -3557,18 +3561,18 @@ state 117
 	Var:  Expr.ACC Ident 
 	Var:  Expr.ACC ArrIndex 
 	Acc:  Expr.ACC Expr 
-	Acc:  Expr ACC Expr.    (79)
+	Acc:  Expr ACC Expr.    (80)
 	Primary:  Expr.'[' SliceN ':' SliceN ']' 
 	ArrIndex:  Expr.'[' Expr ']' 
 
 	VARIADIC  shift 46
-	.  reduce 79 (src line 146)
+	.  reduce 80 (src line 147)
 
 
 state 118
 	Primary:  Expr '[' SliceN.':' SliceN ']' 
 
-	':'  shift 156
+	':'  shift 157
 	.  error
 
 
@@ -3607,7 +3611,7 @@ state 119
 	Var:  Expr.ACC ArrIndex 
 	Acc:  Expr.ACC Expr 
 	Primary:  Expr.'[' SliceN ':' SliceN ']' 
-	SliceN:  Expr.    (93)
+	SliceN:  Expr.    (94)
 	ArrIndex:  Expr.'[' Expr ']' 
 	ArrIndex:  Expr '[' Expr.']' 
 
@@ -3642,8 +3646,8 @@ state 119
 	'@'  shift 49
 	NONIL  shift 48
 	'['  shift 53
-	']'  shift 157
-	.  reduce 93 (src line 172)
+	']'  shift 158
+	.  reduce 94 (src line 173)
 
 
 state 120
@@ -3934,7 +3938,7 @@ state 124
 state 125
 	Primary:  Ident '(' ArgListOpt.')' 
 
-	')'  shift 158
+	')'  shift 159
 	.  error
 
 
@@ -4511,7 +4515,7 @@ state 135
 state 136
 	Expr:  '{' Ids '}'.LAMB Expr 
 
-	LAMB  shift 159
+	LAMB  shift 160
 	.  error
 
 
@@ -4521,17 +4525,17 @@ state 137
 	IDENT  shift 85
 	.  error
 
-	Ident  goto 160
+	Ident  goto 161
 
 state 138
-	Primary:  '{' KvsOpt '}'.    (87)
+	Primary:  '{' KvsOpt '}'.    (88)
 
-	.  reduce 87 (src line 159)
+	.  reduce 88 (src line 160)
 
 
 state 139
 	Kvs:  Kvs ','.Kv 
-	Kvs:  Kvs ','.    (99)
+	Kvs:  Kvs ','.    (100)
 
 	IDENT  shift 12
 	NUMBER  shift 16
@@ -4548,7 +4552,7 @@ state 139
 	'['  shift 21
 	'{'  shift 8
 	'('  shift 20
-	.  reduce 99 (src line 184)
+	.  reduce 100 (src line 185)
 
 	Expr  goto 77
 	Ident  goto 3
@@ -4556,7 +4560,7 @@ state 139
 	ArrIndex  goto 5
 	Primary  goto 14
 	Acc  goto 22
-	Kv  goto 161
+	Kv  goto 162
 
 state 140
 	Kv:  Expr ':'.Expr 
@@ -4578,7 +4582,7 @@ state 140
 	'('  shift 20
 	.  error
 
-	Expr  goto 162
+	Expr  goto 163
 	Ident  goto 3
 	Var  goto 4
 	ArrIndex  goto 5
@@ -4588,16 +4592,12 @@ state 140
 state 141
 	Expr:  FOR IDENT ','.IDENT IN Expr DO Expr END 
 
-	IDENT  shift 163
+	IDENT  shift 164
 	.  error
 
 
 state 142
-	Expr:  IF Expr THEN.EExpr END 
-	Expr:  IF Expr THEN.EExpr ELSE EExpr END 
-	Expr:  IF Expr THEN.EExpr Elseifs END 
-	Expr:  IF Expr THEN.EExpr Elseifs ELSE EExpr END 
-	EExpr: .    (70)
+	Expr:  FOR IDENT IN.Expr DO Expr END 
 
 	IDENT  shift 12
 	NUMBER  shift 16
@@ -4614,35 +4614,66 @@ state 142
 	'['  shift 21
 	'{'  shift 8
 	'('  shift 20
-	.  reduce 70 (src line 129)
+	.  error
 
 	Expr  goto 165
 	Ident  goto 3
 	Var  goto 4
 	ArrIndex  goto 5
-	EExpr  goto 164
 	Primary  goto 14
 	Acc  goto 22
 
 state 143
+	Expr:  IF Expr THEN.EExpr END 
+	Expr:  IF Expr THEN.EExpr ELSE EExpr END 
+	Expr:  IF Expr THEN.EExpr Elseifs END 
+	Expr:  IF Expr THEN.EExpr Elseifs ELSE EExpr END 
+	EExpr: .    (71)
+
+	IDENT  shift 12
+	NUMBER  shift 16
+	STRING  shift 18
+	BOOL  shift 17
+	NIL  shift 19
+	IF  shift 10
+	FOR  shift 9
+	CONST  shift 13
+	SWITCH  shift 11
+	FUNCTION  shift 15
+	'-'  shift 7
+	'!'  shift 6
+	'['  shift 21
+	'{'  shift 8
+	'('  shift 20
+	.  reduce 71 (src line 130)
+
+	Expr  goto 167
+	Ident  goto 3
+	Var  goto 4
+	ArrIndex  goto 5
+	EExpr  goto 166
+	Primary  goto 14
+	Acc  goto 22
+
+state 144
 	Expr:  SWITCH Expr Cases.END 
 	Expr:  SWITCH Expr Cases.DEFAULT ':' EExpr END 
 	Cases:  Cases.Case 
 
-	END  shift 166
-	CASE  shift 145
-	DEFAULT  shift 167
+	END  shift 168
+	CASE  shift 146
+	DEFAULT  shift 169
 	.  error
 
-	Case  goto 168
-
-state 144
-	Cases:  Case.    (67)
-
-	.  reduce 67 (src line 123)
-
+	Case  goto 170
 
 state 145
+	Cases:  Case.    (68)
+
+	.  reduce 68 (src line 124)
+
+
+state 146
 	Case:  CASE.Expr ':' EExpr 
 
 	IDENT  shift 12
@@ -4662,14 +4693,14 @@ state 145
 	'('  shift 20
 	.  error
 
-	Expr  goto 169
+	Expr  goto 171
 	Ident  goto 3
 	Var  goto 4
 	ArrIndex  goto 5
 	Primary  goto 14
 	Acc  goto 22
 
-state 146
+state 147
 	Expr:  Expr.'+' Expr 
 	Expr:  Expr.'-' Expr 
 	Expr:  Expr.'*' Expr 
@@ -4699,7 +4730,7 @@ state 146
 	Expr:  Expr.NONIL 
 	Expr:  Expr.'@' 
 	Expr:  Expr.LAMB '{' Expr '}' 
-	Expr:  IDENT LAMB Expr.    (56)
+	Expr:  IDENT LAMB Expr.    (57)
 	Expr:  Expr.IN Expr 
 	Var:  Expr.ACC Ident 
 	Var:  Expr.ACC ArrIndex 
@@ -4736,55 +4767,55 @@ state 146
 	'@'  shift 49
 	NONIL  shift 48
 	'['  shift 53
-	.  reduce 56 (src line 104)
+	.  reduce 57 (src line 105)
 
-
-state 147
-	Expr:  FUNCTION Ident '('.Idss ')' EExpr END 
-	Idss: .    (74)
-
-	IDENT  shift 85
-	.  reduce 74 (src line 138)
-
-	Ident  goto 149
-	Idss  goto 170
 
 state 148
+	Expr:  FUNCTION Ident '('.Idss ')' EExpr END 
+	Idss: .    (75)
+
+	IDENT  shift 85
+	.  reduce 75 (src line 139)
+
+	Ident  goto 150
+	Idss  goto 172
+
+state 149
 	Expr:  FUNCTION '(' Idss.')' EExpr END 
 	Idss:  Idss.',' Ident 
 
-	','  shift 172
-	')'  shift 171
+	','  shift 174
+	')'  shift 173
 	.  error
 
 
-state 149
-	Idss:  Ident.    (75)
-
-	.  reduce 75 (src line 140)
-
-
 state 150
-	Expr:  NUMBER '~' NUMBER.    (63)
+	Idss:  Ident.    (76)
 
-	.  reduce 63 (src line 113)
+	.  reduce 76 (src line 141)
 
 
 state 151
-	Primary:  '(' Expr ')'.    (86)
+	Expr:  NUMBER '~' NUMBER.    (64)
 
-	.  reduce 86 (src line 158)
+	.  reduce 64 (src line 114)
 
 
 state 152
-	Primary:  '[' ArgListOpt ']'.    (88)
+	Primary:  '(' Expr ')'.    (87)
 
-	.  reduce 88 (src line 160)
+	.  reduce 87 (src line 159)
 
 
 state 153
+	Primary:  '[' ArgListOpt ']'.    (89)
+
+	.  reduce 89 (src line 161)
+
+
+state 154
 	ArgList:  ArgList ','.Expr 
-	ArgList:  ArgList ','.    (105)
+	ArgList:  ArgList ','.    (106)
 
 	IDENT  shift 12
 	NUMBER  shift 16
@@ -4801,16 +4832,16 @@ state 153
 	'['  shift 21
 	'{'  shift 8
 	'('  shift 20
-	.  reduce 105 (src line 198)
+	.  reduce 106 (src line 199)
 
-	Expr  goto 173
+	Expr  goto 175
 	Ident  goto 3
 	Var  goto 4
 	ArrIndex  goto 5
 	Primary  goto 14
 	Acc  goto 22
 
-state 154
+state 155
 	Expr:  Expr '?' Expr ':'.Expr 
 
 	IDENT  shift 12
@@ -4830,14 +4861,14 @@ state 154
 	'('  shift 20
 	.  error
 
-	Expr  goto 174
+	Expr  goto 176
 	Ident  goto 3
 	Var  goto 4
 	ArrIndex  goto 5
 	Primary  goto 14
 	Acc  goto 22
 
-state 155
+state 156
 	Expr:  Expr.'+' Expr 
 	Expr:  Expr.'-' Expr 
 	Expr:  Expr.'*' Expr 
@@ -4906,13 +4937,13 @@ state 155
 	'@'  shift 49
 	NONIL  shift 48
 	'['  shift 53
-	'}'  shift 175
+	'}'  shift 177
 	.  error
 
 
-state 156
+state 157
 	Primary:  Expr '[' SliceN ':'.SliceN ']' 
-	SliceN: .    (92)
+	SliceN: .    (93)
 
 	IDENT  shift 12
 	NUMBER  shift 16
@@ -4929,29 +4960,29 @@ state 156
 	'['  shift 21
 	'{'  shift 8
 	'('  shift 20
-	.  reduce 92 (src line 170)
+	.  reduce 93 (src line 171)
 
-	Expr  goto 177
+	Expr  goto 179
 	Ident  goto 3
 	Var  goto 4
 	ArrIndex  goto 5
 	Primary  goto 14
 	Acc  goto 22
-	SliceN  goto 176
-
-state 157
-	ArrIndex:  Expr '[' Expr ']'.    (94)
-
-	.  reduce 94 (src line 174)
-
+	SliceN  goto 178
 
 state 158
-	Primary:  Ident '(' ArgListOpt ')'.    (85)
+	ArrIndex:  Expr '[' Expr ']'.    (95)
 
-	.  reduce 85 (src line 157)
+	.  reduce 95 (src line 175)
 
 
 state 159
+	Primary:  Ident '(' ArgListOpt ')'.    (86)
+
+	.  reduce 86 (src line 158)
+
+
+state 160
 	Expr:  '{' Ids '}' LAMB.Expr 
 
 	IDENT  shift 12
@@ -4971,26 +5002,26 @@ state 159
 	'('  shift 20
 	.  error
 
-	Expr  goto 178
+	Expr  goto 180
 	Ident  goto 3
 	Var  goto 4
 	ArrIndex  goto 5
 	Primary  goto 14
 	Acc  goto 22
 
-state 160
-	Ids:  Ids ',' Ident.    (73)
-
-	.  reduce 73 (src line 136)
-
-
 state 161
-	Kvs:  Kvs ',' Kv.    (98)
+	Ids:  Ids ',' Ident.    (74)
 
-	.  reduce 98 (src line 183)
+	.  reduce 74 (src line 137)
 
 
 state 162
+	Kvs:  Kvs ',' Kv.    (99)
+
+	.  reduce 99 (src line 184)
+
+
+state 163
 	Expr:  Expr.'+' Expr 
 	Expr:  Expr.'-' Expr 
 	Expr:  Expr.'*' Expr 
@@ -5026,7 +5057,7 @@ state 162
 	Acc:  Expr.ACC Expr 
 	Primary:  Expr.'[' SliceN ':' SliceN ']' 
 	ArrIndex:  Expr.'[' Expr ']' 
-	Kv:  Expr ':' Expr.    (100)
+	Kv:  Expr ':' Expr.    (101)
 
 	EQ  shift 30
 	AND  shift 35
@@ -5059,29 +5090,15 @@ state 162
 	'@'  shift 49
 	NONIL  shift 48
 	'['  shift 53
-	.  reduce 100 (src line 186)
-
-
-state 163
-	Expr:  FOR IDENT ',' IDENT.IN Expr DO Expr END 
-
-	IN  shift 179
-	.  error
+	.  reduce 101 (src line 187)
 
 
 state 164
-	Expr:  IF Expr THEN EExpr.END 
-	Expr:  IF Expr THEN EExpr.ELSE EExpr END 
-	Expr:  IF Expr THEN EExpr.Elseifs END 
-	Expr:  IF Expr THEN EExpr.Elseifs ELSE EExpr END 
+	Expr:  FOR IDENT ',' IDENT.IN Expr DO Expr END 
 
-	ELSE  shift 181
-	END  shift 180
-	ELSEIF  shift 184
+	IN  shift 181
 	.  error
 
-	Elseifs  goto 182
-	elseif  goto 183
 
 state 165
 	Expr:  Expr.'+' Expr 
@@ -5113,8 +5130,95 @@ state 165
 	Expr:  Expr.NONIL 
 	Expr:  Expr.'@' 
 	Expr:  Expr.LAMB '{' Expr '}' 
+	Expr:  FOR IDENT IN Expr.DO Expr END 
 	Expr:  Expr.IN Expr 
-	EExpr:  Expr.    (71)
+	Var:  Expr.ACC Ident 
+	Var:  Expr.ACC ArrIndex 
+	Acc:  Expr.ACC Expr 
+	Primary:  Expr.'[' SliceN ':' SliceN ']' 
+	ArrIndex:  Expr.'[' Expr ']' 
+
+	EQ  shift 30
+	AND  shift 35
+	OR  shift 36
+	NOTEQ  shift 37
+	GT  shift 38
+	GTE  shift 39
+	LT  shift 40
+	LTE  shift 41
+	ORR  shift 42
+	ACC  shift 52
+	IN  shift 51
+	LAMB  shift 50
+	VARIADIC  shift 46
+	AS  shift 43
+	DO  shift 182
+	';'  shift 34
+	'?'  shift 47
+	EQT  shift 31
+	NOTEQT  shift 32
+	ADDADD  shift 44
+	SUBSUB  shift 45
+	'+'  shift 23
+	'-'  shift 24
+	'*'  shift 25
+	'/'  shift 26
+	'%'  shift 33
+	'&'  shift 28
+	'|'  shift 29
+	'^'  shift 27
+	'@'  shift 49
+	NONIL  shift 48
+	'['  shift 53
+	.  error
+
+
+state 166
+	Expr:  IF Expr THEN EExpr.END 
+	Expr:  IF Expr THEN EExpr.ELSE EExpr END 
+	Expr:  IF Expr THEN EExpr.Elseifs END 
+	Expr:  IF Expr THEN EExpr.Elseifs ELSE EExpr END 
+
+	ELSE  shift 184
+	END  shift 183
+	ELSEIF  shift 187
+	.  error
+
+	Elseifs  goto 185
+	elseif  goto 186
+
+state 167
+	Expr:  Expr.'+' Expr 
+	Expr:  Expr.'-' Expr 
+	Expr:  Expr.'*' Expr 
+	Expr:  Expr.'/' Expr 
+	Expr:  Expr.'^' Expr 
+	Expr:  Expr.'&' Expr 
+	Expr:  Expr.'|' Expr 
+	Expr:  Expr.EQ Expr 
+	Expr:  Expr.EQT Expr 
+	Expr:  Expr.NOTEQT Expr 
+	Expr:  Expr.'%' Expr 
+	Expr:  Expr.';' Expr 
+	Expr:  Expr.';' 
+	Expr:  Expr.AND Expr 
+	Expr:  Expr.OR Expr 
+	Expr:  Expr.NOTEQ Expr 
+	Expr:  Expr.GT Expr 
+	Expr:  Expr.GTE Expr 
+	Expr:  Expr.LT Expr 
+	Expr:  Expr.LTE Expr 
+	Expr:  Expr.ORR Expr 
+	Expr:  Expr.AS Ident 
+	Expr:  Expr.ADDADD 
+	Expr:  Expr.SUBSUB 
+	Expr:  Expr.VARIADIC 
+	Expr:  Expr.'?' Expr ':' Expr 
+	Expr:  Expr.NONIL 
+	Expr:  Expr.'@' 
+	Expr:  Expr.LAMB '{' Expr '}' 
+	Expr:  Expr.IN Expr 
+	EExpr:  Expr.    (72)
 	Var:  Expr.ACC Ident 
 	Var:  Expr.ACC ArrIndex 
 	Acc:  Expr.ACC Expr 
@@ -5152,29 +5256,29 @@ state 165
 	'@'  shift 49
 	NONIL  shift 48
 	'['  shift 53
-	.  reduce 71 (src line 131)
-
-
-state 166
-	Expr:  SWITCH Expr Cases END.    (54)
-
-	.  reduce 54 (src line 99)
-
-
-state 167
-	Expr:  SWITCH Expr Cases DEFAULT.':' EExpr END 
-
-	':'  shift 185
-	.  error
+	.  reduce 72 (src line 132)
 
 
 state 168
-	Cases:  Cases Case.    (68)
+	Expr:  SWITCH Expr Cases END.    (55)
 
-	.  reduce 68 (src line 125)
+	.  reduce 55 (src line 100)
 
 
 state 169
+	Expr:  SWITCH Expr Cases DEFAULT.':' EExpr END 
+
+	':'  shift 188
+	.  error
+
+
+state 170
+	Cases:  Cases Case.    (69)
+
+	.  reduce 69 (src line 126)
+
+
+state 171
 	Expr:  Expr.'+' Expr 
 	Expr:  Expr.'-' Expr 
 	Expr:  Expr.'*' Expr 
@@ -5228,7 +5332,7 @@ state 169
 	AS  shift 43
 	';'  shift 34
 	'?'  shift 47
-	':'  shift 186
+	':'  shift 189
 	EQT  shift 31
 	NOTEQT  shift 32
 	ADDADD  shift 44
@@ -5247,18 +5351,18 @@ state 169
 	.  error
 
 
-state 170
+state 172
 	Expr:  FUNCTION Ident '(' Idss.')' EExpr END 
 	Idss:  Idss.',' Ident 
 
-	','  shift 172
-	')'  shift 187
+	','  shift 174
+	')'  shift 190
 	.  error
 
 
-state 171
+state 173
 	Expr:  FUNCTION '(' Idss ')'.EExpr END 
-	EExpr: .    (70)
+	EExpr: .    (71)
 
 	IDENT  shift 12
 	NUMBER  shift 16
@@ -5275,25 +5379,25 @@ state 171
 	'['  shift 21
 	'{'  shift 8
 	'('  shift 20
-	.  reduce 70 (src line 129)
+	.  reduce 71 (src line 130)
 
-	Expr  goto 165
+	Expr  goto 167
 	Ident  goto 3
 	Var  goto 4
 	ArrIndex  goto 5
-	EExpr  goto 188
+	EExpr  goto 191
 	Primary  goto 14
 	Acc  goto 22
 
-state 172
+state 174
 	Idss:  Idss ','.Ident 
 
 	IDENT  shift 85
 	.  error
 
-	Ident  goto 189
+	Ident  goto 192
 
-state 173
+state 175
 	Expr:  Expr.'+' Expr 
 	Expr:  Expr.'-' Expr 
 	Expr:  Expr.'*' Expr 
@@ -5329,7 +5433,7 @@ state 173
 	Acc:  Expr.ACC Expr 
 	Primary:  Expr.'[' SliceN ':' SliceN ']' 
 	ArrIndex:  Expr.'[' Expr ']' 
-	ArgList:  ArgList ',' Expr.    (104)
+	ArgList:  ArgList ',' Expr.    (105)
 
 	EQ  shift 30
 	AND  shift 35
@@ -5362,10 +5466,10 @@ state 173
 	'@'  shift 49
 	NONIL  shift 48
 	'['  shift 53
-	.  reduce 104 (src line 197)
+	.  reduce 105 (src line 198)
 
 
-state 174
+state 176
 	Expr:  Expr.'+' Expr 
 	Expr:  Expr.'-' Expr 
 	Expr:  Expr.'*' Expr 
@@ -5433,20 +5537,20 @@ state 174
 	.  reduce 44 (src line 89)
 
 
-state 175
+state 177
 	Expr:  Expr LAMB '{' Expr '}'.    (48)
 
 	.  reduce 48 (src line 93)
 
 
-state 176
+state 178
 	Primary:  Expr '[' SliceN ':' SliceN.']' 
 
-	']'  shift 190
+	']'  shift 193
 	.  error
 
 
-state 177
+state 179
 	Expr:  Expr.'+' Expr 
 	Expr:  Expr.'-' Expr 
 	Expr:  Expr.'*' Expr 
@@ -5481,7 +5585,7 @@ state 177
 	Var:  Expr.ACC ArrIndex 
 	Acc:  Expr.ACC Expr 
 	Primary:  Expr.'[' SliceN ':' SliceN ']' 
-	SliceN:  Expr.    (93)
+	SliceN:  Expr.    (94)
 	ArrIndex:  Expr.'[' Expr ']' 
 
 	EQ  shift 30
@@ -5515,10 +5619,10 @@ state 177
 	'@'  shift 49
 	NONIL  shift 48
 	'['  shift 53
-	.  reduce 93 (src line 172)
+	.  reduce 94 (src line 173)
 
 
-state 178
+state 180
 	Expr:  Expr.'+' Expr 
 	Expr:  Expr.'-' Expr 
 	Expr:  Expr.'*' Expr 
@@ -5588,7 +5692,7 @@ state 178
 	.  reduce 47 (src line 92)
 
 
-state 179
+state 181
 	Expr:  FOR IDENT ',' IDENT IN.Expr DO Expr END 
 
 	IDENT  shift 12
@@ -5608,22 +5712,15 @@ state 179
 	'('  shift 20
 	.  error
 
-	Expr  goto 191
+	Expr  goto 194
 	Ident  goto 3
 	Var  goto 4
 	ArrIndex  goto 5
 	Primary  goto 14
 	Acc  goto 22
 
-state 180
-	Expr:  IF Expr THEN EExpr END.    (50)
-
-	.  reduce 50 (src line 95)
-
-
-state 181
-	Expr:  IF Expr THEN EExpr ELSE.EExpr END 
-	EExpr: .    (70)
+state 182
+	Expr:  FOR IDENT IN Expr DO.Expr END 
 
 	IDENT  shift 12
 	NUMBER  shift 16
@@ -5640,35 +5737,69 @@ state 181
 	'['  shift 21
 	'{'  shift 8
 	'('  shift 20
-	.  reduce 70 (src line 129)
+	.  error
 
-	Expr  goto 165
+	Expr  goto 195
 	Ident  goto 3
 	Var  goto 4
 	ArrIndex  goto 5
-	EExpr  goto 192
 	Primary  goto 14
 	Acc  goto 22
 
-state 182
+state 183
+	Expr:  IF Expr THEN EExpr END.    (51)
+
+	.  reduce 51 (src line 96)
+
+
+state 184
+	Expr:  IF Expr THEN EExpr ELSE.EExpr END 
+	EExpr: .    (71)
+
+	IDENT  shift 12
+	NUMBER  shift 16
+	STRING  shift 18
+	BOOL  shift 17
+	NIL  shift 19
+	IF  shift 10
+	FOR  shift 9
+	CONST  shift 13
+	SWITCH  shift 11
+	FUNCTION  shift 15
+	'-'  shift 7
+	'!'  shift 6
+	'['  shift 21
+	'{'  shift 8
+	'('  shift 20
+	.  reduce 71 (src line 130)
+
+	Expr  goto 167
+	Ident  goto 3
+	Var  goto 4
+	ArrIndex  goto 5
+	EExpr  goto 196
+	Primary  goto 14
+	Acc  goto 22
+
+state 185
 	Expr:  IF Expr THEN EExpr Elseifs.END 
 	Expr:  IF Expr THEN EExpr Elseifs.ELSE EExpr END 
 	Elseifs:  Elseifs.elseif 
 
-	ELSE  shift 194
-	END  shift 193
-	ELSEIF  shift 184
+	ELSE  shift 198
+	END  shift 197
+	ELSEIF  shift 187
 	.  error
 
-	elseif  goto 195
+	elseif  goto 199
 
-state 183
-	Elseifs:  elseif.    (64)
+state 186
+	Elseifs:  elseif.    (65)
 
-	.  reduce 64 (src line 116)
+	.  reduce 65 (src line 117)
 
 
-state 184
+state 187
 	elseif:  ELSEIF.Expr THEN EExpr 
 
 	IDENT  shift 12
@@ -5688,120 +5819,120 @@ state 184
 	'('  shift 20
 	.  error
 
-	Expr  goto 196
+	Expr  goto 200
 	Ident  goto 3
 	Var  goto 4
 	ArrIndex  goto 5
-	Primary  goto 14
-	Acc  goto 22
-
-state 185
-	Expr:  SWITCH Expr Cases DEFAULT ':'.EExpr END 
-	EExpr: .    (70)
-
-	IDENT  shift 12
-	NUMBER  shift 16
-	STRING  shift 18
-	BOOL  shift 17
-	NIL  shift 19
-	IF  shift 10
-	FOR  shift 9
-	CONST  shift 13
-	SWITCH  shift 11
-	FUNCTION  shift 15
-	'-'  shift 7
-	'!'  shift 6
-	'['  shift 21
-	'{'  shift 8
-	'('  shift 20
-	.  reduce 70 (src line 129)
-
-	Expr  goto 165
-	Ident  goto 3
-	Var  goto 4
-	ArrIndex  goto 5
-	EExpr  goto 197
-	Primary  goto 14
-	Acc  goto 22
-
-state 186
-	Case:  CASE Expr ':'.EExpr 
-	EExpr: .    (70)
-
-	IDENT  shift 12
-	NUMBER  shift 16
-	STRING  shift 18
-	BOOL  shift 17
-	NIL  shift 19
-	IF  shift 10
-	FOR  shift 9
-	CONST  shift 13
-	SWITCH  shift 11
-	FUNCTION  shift 15
-	'-'  shift 7
-	'!'  shift 6
-	'['  shift 21
-	'{'  shift 8
-	'('  shift 20
-	.  reduce 70 (src line 129)
-
-	Expr  goto 165
-	Ident  goto 3
-	Var  goto 4
-	ArrIndex  goto 5
-	EExpr  goto 198
-	Primary  goto 14
-	Acc  goto 22
-
-state 187
-	Expr:  FUNCTION Ident '(' Idss ')'.EExpr END 
-	EExpr: .    (70)
-
-	IDENT  shift 12
-	NUMBER  shift 16
-	STRING  shift 18
-	BOOL  shift 17
-	NIL  shift 19
-	IF  shift 10
-	FOR  shift 9
-	CONST  shift 13
-	SWITCH  shift 11
-	FUNCTION  shift 15
-	'-'  shift 7
-	'!'  shift 6
-	'['  shift 21
-	'{'  shift 8
-	'('  shift 20
-	.  reduce 70 (src line 129)
-
-	Expr  goto 165
-	Ident  goto 3
-	Var  goto 4
-	ArrIndex  goto 5
-	EExpr  goto 199
 	Primary  goto 14
 	Acc  goto 22
 
 state 188
+	Expr:  SWITCH Expr Cases DEFAULT ':'.EExpr END 
+	EExpr: .    (71)
+
+	IDENT  shift 12
+	NUMBER  shift 16
+	STRING  shift 18
+	BOOL  shift 17
+	NIL  shift 19
+	IF  shift 10
+	FOR  shift 9
+	CONST  shift 13
+	SWITCH  shift 11
+	FUNCTION  shift 15
+	'-'  shift 7
+	'!'  shift 6
+	'['  shift 21
+	'{'  shift 8
+	'('  shift 20
+	.  reduce 71 (src line 130)
+
+	Expr  goto 167
+	Ident  goto 3
+	Var  goto 4
+	ArrIndex  goto 5
+	EExpr  goto 201
+	Primary  goto 14
+	Acc  goto 22
+
+state 189
+	Case:  CASE Expr ':'.EExpr 
+	EExpr: .    (71)
+
+	IDENT  shift 12
+	NUMBER  shift 16
+	STRING  shift 18
+	BOOL  shift 17
+	NIL  shift 19
+	IF  shift 10
+	FOR  shift 9
+	CONST  shift 13
+	SWITCH  shift 11
+	FUNCTION  shift 15
+	'-'  shift 7
+	'!'  shift 6
+	'['  shift 21
+	'{'  shift 8
+	'('  shift 20
+	.  reduce 71 (src line 130)
+
+	Expr  goto 167
+	Ident  goto 3
+	Var  goto 4
+	ArrIndex  goto 5
+	EExpr  goto 202
+	Primary  goto 14
+	Acc  goto 22
+
+state 190
+	Expr:  FUNCTION Ident '(' Idss ')'.EExpr END 
+	EExpr: .    (71)
+
+	IDENT  shift 12
+	NUMBER  shift 16
+	STRING  shift 18
+	BOOL  shift 17
+	NIL  shift 19
+	IF  shift 10
+	FOR  shift 9
+	CONST  shift 13
+	SWITCH  shift 11
+	FUNCTION  shift 15
+	'-'  shift 7
+	'!'  shift 6
+	'['  shift 21
+	'{'  shift 8
+	'('  shift 20
+	.  reduce 71 (src line 130)
+
+	Expr  goto 167
+	Ident  goto 3
+	Var  goto 4
+	ArrIndex  goto 5
+	EExpr  goto 203
+	Primary  goto 14
+	Acc  goto 22
+
+state 191
 	Expr:  FUNCTION '(' Idss ')' EExpr.END 
 
-	END  shift 200
+	END  shift 204
 	.  error
 
 
-state 189
-	Idss:  Idss ',' Ident.    (76)
+state 192
+	Idss:  Idss ',' Ident.    (77)
 
-	.  reduce 76 (src line 141)
-
-
-state 190
-	Primary:  Expr '[' SliceN ':' SliceN ']'.    (91)
-
-	.  reduce 91 (src line 163)
+	.  reduce 77 (src line 142)
 
 
-state 191
+state 193
+	Primary:  Expr '[' SliceN ':' SliceN ']'.    (92)
+
+	.  reduce 92 (src line 164)
+
+
+state 194
 	Expr:  Expr.'+' Expr 
 	Expr:  Expr.'-' Expr 
 	Expr:  Expr.'*' Expr 
@@ -5853,7 +5984,7 @@ state 191
 	LAMB  shift 50
 	VARIADIC  shift 46
 	AS  shift 43
-	DO  shift 201
+	DO  shift 205
 	';'  shift 34
 	'?'  shift 47
 	EQT  shift 31
@@ -5874,22 +6005,95 @@ state 191
 	.  error
 
 
-state 192
-	Expr:  IF Expr THEN EExpr ELSE EExpr.END 
+state 195
+	Expr:  Expr.'+' Expr 
+	Expr:  Expr.'-' Expr 
+	Expr:  Expr.'*' Expr 
+	Expr:  Expr.'/' Expr 
+	Expr:  Expr.'^' Expr 
+	Expr:  Expr.'&' Expr 
+	Expr:  Expr.'|' Expr 
+	Expr:  Expr.EQ Expr 
+	Expr:  Expr.EQT Expr 
+	Expr:  Expr.NOTEQT Expr 
+	Expr:  Expr.'%' Expr 
+	Expr:  Expr.';' Expr 
+	Expr:  Expr.';' 
+	Expr:  Expr.AND Expr 
+	Expr:  Expr.OR Expr 
+	Expr:  Expr.NOTEQ Expr 
+	Expr:  Expr.GT Expr 
+	Expr:  Expr.GTE Expr 
+	Expr:  Expr.LT Expr 
+	Expr:  Expr.LTE Expr 
+	Expr:  Expr.ORR Expr 
+	Expr:  Expr.AS Ident 
+	Expr:  Expr.ADDADD 
+	Expr:  Expr.SUBSUB 
+	Expr:  Expr.VARIADIC 
+	Expr:  Expr.'?' Expr ':' Expr 
+	Expr:  Expr.NONIL 
+	Expr:  Expr.'@' 
+	Expr:  Expr.LAMB '{' Expr '}' 
+	Expr:  FOR IDENT IN Expr DO Expr.END 
+	Expr:  Expr.IN Expr 
+	Var:  Expr.ACC Ident 
+	Var:  Expr.ACC ArrIndex 
+	Acc:  Expr.ACC Expr 
+	Primary:  Expr.'[' SliceN ':' SliceN ']' 
+	ArrIndex:  Expr.'[' Expr ']' 
 
-	END  shift 202
+	EQ  shift 30
+	AND  shift 35
+	OR  shift 36
+	NOTEQ  shift 37
+	GT  shift 38
+	GTE  shift 39
+	LT  shift 40
+	LTE  shift 41
+	ORR  shift 42
+	ACC  shift 52
+	IN  shift 51
+	LAMB  shift 50
+	VARIADIC  shift 46
+	AS  shift 43
+	END  shift 206
+	';'  shift 34
+	'?'  shift 47
+	EQT  shift 31
+	NOTEQT  shift 32
+	ADDADD  shift 44
+	SUBSUB  shift 45
+	'+'  shift 23
+	'-'  shift 24
+	'*'  shift 25
+	'/'  shift 26
+	'%'  shift 33
+	'&'  shift 28
+	'|'  shift 29
+	'^'  shift 27
+	'@'  shift 49
+	NONIL  shift 48
+	'['  shift 53
 	.  error
 
 
-state 193
-	Expr:  IF Expr THEN EExpr Elseifs END.    (52)
+state 196
+	Expr:  IF Expr THEN EExpr ELSE EExpr.END 
 
-	.  reduce 52 (src line 97)
+	END  shift 207
+	.  error
 
 
-state 194
+state 197
+	Expr:  IF Expr THEN EExpr Elseifs END.    (53)
+
+	.  reduce 53 (src line 98)
+
+
+state 198
 	Expr:  IF Expr THEN EExpr Elseifs ELSE.EExpr END 
-	EExpr: .    (70)
+	EExpr: .    (71)
 
 	IDENT  shift 12
 	NUMBER  shift 16
@@ -5906,23 +6110,23 @@ state 194
 	'['  shift 21
 	'{'  shift 8
 	'('  shift 20
-	.  reduce 70 (src line 129)
+	.  reduce 71 (src line 130)
 
-	Expr  goto 165
+	Expr  goto 167
 	Ident  goto 3
 	Var  goto 4
 	ArrIndex  goto 5
-	EExpr  goto 203
+	EExpr  goto 208
 	Primary  goto 14
 	Acc  goto 22
 
-state 195
-	Elseifs:  Elseifs elseif.    (65)
+state 199
+	Elseifs:  Elseifs elseif.    (66)
 
-	.  reduce 65 (src line 118)
+	.  reduce 66 (src line 119)
 
 
-state 196
+state 200
 	Expr:  Expr.'+' Expr 
 	Expr:  Expr.'-' Expr 
 	Expr:  Expr.'*' Expr 
@@ -5974,7 +6178,7 @@ state 196
 	LAMB  shift 50
 	VARIADIC  shift 46
 	AS  shift 43
-	THEN  shift 204
+	THEN  shift 209
 	';'  shift 34
 	'?'  shift 47
 	EQT  shift 31
@@ -5995,33 +6199,33 @@ state 196
 	.  error
 
 
-state 197
+state 201
 	Expr:  SWITCH Expr Cases DEFAULT ':' EExpr.END 
 
-	END  shift 205
+	END  shift 210
 	.  error
 
 
-state 198
-	Case:  CASE Expr ':' EExpr.    (69)
+state 202
+	Case:  CASE Expr ':' EExpr.    (70)
 
-	.  reduce 69 (src line 126)
+	.  reduce 70 (src line 127)
 
 
-state 199
+state 203
 	Expr:  FUNCTION Ident '(' Idss ')' EExpr.END 
 
-	END  shift 206
+	END  shift 211
 	.  error
 
 
-state 200
-	Expr:  FUNCTION '(' Idss ')' EExpr END.    (62)
+state 204
+	Expr:  FUNCTION '(' Idss ')' EExpr END.    (63)
 
-	.  reduce 62 (src line 112)
+	.  reduce 63 (src line 113)
 
 
-state 201
+state 205
 	Expr:  FOR IDENT ',' IDENT IN Expr DO.Expr END 
 
 	IDENT  shift 12
@@ -6041,29 +6245,35 @@ state 201
 	'('  shift 20
 	.  error
 
-	Expr  goto 207
+	Expr  goto 212
 	Ident  goto 3
 	Var  goto 4
 	ArrIndex  goto 5
 	Primary  goto 14
 	Acc  goto 22
 
-state 202
-	Expr:  IF Expr THEN EExpr ELSE EExpr END.    (51)
+state 206
+	Expr:  FOR IDENT IN Expr DO Expr END.    (50)
 
-	.  reduce 51 (src line 96)
+	.  reduce 50 (src line 95)
 
 
-state 203
+state 207
+	Expr:  IF Expr THEN EExpr ELSE EExpr END.    (52)
+
+	.  reduce 52 (src line 97)
+
+
+state 208
 	Expr:  IF Expr THEN EExpr Elseifs ELSE EExpr.END 
 
-	END  shift 208
+	END  shift 213
 	.  error
 
 
-state 204
+state 209
 	elseif:  ELSEIF Expr THEN.EExpr 
-	EExpr: .    (70)
+	EExpr: .    (71)
 
 	IDENT  shift 12
 	NUMBER  shift 16
@@ -6080,29 +6290,29 @@ state 204
 	'['  shift 21
 	'{'  shift 8
 	'('  shift 20
-	.  reduce 70 (src line 129)
+	.  reduce 71 (src line 130)
 
-	Expr  goto 165
+	Expr  goto 167
 	Ident  goto 3
 	Var  goto 4
 	ArrIndex  goto 5
-	EExpr  goto 209
+	EExpr  goto 214
 	Primary  goto 14
 	Acc  goto 22
 
-state 205
-	Expr:  SWITCH Expr Cases DEFAULT ':' EExpr END.    (55)
+state 210
+	Expr:  SWITCH Expr Cases DEFAULT ':' EExpr END.    (56)
 
-	.  reduce 55 (src line 100)
-
-
-state 206
-	Expr:  FUNCTION Ident '(' Idss ')' EExpr END.    (61)
-
-	.  reduce 61 (src line 111)
+	.  reduce 56 (src line 101)
 
 
-state 207
+state 211
+	Expr:  FUNCTION Ident '(' Idss ')' EExpr END.    (62)
+
+	.  reduce 62 (src line 112)
+
+
+state 212
 	Expr:  Expr.'+' Expr 
 	Expr:  Expr.'-' Expr 
 	Expr:  Expr.'*' Expr 
@@ -6154,7 +6364,7 @@ state 207
 	LAMB  shift 50
 	VARIADIC  shift 46
 	AS  shift 43
-	END  shift 210
+	END  shift 215
 	';'  shift 34
 	'?'  shift 47
 	EQT  shift 31
@@ -6175,33 +6385,33 @@ state 207
 	.  error
 
 
-state 208
-	Expr:  IF Expr THEN EExpr Elseifs ELSE EExpr END.    (53)
+state 213
+	Expr:  IF Expr THEN EExpr Elseifs ELSE EExpr END.    (54)
 
-	.  reduce 53 (src line 98)
-
-
-state 209
-	elseif:  ELSEIF Expr THEN EExpr.    (66)
-
-	.  reduce 66 (src line 120)
+	.  reduce 54 (src line 99)
 
 
-state 210
+state 214
+	elseif:  ELSEIF Expr THEN EExpr.    (67)
+
+	.  reduce 67 (src line 121)
+
+
+state 215
 	Expr:  FOR IDENT ',' IDENT IN Expr DO Expr END.    (49)
 
 	.  reduce 49 (src line 94)
 
 
-67 terminals, 21 nonterminals
-106 grammar rules, 211/16000 states
+68 terminals, 21 nonterminals
+107 grammar rules, 216/16000 states
 0 shift/reduce, 0 reduce/reduce conflicts reported
 120 working sets used
-memory: parser 910/240000
-247 extra closures
-2281 shift entries, 13 exceptions
-103 goto entries
-345 entries saved by goto default
-Optimizer space used: output 1208/240000
-1208 table entries, 421 zero
-maximum spread: 67, maximum offset: 204
+memory: parser 936/240000
+252 extra closures
+2377 shift entries, 13 exceptions
+105 goto entries
+355 entries saved by goto default
+Optimizer space used: output 1288/240000
+1288 table entries, 434 zero
+maximum spread: 68, maximum offset: 209

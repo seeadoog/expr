@@ -32,3 +32,39 @@ func TestCache(t *testing.T) {
 	assertEqual2(t, err, nil)
 
 }
+
+func execVal(k int, v Val, c *Context) any {
+	switch k {
+	case 0:
+		RunLambda(c, v)
+	case 1:
+		return c.Get(v.(*variable).hash)
+	case 2:
+		return v.(*constraint).value
+	}
+	return v
+}
+
+func BenchmarkExecRaw(b *testing.B) {
+	e, err := DefaultEnv.parseValueV(`1`)
+	if err != nil {
+		b.Fatal(err)
+	}
+
+	c := DefaultEnv.NewContext(nil)
+	for i := 0; i < b.N; i++ {
+		execVal(2, e, c)
+	}
+}
+
+func BenchmarkExecRaw2(b *testing.B) {
+	e, err := DefaultEnv.parseValueV(`1`)
+	if err != nil {
+		b.Fatal(err)
+	}
+
+	c := DefaultEnv.NewContext(nil)
+	for i := 0; i < b.N; i++ {
+		c.ExecValue(e)
+	}
+}

@@ -113,7 +113,11 @@ app_id_rules = const {
 };
 
 call(app_id_rules["name"]);
-call(func() callVal  = 3 end)
+call(func() callVal  = 3 end);
+maps = {a:1,b:1};
+for _,v in maps do 
+	mapsv = v;
+end;
 `
 	parseAndExec(DefaultEnv, str, c)
 	assertEqual(t, c, "c", 2.0)
@@ -133,6 +137,7 @@ call(func() callVal  = 3 end)
 	assertEqual(t, c, "sw2", 2.0)
 	assertEqual(t, c, "funcexec", 1.0)
 	assertEqual(t, c, "callVal", 3.0)
+	assertEqual(t, c, "mapsv", 1.0)
 	assertDeepEqual(t, c, "m2", map[string]any{"name": "1", "age": "2"})
 
 	res := testing.Benchmark(func(b *testing.B) {

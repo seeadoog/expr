@@ -9,7 +9,7 @@ import (
 %}
 %token IDENT NUMBER STRING BOOL NIL EQ AND OR NOTEQ GT GTE LT LTE ORR ACC IF ELSE FOR IN ACC2 CONST LAMB ADDEQ SUBEQ MULEQ DIVEQ VARIADIC AS
 %left IDENT
-%left IF ELSE END DO ELSEIF THEN FOR SWITCH CASE DEFAULT FUNCTION
+%left IF ELSE END DO ELSEIF THEN FOR SWITCH CASE DEFAULT FUNCTION ANNO
 %left ';'
 %left LAMB
 %left AS
@@ -17,7 +17,7 @@ import (
 
 %right '?'
 %left ':'
-%left ORR
+%right ORR
 %right OR
 %right AND
 %left EQ   NOTEQ  GT GTE LT LTE IN  EQT NOTEQT
@@ -92,6 +92,7 @@ Expr:
 	| '{' Ids '}' LAMB  Expr  {  $$.node = &Lambda{L: $2.strs , R:$5.node } }
 	| Expr LAMB '{' Expr '}'  {  $$.node = &Lambda2{L: $1.node , R:$4.node } }
 	| FOR IDENT ',' IDENT IN Expr  DO Expr END {  $$.node = &ForRange{KName: $2.str, VName:$4.str,Var:$6.node,Do:$8.node }   }
+	| FOR IDENT IN Expr  DO Expr END {  $$.node = &ForRange{VName:$2.str,Var:$4.node,Do:$6.node }   }
 	| IF Expr THEN EExpr END   {  $$.node = &IfElse{Cond: $2.node,Then: $4.node } }
 	| IF Expr THEN EExpr ELSE EExpr END   {  $$.node = &IfElse{Cond: $2.node,Then: $4.node,Else: $6.node } }
 	| IF Expr THEN EExpr Elseifs END {  $$.node = &IfElse{Cond: $2.node,Then: $4.node,Elseifs: $5.nodes } }

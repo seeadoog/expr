@@ -670,8 +670,10 @@ func (f *forRangeVal) Set(c *Context, val any) {
 }
 
 func parserForRangeVal(e *Env, n *ast.ForRange, isAccess bool, pc *ParserContext) (Val, error) {
-
 	lefts := []string{n.KName, n.VName}
+	if n.KName == "" || n.KName == "_" {
+		lefts = []string{n.VName}
+	}
 	leftsHash := hashOfStrings(lefts)
 
 	doo, err := e.parseValueFromNode(n.Do, false, pc)

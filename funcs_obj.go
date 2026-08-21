@@ -549,7 +549,23 @@ func init() {
 		}
 		return dst
 	})
-
+	SelfDefine0(DefaultEnv, "clone", func(ctx *Context, self ReadOnlyMap) map[string]any {
+		dst := make(map[string]any, len(self))
+		for k, v := range self {
+			dst[k] = v
+		}
+		return dst
+	})
+	SelfDefine0(DefaultEnv, "clone", func(ctx *Context, self ReadOnlyArray) []any {
+		dst := make([]any, len(self))
+		copy(dst, self)
+		return dst
+	})
+	SelfDefine0(DefaultEnv, "clone", func(ctx *Context, self []any) []any {
+		dst := make([]any, len(self))
+		copy(dst, self)
+		return dst
+	})
 	//SelfDefine1(DefaultEnv, "equals", func(ctx *Context, self map[string]any, b map[string]any) bool {
 	//	return reflect.DeepEqual(self, b)
 	//})

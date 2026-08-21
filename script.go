@@ -1,14 +1,12 @@
 package expr
 
 import (
-	"context"
 	"encoding/json"
 	"errors"
 	"fmt"
 	"reflect"
 	"regexp"
 	"strings"
-	"time"
 )
 
 /*
@@ -17,7 +15,6 @@ import (
 */
 
 type Context struct {
-	pctx                    context.Context
 	table                   *envMap
 	returnVal               []any
 	IgnoreFuncNotFoundError bool
@@ -36,7 +33,6 @@ func (c *Context) Clone() *Context {
 		ForceType:               c.ForceType,
 		NewCallEnv:              c.NewCallEnv,
 		PanicWhenError:          c.PanicWhenError,
-		pctx:                    c.pctx,
 		Env:                     c.Env,
 		//funcs:                   c.funcs,
 	}
@@ -109,7 +105,6 @@ func (c *Context) Delete(key string) {
 }
 
 func (c *Context) Reset() {
-	c.pctx = nil
 	c.returnVal = nil
 	c.stackCallNum = 0
 	c.table.reset()
@@ -212,43 +207,6 @@ func (c *Context) GetTable() map[string]any {
 
 func (c *Context) Range(fn func(keyHash uint64, key string, val any) bool) {
 	c.table.foreach(fn)
-}
-
-func (c *Context) Done() <-chan struct{} {
-	if c.pctx == nil {
-		return nil
-	}
-	return c.pctx.Done()
-}
-
-func (c *Context) Err() error {
-	if c.pctx == nil {
-		return nil
-	}
-	return c.pctx.Err()
-}
-
-func (c *Context) Value(key interface{}) interface{} {
-
-	k, ok := key.(string)
-	if ok {
-		return c.GetByString(k)
-	}
-	if c.pctx == nil {
-		return nil
-	}
-	return c.pctx.Value(key)
-}
-
-func (c *Context) Deadline() (deadline time.Time, ok bool) {
-	if c.pctx == nil {
-		return deadline, false
-	}
-	return c.pctx.Deadline()
-}
-
-func (c *Context) SetContext(ctx context.Context) {
-	c.pctx = ctx
 }
 
 func (c *Context) SafeExecValue(v Val) (res any, err any) {

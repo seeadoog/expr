@@ -646,3 +646,11 @@ func TestStack(t *testing.T) {
 	}
 
 }
+
+func TestClone(t *testing.T) {
+	c := DefaultEnv.NewContext(nil)
+	c.SetByString("a1", ReadOnlyArray{1, 2, 3})
+	c.SetByString("m1", ReadOnlyMap{"na": 1})
+	assertDeepEqual(t, c, "a1.clone()", []any{1, 2, 3})
+	assertDeepEqual(t, c, "m1.clone()", map[string]any{"na": 1})
+}

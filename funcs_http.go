@@ -40,7 +40,7 @@ var httpRequest = FuncDefine5WithCtx(func(c *Context, method string, url string,
 	if timeoutMillSec <= 0 {
 		timeoutMillSec = 60000
 	}
-	ctx, cancel := context.WithTimeout(c, time.Duration(timeoutMillSec)*time.Millisecond)
+	ctx, cancel := context.WithTimeout(context.Background(), time.Duration(timeoutMillSec)*time.Millisecond)
 	defer cancel()
 	res := map[string]any{}
 	req, err := http.NewRequestWithContext(ctx, method, url, bytes.NewReader(bb))
@@ -135,7 +135,7 @@ func init() {
 		if timeoutMillSec <= 0 {
 			timeoutMillSec = 60000 * time.Millisecond
 		}
-		ctx, cancel := context.WithTimeout(c, timeoutMillSec)
+		ctx, cancel := context.WithTimeout(context.Background(), timeoutMillSec)
 		defer cancel()
 		res := &httpResp{}
 		req, err := http.NewRequestWithContext(ctx, method, url, bytes.NewReader(bb))
@@ -152,7 +152,7 @@ func init() {
 		})
 
 		ip := opt.GetString("ip")
-		cli, _ := httpLib.Get(c, key{url: url, ip: ip, sslVerify: opt.GetBoolDef("ssl_verify", true)}, nil)
+		cli, _ := httpLib.Get(context.Background(), key{url: url, ip: ip, sslVerify: opt.GetBoolDef("ssl_verify", true)}, nil)
 		resp, err := cli.Do(req)
 		if err != nil {
 			res.Err = err.Error()
