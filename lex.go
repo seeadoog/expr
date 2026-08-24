@@ -162,6 +162,8 @@ func (t *tokenizer) getTknKind(seg string) int {
 		kind = ast.SWITCH
 	case "func":
 		kind = ast.FUNCTION
+	case "break":
+		kind = ast.BREAK
 	}
 	return kind
 }

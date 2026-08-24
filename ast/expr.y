@@ -9,7 +9,7 @@ import (
 %}
 %token IDENT NUMBER STRING BOOL NIL EQ AND OR NOTEQ GT GTE LT LTE ORR ACC IF ELSE FOR IN ACC2 CONST LAMB ADDEQ SUBEQ MULEQ DIVEQ VARIADIC AS
 %left IDENT
-%left IF ELSE END DO ELSEIF THEN FOR SWITCH CASE DEFAULT FUNCTION ANNO
+%left IF ELSE END DO ELSEIF THEN FOR SWITCH CASE DEFAULT FUNCTION ANNO BREAK
 %left ';'
 %left LAMB
 %left AS
@@ -99,6 +99,7 @@ Expr:
 	| IF Expr THEN EExpr Elseifs ELSE EExpr END {  $$.node = &IfElse{Cond: $2.node,Then: $4.node,Elseifs: $5.nodes ,Else: $7.node} }
 	| SWITCH Expr Cases END { $$.node = &Switch{Var :$2.node , Cases: $3.nodes}}
 	| SWITCH Expr Cases DEFAULT ':' EExpr END { $$.node = &Switch{Var :$2.node , Cases: $3.nodes ,Default: $6.node}}
+	| BREAK { $$.node = &Break{}}
 
 //	| '(' ArgListOpt ')' LAMB  Expr  {  $$.node = &Lambda{L: $2.strs , R:$5.node } }
 //	| '(' ArgList ')' LAMB Expr %prec LAMB {  $$.node = &Lambda{L: $2.strs , R:$5.node } }
@@ -125,7 +126,8 @@ Cases:
     Case { $$.nodes = []Node{$1.node}}
     | Cases Case { $$.nodes = append($1.nodes,$2.node)}
 Case:
-    CASE Expr ':' EExpr { $$.node = &Case{Var: $2.node, Do: $4.node}}
+   // CASE Expr ':' EExpr { $$.node = &Case{Var: $2.node, Do: $4.node}}
+    CASE ArgList ':' EExpr { $$.node = &Case{Vars: $2.nodes, Do: $4.node} }
 
  EExpr:
     { $$.node = nil }

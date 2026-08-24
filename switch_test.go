@@ -1,7 +1,6 @@
 package expr
 
 import (
-	"fmt"
 	"testing"
 )
 
@@ -118,6 +117,30 @@ maps = {a:1,b:1};
 for _,v in maps do 
 	mapsv = v;
 end;
+
+for v in const [1,3,4,5] do
+	brv = v ; 
+	if v == 3 then 
+		break
+	end ;
+end;
+mulsw = 3;
+switch mulsw
+case 1,2,3:
+	mulv = 1;
+default:
+	mulv = 2;
+end;
+
+switch mulsw
+case 0~1, 2~4:
+	mulv2 = 1;
+case 5~9:
+    mulv2 = 2;
+default:
+    mulv2 = 3;
+end;
+
 `
 	parseAndExec(DefaultEnv, str, c)
 	assertEqual(t, c, "c", 2.0)
@@ -138,23 +161,26 @@ end;
 	assertEqual(t, c, "funcexec", 1.0)
 	assertEqual(t, c, "callVal", 3.0)
 	assertEqual(t, c, "mapsv", 1.0)
+	assertEqual(t, c, "brv", 3.0)
+	assertEqual(t, c, "mulv", 1.0)
+	assertEqual(t, c, "mulv2", 1.0)
 	assertDeepEqual(t, c, "m2", map[string]any{"name": "1", "age": "2"})
 
-	res := testing.Benchmark(func(b *testing.B) {
-		v, err := DefaultEnv.ParseValue(str)
-		if err != nil {
-			b.Fatal(err)
-		}
-		b.ReportAllocs()
-		for i := 0; i < b.N; i++ {
-			c.ExecValue(v)
-		}
-	})
-	fmt.Println(res)
-
-	fmt.Println("allocs/op:", res.AllocsPerOp())
-
-	fmt.Println("bytes/op:", res.AllocedBytesPerOp())
+	//res := testing.Benchmark(func(b *testing.B) {
+	//	v, err := DefaultEnv.ParseValue(str)
+	//	if err != nil {
+	//		b.Fatal(err)
+	//	}
+	//	b.ReportAllocs()
+	//	for i := 0; i < b.N; i++ {
+	//		c.ExecValue(v)
+	//	}
+	//})
+	//fmt.Println(res)
+	//
+	//fmt.Println("allocs/op:", res.AllocsPerOp())
+	//
+	//fmt.Println("bytes/op:", res.AllocedBytesPerOp())
 }
 
 func BenchmarkIFF(b *testing.B) {

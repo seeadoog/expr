@@ -266,8 +266,9 @@ func (f *ForRange) String() string {
 }
 
 type Case struct {
-	Var Node
-	Do  Node
+	//Var  Node
+	Vars []Node
+	Do   Node
 }
 
 func (c *Case) String() string {
@@ -291,4 +292,11 @@ type RangeValue struct {
 
 func (r *RangeValue) String() string {
 	return fmt.Sprintf("%v ~ %v", r.L, r.R)
+}
+
+type Break struct {
+}
+
+func (b *Break) String() string {
+	return "break"
 }

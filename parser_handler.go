@@ -35,6 +35,7 @@ func init() {
 	RegisterParseFunc(parserForRangeVal)
 	RegisterParseFunc(parseSwitchVar)
 	RegisterParseFunc(parseRangeValue)
+	RegisterParseFunc(parseBreak)
 }
 
 func parseNodeString(e *Env, n *ast.String, isAccess bool, pc *ParserContext) (Val, error) {
@@ -705,14 +706,6 @@ func parseSwitchVar(e *Env, n *ast.Switch, isAccess bool, pc *ParserContext) (Va
 	rs.sw = varCond
 	for _, node := range n.Cases {
 		cas := node.(*ast.Case)
-		cavar, err := e.parseValueFromNode(cas.Var, false, pc)
-		if err != nil {
-			return nil, fmt.Errorf("parse switch case var error:%w %v", err, cas.Var)
-		}
-		_, ok := cavar.(*rangeValue)
-		if ok {
-			return parseSwitchRange(e, n, isAccess, pc)
-		}
 		var doval Val
 		if cas.Do != nil {
 			doval, err = e.parseValueFromNode(cas.Do, true, pc)
@@ -721,10 +714,21 @@ func parseSwitchVar(e *Env, n *ast.Switch, isAccess bool, pc *ParserContext) (Va
 			}
 		}
 
-		rs.cases = append(rs.cases, elfs{
-			cond: cavar,
-			Do:   doval,
-		})
+		for _, casVar := range cas.Vars {
+			cavar, err := e.parseValueFromNode(casVar, false, pc)
+			if err != nil {
+				return nil, fmt.Errorf("parse switch case var error:%w %v", err, casVar)
+			}
+			_, ok := cavar.(*rangeValue)
+			if ok {
+				return parseSwitchRange(e, n, isAccess, pc)
+			}
+			rs.cases = append(rs.cases, elfs{
+				cond: cavar,
+				Do:   doval,
+			})
+		}
+
 	}
 	if n.Default != nil {
 		defvar, err := e.parseValueFromNode(n.Default, false, pc)
@@ -745,14 +749,6 @@ func parseSwitchRange(e *Env, n *ast.Switch, isAccess bool, pc *ParserContext) (
 	rs.sw = varCond
 	for _, node := range n.Cases {
 		cas := node.(*ast.Case)
-		cavar, err := e.parseValueFromNode(cas.Var, false, pc)
-		if err != nil {
-			return nil, fmt.Errorf("parse switch case var error:%w %v", err, cas.Var)
-		}
-		_, ok := cavar.(*rangeValue)
-		if !ok {
-			return nil, fmt.Errorf("parse switch  range case var error ,type should be a ~ b,but %v", cas.Var)
-		}
 		var doval Val
 		if cas.Do != nil {
 			doval, err = e.parseValueFromNode(cas.Do, true, pc)
@@ -761,10 +757,23 @@ func parseSwitchRange(e *Env, n *ast.Switch, isAccess bool, pc *ParserContext) (
 			}
 
 		}
-		rs.cases = append(rs.cases, elfs{
-			cond: cavar,
-			Do:   doval,
-		})
+		for _, casVar := range cas.Vars {
+
+			cavar, err := e.parseValueFromNode(casVar, false, pc)
+			if err != nil {
+				return nil, fmt.Errorf("parse switch case var error:%w %v", err, casVar)
+			}
+			_, ok := cavar.(*rangeValue)
+			if !ok {
+				return nil, fmt.Errorf("parse switch  range case var error ,type should be a ~ b,but %v", casVar)
+			}
+
+			rs.cases = append(rs.cases, elfs{
+				cond: cavar,
+				Do:   doval,
+			})
+		}
+
 	}
 	if n.Default != nil {
 		defvar, err := e.parseValueFromNode(n.Default, false, pc)
@@ -782,4 +791,8 @@ func parseRangeValue(e *Env, n *ast.RangeValue, isAccess bool, pc *ParserContext
 		l: n.L,
 		r: n.R,
 	}, nil
+}
+
+func parseBreak(e *Env, n *ast.Break, isacc bool, pc *ParserContext) (Val, error) {
+	return &breakVar{}, nil
 }
