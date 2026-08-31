@@ -1094,7 +1094,7 @@ var funcFor ScriptFunc = func(ctx *Context, args ...Val) any {
 func lambaCall(lm *lambda, ctx *Context, as []Val) any {
 	ctx.stackCallNum++
 	if ctx.stackCallNum > MaxStackCallNum {
-		return newErrorfWithCtx(ctx, "stack overflow")
+		return newErrorfWithCtx(ctx, "lambda call stack overflow")
 	}
 
 	argNames := lm.Lefts

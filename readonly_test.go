@@ -65,5 +65,5 @@ func parseAndExec(env *Env, valExpr string, ctx *Context) {
 	if err != nil {
 		panic(err)
 	}
-	v.Val(ctx)
+	ctx.ExecValue(v)
 }

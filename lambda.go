@@ -56,10 +56,10 @@ var (
 	mapKeys = []string{"$key", "$val"}
 )
 
-func hashOfStrings(ss []string) []uint64 {
+func hashOfStrings(e *Env, ss []string) []uint64 {
 	r := make([]uint64, len(ss))
 	for i, s := range ss {
-		r[i] = calcHash(s)
+		r[i] = e.calcHash(s)
 	}
 	return r
 }
@@ -78,7 +78,7 @@ func forRangeExec(doVal Val, ctx *Context, target any, f func(k, v any, val Val)
 			lm = &lambda{
 				Lefts:     mapKeys,
 				Right:     doVal,
-				leftsHash: hashOfStrings(mapKeys),
+				leftsHash: hashOfStrings(ctx.Env, mapKeys),
 			}
 
 		}
@@ -88,7 +88,7 @@ func forRangeExec(doVal Val, ctx *Context, target any, f func(k, v any, val Val)
 			lm = &lambda{
 				Lefts:     mapKeys,
 				Right:     doVal,
-				leftsHash: hashOfStrings(mapKeys),
+				leftsHash: hashOfStrings(ctx.Env, mapKeys),
 			}
 
 		}
@@ -98,7 +98,7 @@ func forRangeExec(doVal Val, ctx *Context, target any, f func(k, v any, val Val)
 			lm = &lambda{
 				Lefts:     arrKeys,
 				Right:     doVal,
-				leftsHash: hashOfStrings(mapKeys),
+				leftsHash: hashOfStrings(ctx.Env, mapKeys),
 			}
 
 		}
@@ -108,7 +108,7 @@ func forRangeExec(doVal Val, ctx *Context, target any, f func(k, v any, val Val)
 			lm = &lambda{
 				Lefts:     arrKeys,
 				Right:     doVal,
-				leftsHash: hashOfStrings(mapKeys),
+				leftsHash: hashOfStrings(ctx.Env, mapKeys),
 			}
 
 		}
@@ -120,7 +120,7 @@ func forRangeExec(doVal Val, ctx *Context, target any, f func(k, v any, val Val)
 			lm = &lambda{
 				Lefts:     mapKeys,
 				Right:     doVal,
-				leftsHash: hashOfStrings(mapKeys),
+				leftsHash: hashOfStrings(ctx.Env, mapKeys),
 			}
 		}
 		return forRangeStruct(lm, ctx, reflect.ValueOf(vv), f)
@@ -215,7 +215,7 @@ var (
 func RunLambda(ctx *Context, v Val, args ...any) any {
 	ctx.stackCallNum++
 	if ctx.stackCallNum > MaxStackCallNum {
-		return newErrorfWithCtx(ctx, "stack overflow")
+		return newErrorfWithCtx(ctx, "lambda call stack overflow")
 	}
 	lm, ok := v.(*lambda)
 	if !ok {

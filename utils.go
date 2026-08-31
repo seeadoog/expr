@@ -295,11 +295,8 @@ func calcHash(s string) uint64 {
 	//return xxhash.Sum64([]byte(s))
 }
 
-func CalcHash(s string) HashKey {
-	return HashKey{
-		Key:  s,
-		Hash: calcHash(s),
-	}
+func CalcHash(e *Env, s string) HashKey {
+	return e.NewHashKey(s)
 }
 
 type hashManager struct {

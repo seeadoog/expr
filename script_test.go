@@ -464,8 +464,8 @@ func TestHTTP(t *testing.T) {
   "assd2 = adf or name or 4",
   "str2 = \"helloworld\" ",
   "$map_to_str = {_ss}=>( _sb=str_builder(); foreach(_ss, _sb::write($key,'=',$val,';')); _sb::string()::trim_right(';') )",
-  "mapstr1 = $map_to_str(kv.c)",
-  "mapstr1 = $map_to_str(kv.c)",
+  "mapstr1 = call($map_to_str,kv.c)",
+  "mapstr1 = call($map_to_str,kv.c)",
   "callbool = nil::boolean()",
   "$.arr = slice_new(5)",
   "$.arr[3] = 'bb'",
@@ -480,7 +480,7 @@ func TestHTTP(t *testing.T) {
   "strfmt = '${name}_${name}'#",
   "kv::get('c')['e']='x2'",
   "$add = {$a,$b}=> $a + $b",
-  "lmadd = $add(3,4)",
+  "lmadd = call($add,3,4)",
   "sbb=str_builder(); {d:'x'}::foreach({k,v}=>sbb::write(k,v));sbbs=sbb::string()",
   "return(1)",
   "cbg=2"
@@ -591,6 +591,8 @@ func TestHTTP(t *testing.T) {
 	//fmt.Println(string(bs))
 
 	c.GetReturn()
+	fmt.Println(c.GetTable())
+
 }
 
 func assertEqual(t *testing.T, c *Context, k string, b any) {

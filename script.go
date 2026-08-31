@@ -42,10 +42,10 @@ func (c *Context) Clone() *Context {
 
 func (e *Env) NewContext(table map[string]any) *Context {
 
-	f := newEnvMap(8)
+	f := newEnvMap(16)
 	if table != nil {
 		for s, a := range table {
-			f.putHash(calcHash(s), s, a)
+			f.putHash(e.calcHash(s), s, a)
 		}
 	}
 
@@ -72,7 +72,7 @@ func (c *Context) Get(key uint64) interface{} {
 	return v
 }
 func (c *Context) GetByString(key string) interface{} {
-	v := c.table.getHash(calcHash(key))
+	v := c.table.getHash(c.Env.calcHash(key))
 	return v
 }
 
@@ -97,11 +97,11 @@ func (c *Context) Set(key uint64, skey string, value interface{}) {
 	c.table.putHashOnly(key, skey, value)
 }
 func (c *Context) SetByString(skey string, value interface{}) {
-	c.table.putHash(calcHash(skey), skey, value)
+	c.table.putHash(c.Env.calcHash(skey), skey, value)
 }
 
 func (c *Context) Delete(key string) {
-	c.table.del(calcHash(key))
+	c.table.del(c.Env.calcHash(key))
 }
 
 func (c *Context) Reset() {
@@ -343,10 +343,10 @@ func (c *funcVariable) Val(ctx *Context) any {
 		//		return f(ctx, c.args...)
 		//	}
 		//}
-		lm, ok := ctx.Get(c.funcNameHash).(*lambda)
-		if ok {
-			return lambaCall(lm, ctx, c.args)
-		}
+		//lm, ok := ctx.Get(c.funcNameHash).(*lambda)
+		//if ok {
+		//	return lambaCall(lm, ctx, c.args)
+		//}
 
 		if ctx.IgnoreFuncNotFoundError {
 			return nil
@@ -679,8 +679,8 @@ var parseForRange ExpParseFunc = func(ev *Env, o map[string]any, val any) (exp, 
 		target:  vv,
 		keyName: values[0][1],
 		valName: values[0][2],
-		keyHash: calcHash(values[0][1]),
-		valHash: calcHash(values[0][2]),
+		keyHash: ev.calcHash(values[0][1]),
+		valHash: ev.calcHash(values[0][2]),
 		do:      do,
 	}
 	return e, nil
@@ -1023,7 +1023,7 @@ var parseDefine = func(e *Env, o map[string]any, val any) (exp, error) {
 	defexp := &defineExpr{}
 	for key, val := range parentMap {
 		defexp.defs = append(defexp.defs, defineElem{
-			hash: CalcHash(key),
+			hash: e.NewHashKey(key),
 			val:  NewReadOnlyVal(val),
 		})
 	}

@@ -69,6 +69,7 @@ func docOfSelfFunc(vv any) []string {
 	})
 	return ss
 }
+
 func showDocOf(prefix string, vv any) string {
 	funs := []string{}
 

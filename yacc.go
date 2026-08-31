@@ -323,19 +323,15 @@ type stringFmtVal struct {
 
 var arrPool = sync.Pool{
 	New: func() interface{} {
-		return make([]string, 0, 3)
+		arr := make([]string, 0, 32)
+		return &arr
 	},
 }
 
 func (s *stringFmtVal) Val(c *Context) any {
 
-	//sb := strings.Builder{}
-	//for _, val := range s.vals {
-	//	sb.WriteString(StringOf(val.Val(c)))
-	//}
-	//return sb.String()
-	arr := arrPool.Get().([]string)
-	//arr := make([]string, 0, len(s.vals))
+	arrPtr := arrPool.Get().(*[]string)
+	arr := (*arrPtr)[:0]
 	for _, val := range s.vals {
 		arr = append(arr, StringOf(val.Val(c)))
 	}
@@ -347,7 +343,7 @@ func (s *stringFmtVal) Val(c *Context) any {
 	for _, s2 := range arr {
 		res = append(res, s2...)
 	}
-	arrPool.Put(arr[:0])
+	arrPool.Put(arrPtr)
 	return ToString(res)
 }
 

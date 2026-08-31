@@ -116,6 +116,7 @@ func TestHttp(t *testing.T) {
 	assertDeepEqual(t, c, "res2.h1", "h1")
 	assertDeepEqual(t, c, "res2.p1", "p1")
 	assertDeepEqual(t, c, "res2.body.name", "xn")
+
 }
 
 func TestTime(t *testing.T) {
@@ -376,13 +377,6 @@ func TestAddAdd(t *testing.T) {
 
 }
 
-func BenchmarkPutHash(b *testing.B) {
-	fm := newEnvMap(8)
-	for i := 0; i < b.N; i++ {
-		fm.putString("name0000000000", "gg")
-	}
-}
-
 type inter struct {
 	d, t unsafe.Pointer
 }
@@ -636,13 +630,14 @@ func TestStack(t *testing.T) {
 	c := DefaultEnv.NewContext(nil)
 	c.PanicWhenError = false
 	parseAndExec(DefaultEnv, `
-	$hd = func() $hd2() end; 
-	$hd2 = func() $hd() end;
-	$hd();
+	$hd = func() call($hd2) end; 
+	$hd2 = func() call($hd) end;
+	call($hd);
 	`, c)
 
+	fmt.Println(c.stackCallNum)
 	if c.stackCallNum != 1 {
-		t.Errorf("stack call number should be 1 but got %d", c.stackCallNum)
+		t.Errorf("stack call number should be 0 but got %d", c.stackCallNum)
 	}
 
 }

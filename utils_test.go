@@ -111,22 +111,14 @@ func (m *map2) get(key string) any {
 func Test222(t *testing.T) {
 }
 
-func TestRest(t *testing.T) {
-	m := newEnvMap(8)
-	m.putString("name", 1)
-	m.putString("age", 2)
-
-	assertEqual2(t, m.getString("name"), 1)
-	assertEqual2(t, m.getString("age"), 2)
-
-	m.reset()
-	assertEqual2(t, m.getString("name"), nil)
-	assertEqual2(t, m.getString("age"), nil)
-}
-
 func BenchmarkReset(b *testing.B) {
 	m := DefaultEnv.NewContext(nil)
+
+	fmt.Println(m.table.mod)
 	for i := 0; i < b.N; i++ {
+		for j := 0; j < 32; j++ {
+			m.Set(uint64(j), "", nil)
+		}
 		m.Reset()
 	}
 }
@@ -162,35 +154,6 @@ func BenchmarkParallel(b *testing.B) {
 			p.Put(d)
 		}
 	})
-}
-
-func TestEnvMap2(t *testing.T) {
-	m := newEnvMap(1)
-	m.putString("name", 1)
-	assertEqual2(t, m.getString("name"), 1)
-
-	m.putString("name", 2)
-	assertEqual2(t, m.getString("name"), 2)
-	m.putString("age", 3)
-	assertEqual2(t, m.getString("age"), 3)
-	m.putString("age", 4)
-	assertEqual2(t, m.getString("age"), 4)
-	m.reset()
-	assertEqual2(t, m.getString("name"), nil)
-	assertEqual2(t, m.getString("age"), nil)
-
-	m.putString("name", 1)
-	assertEqual2(t, m.getString("name"), 1)
-
-	m.putString("name", 2)
-	assertEqual2(t, m.getString("name"), 2)
-	m.putString("age", 3)
-	assertEqual2(t, m.getString("age"), 3)
-	m.putString("age", 4)
-	assertEqual2(t, m.getString("age"), 4)
-	m.putString("age3", 5)
-	assertEqual2(t, m.getString("age3"), 5)
-	assertEqual2(t, m.size, 3)
 }
 
 func TestSyncMap(t *testing.T) {

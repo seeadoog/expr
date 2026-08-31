@@ -88,7 +88,7 @@ func parseNodeVariable(e *Env, n *ast.Variable, isAccess bool, pc *ParserContext
 
 	return &variable{
 		varName: n.Name,
-		hash:    calcHash(n.Name),
+		hash:    e.calcHash(n.Name),
 	}, nil
 }
 
@@ -239,10 +239,10 @@ func parseNodeCall(e *Env, n *ast.Call, isAccess bool, pc *ParserContext) (Val, 
 	}
 
 	return &funcVariable{
-		funcNameHash: calcHash(n.Name),
-		funcName:     n.Name,
-		fun:          f,
-		args:         args,
+		//funcNameHash: calcHash(n.Name),
+		funcName: n.Name,
+		fun:      f,
+		args:     args,
 	}, nil
 }
 
@@ -519,7 +519,7 @@ func parseNodeLambda(e *Env, n *ast.Lambda, isAccess bool, pc *ParserContext) (V
 	lm := &lambda{
 		Lefts:     n.L,
 		Right:     r,
-		leftsHash: hashOfStrings(n.L),
+		leftsHash: hashOfStrings(e, n.L),
 	}
 	return lm, nil
 }
@@ -548,7 +548,7 @@ func parseNodeLambda2(e *Env, n *ast.Lambda2, isAccess bool, pc *ParserContext) 
 	default:
 		return nil, fmt.Errorf("lambda parse right array elem type is invaid:%s", reflect.TypeOf(n.R))
 	}
-	lm.leftsHash = hashOfStrings(lm.Lefts)
+	lm.leftsHash = hashOfStrings(e, lm.Lefts)
 
 	return lm, nil
 }
@@ -675,7 +675,7 @@ func parserForRangeVal(e *Env, n *ast.ForRange, isAccess bool, pc *ParserContext
 	if n.KName == "" || n.KName == "_" {
 		lefts = []string{n.VName}
 	}
-	leftsHash := hashOfStrings(lefts)
+	leftsHash := hashOfStrings(e, lefts)
 
 	doo, err := e.parseValueFromNode(n.Do, false, pc)
 	if err != nil {

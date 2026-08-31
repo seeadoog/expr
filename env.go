@@ -25,6 +25,13 @@ func (e *Env) calcHash(s string) uint64 {
 	return e.hashManager.getHash(s)
 }
 
+func (e *Env) NewHashKey(k string) HashKey {
+	return HashKey{
+		Key:  k,
+		Hash: e.calcHash(k),
+	}
+}
+
 func (e *Env) GetContextFromPool() *Context {
 	ctx, ok := e.pool.Get().(*Context)
 	if ok {
@@ -44,6 +51,7 @@ var (
 		allTypeFuncs: allTypeFuncs_,
 		isDefault:    true,
 		libs:         newEnvMap(1024 * 4),
+		hashManager:  &hashManager{},
 	}
 )
 

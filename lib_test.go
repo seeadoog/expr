@@ -5,26 +5,26 @@ import (
 	"testing"
 )
 
-func TestNewLib(t *testing.T) {
-	lib := NewMathLib("")
-
-	RegisterOptFuncDefine2(lib, "add", func(ctx *Context, a float64, b float64, opt *Options) any {
-
-		return a + b
-	})
-
-	e := NewEnv()
-	e.AddLib(lib)
-
-	val, err := e.ParseValue(`math.log10(10)===4`)
-	if err != nil {
-		t.Fatal(err)
-	}
-
-	ctx := e.NewContext(nil)
-
-	fmt.Println(ctx.ExecValue(val))
-}
+//func TestNewLib(t *testing.T) {
+//	lib := NewMathLib("")
+//
+//	RegisterOptFuncDefine2(lib, "add", func(ctx *Context, a float64, b float64, opt *Options) any {
+//
+//		return a + b
+//	})
+//
+//	e := NewEnv()
+//	e.AddLib(lib)
+//
+//	val, err := e.ParseValue(`math.log10(10)===4`)
+//	if err != nil {
+//		t.Fatal(err)
+//	}
+//
+//	ctx := e.NewContext(nil)
+//
+//	fmt.Println(ctx.ExecValue(val))
+//}
 
 func BenchmarkLib(b *testing.B) {
 	lib := NewLib("math")

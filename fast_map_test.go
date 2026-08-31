@@ -34,20 +34,6 @@ func TestFF(t *testing.T) {
 	})
 }
 
-func TestMapCap(t *testing.T) {
-
-	e := newEnvMap(8)
-	for i := 0; i < 6; i++ {
-		e.putString(strconv.Itoa(i), i)
-	}
-
-	//fmt.Println(len(e.data))
-	for i, datum := range e.data {
-		if len(datum) > 0 {
-			fmt.Println(len(datum), i)
-		}
-	}
-}
 func TestFuncMap(t *testing.T) {
 	f := newFuncMap(4)
 	f.puts("a", nil)
@@ -65,22 +51,22 @@ func TestFuncMap(t *testing.T) {
 }
 
 func TestEnvMap(t *testing.T) {
-	m := newEnvMap(8)
-
-	for i := 0; i < 10000; i++ {
-		ss := strconv.Itoa(i) + "xxxadsf"
-		ha := calcHash(ss)
-		m.putHash(ha, ss, i)
-	}
-	confilct := make(map[int][]int)
-	for i, datum := range m.data {
-		confilct[len(datum)] = append(confilct[len(datum)], i)
-	}
-	for i, i2 := range confilct {
-		if i == 3 {
-			fmt.Println(m.data[i2[2]][2].key)
-		}
-	}
+	//m := newEnvMap(8)
+	//
+	//for i := 0; i < 10000; i++ {
+	//	ss := strconv.Itoa(i) + "xxxadsf"
+	//	ha := calcHash(ss)
+	//	m.putHash(ha, ss, i)
+	//}
+	//confilct := make(map[int][]int)
+	//for i, datum := range m.data {
+	//	confilct[len(datum)] = append(confilct[len(datum)], i)
+	//}
+	//for i, i2 := range confilct {
+	//	if i == 3 {
+	//		fmt.Println(m.data[i2[2]][2].key)
+	//	}
+	//}
 
 }
 

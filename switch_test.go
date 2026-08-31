@@ -1,7 +1,10 @@
 package expr
 
 import (
+	"fmt"
 	"testing"
+
+	"github.com/ortuman/nuke"
 )
 
 func TestSwitchCases(t *testing.T) {
@@ -77,10 +80,10 @@ func $add ($1,$2)
 	$1+$2
 end;
 
-addv = $add(3,5);
+addv = call($add,3,5);
 
 $add2 = func($1,$2) $1 + $2 end;
-addv2 = $add2(3,4);
+addv2 = call($add2,3,4);
 
 
 swv = 30;
@@ -177,44 +180,35 @@ end;
 	//	}
 	//})
 	//fmt.Println(res)
-	//
+	////
 	//fmt.Println("allocs/op:", res.AllocsPerOp())
 	//
 	//fmt.Println("bytes/op:", res.AllocedBytesPerOp())
+
+	fmt.Println(DefaultEnv.calcHash("helsf"))
+	size := 0
+	DefaultEnv.hashManager.idHash.Range(func(key string, value uint64) bool {
+		//fmt.Println(key, value)
+		size++
+		return true
+	})
+	fmt.Println("idHashSize", size)
 }
 
 func BenchmarkIFF(b *testing.B) {
-	c := DefaultEnv.NewContext(nil)
 	b.ReportAllocs()
 	v, err := DefaultEnv.ParseValue(`
-
-app_id_rules = const {
-name: func()
-   a= 1
-end,
-
-"50043455": func()
-	a= 2
-end,
-
-"0899s3234": func()
-    a= 3
-end
-
-};
-
-call(app_id_rules["name"])
-
-
-
+$
 `)
 	if err != nil {
 		b.Fatal(err)
 	}
 
+	cc := DefaultEnv.NewContext(nil)
+	cc.SetByString("name", "hello")
 	for i := 0; i < b.N; i++ {
 
-		c.ExecValue(v)
+		cc.ExecValue(v)
 
 	}
 
@@ -233,7 +227,7 @@ app_id_rules = const {
 };
 
 $hd = app_id_rules[name];
-$hd();
+call($hd);
 
 app_id_rules.age = 1;
 
@@ -258,4 +252,75 @@ rule_table2 = const{
 	c.ExecValue(e)
 	assertEqual(t, c, "a", 2.0)
 	assertEqual(t, c, "app_id_rules.age", nil)
+
+	fmt.Println(DefaultEnv.calcHash("fsfsmls"))
+}
+
+var (
+	ccc float64
+)
+
+type Cctx struct {
+	nu nuke.Arena
+}
+
+type lval interface {
+	Val(c *Cctx) any
+}
+
+func add22(c *Cctx, a, b lval) any {
+	res := f64(a.Val(c)) + f64(b.Val(c))
+	ft := nuke.New[float64](c.nu)
+	*ft = res
+	return ft
+}
+
+type lcv struct {
+	v any
+}
+
+func (l *lcv) Val(c *Cctx) any {
+	return l.v
+}
+
+type addV2 struct {
+	a lval
+	b lval
+}
+
+func (a *addV2) Val(c *Cctx) any {
+	return add22(c, a.a, a.b)
+}
+
+func f64(v any) float64 {
+	switch v := v.(type) {
+	case float64:
+		return v
+	case *float64:
+		return *v
+	case int:
+		return float64(v)
+	default:
+		return 0
+	}
+}
+
+func BenchmarkVV(b *testing.B) {
+	a1 := &lcv{v: 2.0}
+	a2 := &lcv{v: 3.0}
+	c := &Cctx{
+		nu: nuke.NewMonotonicArena(1024, 4),
+	}
+	a3 := &addV2{a: a1, b: a2}
+	b.ReportAllocs()
+	for i := 0; i < b.N; i++ {
+		a3.Val(c)
+		c.nu.Reset(false)
+	}
+}
+
+func BenchmarkGET(b *testing.B) {
+	for i := 0; i < b.N; i++ {
+
+	}
 }

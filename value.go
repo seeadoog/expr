@@ -171,3 +171,38 @@ func (e exprValue) RangeArr(f func(k int, v any) bool) {
 		}
 	}
 }
+
+func (e exprValue) AnyArr() []any {
+	switch m := e.data.(type) {
+	case []any:
+		return m
+	case []float64:
+		d := make([]any, len(m))
+		for i, v := range m {
+			d[i] = v
+		}
+		return d
+	case []int:
+		d := make([]any, len(m))
+		for i, v := range m {
+			d[i] = v
+		}
+		return d
+	case []string:
+		d := make([]any, len(m))
+		for i, v := range m {
+			d[i] = v
+		}
+		return d
+	default:
+		v := reflect.ValueOf(e.data)
+		dst := make([]any, v.Len())
+		if v.Kind() == reflect.Slice {
+			for i := 0; i < v.Len(); i++ {
+				dst[i] = v.Index(i).Interface()
+			}
+			return dst
+		}
+		return nil
+	}
+}
