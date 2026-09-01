@@ -114,13 +114,14 @@ func Test222(t *testing.T) {
 func BenchmarkReset(b *testing.B) {
 	m := DefaultEnv.NewContext(nil)
 
-	fmt.Println(m.table.mod)
+	fmt.Println(m.stack.mod)
 	for i := 0; i < b.N; i++ {
-		for j := 0; j < 32; j++ {
-			m.Set(uint64(j), "", nil)
-		}
+		//for j := 0; j <= int(m.table.mod); j++ {
+		//	m.Set(uint64(j), "", nil)
+		//}
 		m.Reset()
 	}
+	fmt.Println(m.stack.mod)
 }
 
 func BenchmarkReuseVm(b *testing.B) {
@@ -350,36 +351,6 @@ func Benchmark_MapLogic(b *testing.B) {
 
 }
 
-func BenchmarkEqT(b *testing.B) {
-	env := NewEnv()
-
-	b.ReportAllocs()
-
-	env.AddLib(NewMathLib("math"))
-	v, err := env.ParseValue(`  
-math_abs(1)
-
-
-`)
-	if err != nil {
-		b.Fatal(err)
-	}
-
-	c := env.NewContext(nil)
-	c.SetByString("a", 1)
-
-	c.SetByString("$", map[string]any{
-		"name": "xb",
-		"age":  5,
-	})
-	fmt.Println(c.SafeExecValue(v))
-	for i := 0; i < b.N; i++ {
-
-		c.ExecValue(v)
-	}
-
-}
-
 func TestUTF(t *testing.T) {
 
 	s := "地方"
@@ -397,5 +368,9 @@ func TestUTF(t *testing.T) {
 
 		}
 	}
+
+}
+
+func TestFastMapClone(t *testing.T) {
 
 }

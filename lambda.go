@@ -42,10 +42,10 @@ func (lv *lambda) setMapKvForLambda(ctx *Context, k, v any) {
 	switch len(lv.Lefts) {
 	case 0:
 	case 1:
-		ctx.Set(lv.leftsHash[0], lv.Lefts[0], v)
+		ctx.Set(lv.leftsHash[0], v)
 	default:
-		ctx.Set(lv.leftsHash[0], lv.Lefts[0], k)
-		ctx.Set(lv.leftsHash[1], lv.Lefts[1], v)
+		ctx.Set(lv.leftsHash[0], k)
+		ctx.Set(lv.leftsHash[1], v)
 	}
 }
 
@@ -223,11 +223,11 @@ func RunLambda(ctx *Context, v Val, args ...any) any {
 	}
 	lefts := lm.Lefts
 
-	for i, left := range lefts {
+	for i, _ := range lefts {
 		if i < len(args) {
-			ctx.Set(lm.leftsHash[i], left, args[i])
+			ctx.Set(lm.leftsHash[i], args[i])
 		} else {
-			ctx.Set(lm.leftsHash[i], left, nil)
+			ctx.Set(lm.leftsHash[i], nil)
 		}
 	}
 	ret := lm.Right.Val(ctx)

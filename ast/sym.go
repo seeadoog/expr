@@ -133,7 +133,7 @@ func (s *Access) String() string {
 }
 
 type KV struct {
-	K Node
+	K string
 	V Node
 }
 

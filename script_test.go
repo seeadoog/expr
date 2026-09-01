@@ -456,7 +456,7 @@ func TestHTTP(t *testing.T) {
    },
    "header2 = new()::set('content-type', 'text/csv')",
 	"now = time_now(); date = '${now::year()}-${now::month()}-${now::day()}' ",
-   "mmaps = {'name':'5','age':6,'bdy':{'xm':3},name:name,name::type() : name::type(),'xx1': age == 5?'gg':'xx'}",
+   "mmaps = {'name':'5','age':6,'bdy':{'xm':3},name:name,string : name::type(),'xx1': age == 5?'gg':'xx'}",
   "foreach($2.data,$val.id in const['aa','bb']? $$.status = $val.data.status ; $$::set($val.id,$val.data) : ( !$$.status? $$.status = $val.status ; $$.result = $val.data : _))",
   "hddef =  {name: 'hello', age:36, bios: {name:'atm', age:34},'fail': name or 1}",
   "$2::delete('data')",
@@ -1188,7 +1188,7 @@ func BenchmarkPgn(b *testing.B) {
 	env := NewEnv()
 	b.ReportAllocs()
 	exp, err := env.ParseValue(`
-o=$;$={};$.a = {a:o.a,b:o.b or 15,c: o.c>0?o.c:5 }
+o =1
 `)
 	if err != nil {
 		panic(err)

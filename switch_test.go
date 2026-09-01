@@ -169,21 +169,21 @@ end;
 	assertEqual(t, c, "mulv2", 1.0)
 	assertDeepEqual(t, c, "m2", map[string]any{"name": "1", "age": "2"})
 
-	//res := testing.Benchmark(func(b *testing.B) {
-	//	v, err := DefaultEnv.ParseValue(str)
-	//	if err != nil {
-	//		b.Fatal(err)
-	//	}
-	//	b.ReportAllocs()
-	//	for i := 0; i < b.N; i++ {
-	//		c.ExecValue(v)
-	//	}
-	//})
-	//fmt.Println(res)
-	////
-	//fmt.Println("allocs/op:", res.AllocsPerOp())
+	res := testing.Benchmark(func(b *testing.B) {
+		v, err := DefaultEnv.ParseValue(str)
+		if err != nil {
+			b.Fatal(err)
+		}
+		b.ReportAllocs()
+		for i := 0; i < b.N; i++ {
+			c.ExecValue(v)
+		}
+	})
+	fmt.Println(res)
 	//
-	//fmt.Println("bytes/op:", res.AllocedBytesPerOp())
+	fmt.Println("allocs/op:", res.AllocsPerOp())
+
+	fmt.Println("bytes/op:", res.AllocedBytesPerOp())
 
 	fmt.Println(DefaultEnv.calcHash("helsf"))
 	size := 0
@@ -240,6 +240,10 @@ rule_table2 = const{
 	}
 };
 
+
+ss1 = 'lx';
+str_pd = str_apd(ss1,'_',ss1,'world');
+
 `)
 	if err != nil {
 		t.Fatal(err)
@@ -251,6 +255,7 @@ rule_table2 = const{
 	c.SetByString("name", "n2")
 	c.ExecValue(e)
 	assertEqual(t, c, "a", 2.0)
+	assertEqual(t, c, "str_pd", "lx_lxworld")
 	assertEqual(t, c, "app_id_rules.age", nil)
 
 	fmt.Println(DefaultEnv.calcHash("fsfsmls"))

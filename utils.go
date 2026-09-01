@@ -53,6 +53,35 @@ func BoolCond(v interface{}) bool {
 	}
 }
 
+func stringConvert(v interface{}) any {
+	switch vv := v.(type) {
+	case string:
+		return v
+	case *string:
+		return *vv
+	case bool:
+		if vv {
+			return "true"
+		}
+		return "false"
+	case float64:
+		return strconv.FormatFloat(vv, 'f', -1, 64)
+	case int:
+		return strconv.Itoa(vv)
+	case nil:
+		return ""
+	case []byte:
+		return unsafe.String(unsafe.SliceData(vv), len(vv))
+	case *strings.Builder:
+		return vv.String()
+	}
+	rv := reflect.ValueOf(v)
+	if rv.Kind() == reflect.String {
+		return rv.String()
+	}
+	return fmt.Sprintf("%v", v)
+}
+
 func StringOf(v interface{}) string {
 	switch vv := v.(type) {
 	case string:
@@ -81,7 +110,49 @@ func StringOf(v interface{}) string {
 	}
 	return fmt.Sprintf("%v", v)
 }
-
+func numberConvert(v any) any {
+	switch vv := v.(type) {
+	case float64:
+		return v
+	case *float64:
+		return *vv
+	case int:
+		return float64(vv)
+	case int64:
+		return float64(vv)
+	case uint64:
+		return float64(vv)
+	case uint:
+		return float64(vv)
+	case int32:
+		return float64(vv)
+	case uint32:
+		return float64(vv)
+	case int16:
+		return float64(vv)
+	case uint16:
+		return float64(vv)
+	case int8:
+		return float64(vv)
+	case uint8:
+		return float64(vv)
+	case bool:
+		if vv {
+			return 1
+		}
+		return 0
+	case string:
+		i, err := strconv.ParseFloat(vv, 64)
+		if err == nil {
+			return i
+		}
+		if vv == "true" {
+			return 1
+		}
+		return 0
+	}
+	return 0
+}
 func NumberOf(v interface{}) float64 {
 	switch vv := v.(type) {
 	case float64:
@@ -300,9 +371,15 @@ func CalcHash(e *Env, s string) HashKey {
 }
 
 type hashManager struct {
-	idHash Map[string, uint64]
-	lock   sync.Mutex
-	id     uint64
+	idHash   Map[string, uint64]
+	nameHash Map[uint64, string]
+	lock     sync.Mutex
+	id       uint64
+}
+
+func (h *hashManager) getHashString(hash uint64) string {
+	v, _ := h.nameHash.Load(hash)
+	return v
 }
 
 func (h *hashManager) getHash(key string) uint64 {
@@ -321,6 +398,7 @@ func (h *hashManager) getHash(key string) uint64 {
 	val = h.id
 	h.id++
 	h.idHash.Store(key, val)
+	h.nameHash.Store(val, key)
 	return val
 }
 

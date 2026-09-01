@@ -263,7 +263,8 @@ func cutterOf(v any) (func(st, ed int) any, int) {
 }
 
 type mapKv struct {
-	k, v Val
+	k string
+	v Val
 }
 type mapDefineVal struct {
 	kvs   []mapKv
@@ -277,19 +278,8 @@ func (m *mapDefineVal) Set(c *Context, v any) {
 func (m *mapDefineVal) Val(c *Context) any {
 	mm := make(map[string]any)
 	for _, kv := range m.kvs {
-		key := ""
-		vk, ok := kv.k.(*variable)
-		if ok {
-			//vvv := kv.k.Val(c)
-			//_, ok := vvv.(string)
-			//if vvv != nil  && {
-			//	key = StringOf(vvv)
-			//} else {
-			key = vk.varName
-			//}
-		} else {
-			key = StringOf(kv.k.Val(c))
-		}
+		key := kv.k
+
 		mm[key] = kv.v.Val(c)
 	}
 	if m.isOpt {
@@ -550,13 +540,13 @@ func (a *accessVal) Val(ctx *Context) any {
 		f := objFuncMap.get(t)
 		if f == nil {
 
-			se, ok := a.left.(*variable)
-			if ok {
-				lf := ctx.Env.GetLibFunc(se.hash, v.funNameHash)
-				if lf != nil {
-					return lf(ctx, v.args...)
-				}
-			}
+			//se, ok := a.left.(*variable)
+			//if ok {
+			//	lf := ctx.Env.GetLibFunc(se.hash, v.funNameHash)
+			//	if lf != nil {
+			//		return lf(ctx, v.args...)
+			//	}
+			//}
 
 			fv := reflect.ValueOf(self)
 			if fv.Kind() == reflect.Func {
@@ -696,10 +686,15 @@ func (a *arrAccessVal) Set(c *Context, val any) {
 			a.left.Set(c, parent)
 		} else {
 			if len(parent) <= idx {
-				old := parent
-				parent = make([]any, idx+1)
-				copy(parent, old)
+				if cap(parent) > idx {
+					parent = parent[:idx+1]
+				} else {
+					old := parent
+					parent = make([]any, idx+1, (idx+1)*2)
+					copy(parent, old)
+				}
 				a.left.Set(c, parent)
+
 			}
 		}
 		parent[idx] = val
@@ -792,22 +787,22 @@ func tryCovertMapToConst(val *mapDefineVal) Val {
 		//if !ok {
 		//	return val
 		//}
-		var ckk any
-		ck, ok1 := v.k.(*constraint)
-		if ok1 {
-			ckk = ck.value
-		}
-		ck2, ok2 := v.k.(*variable)
-		if ok2 {
-			ckk = ck2.varName
-		}
-		if !ok1 && !ok2 {
-			return val
-		}
-
+		//var ckk any
+		//ck, ok1 := v.k.(*constraint)
+		//if ok1 {
+		//	ckk = ck.value
+		//}
+		//ck2, ok2 := v.k.(*variable)
+		//if ok2 {
+		//	ckk = ck2.varName
+		//}
+		//if !ok1 && !ok2 {
+		//	return val
+		//}
+		cck := v.k
 		vcv, ok := tryConvertToConst(v.v).(*constraint)
 		if ok {
-			dst[StringOf(ckk)] = vcv.value
+			dst[cck] = vcv.value
 		} else {
 			return val
 		}
@@ -920,7 +915,6 @@ type expList struct {
 }
 
 func (e *expList) Val(c *Context) any {
-	//TODO implement me
 	var v any
 	for _, e := range e.Vals {
 		v = e.Val(c)
@@ -1355,7 +1349,7 @@ type asVal struct {
 
 func (a *asVal) Val(c *Context) any {
 	v := a.val.Val(c)
-	c.Set(a.keyHash, a.key, v)
+	c.Set(a.keyHash, v)
 	return v
 }
 

@@ -162,9 +162,9 @@ func (f *funcMap) getS(key uint64, ks string) *objectFunc {
 }
 
 type envMapElem struct {
-	key     string
-	keyHash uint64
-	val     any
+	//key string
+	//keyHash uint64
+	val any
 }
 
 //type envMap struct {
@@ -316,32 +316,35 @@ func (f *envMap) getHash(key uint64) any {
 	return f.data[key].val
 }
 
-func (f *envMap) putHash(key uint64, skey string, val any) {
+func (f *envMap) putHash(key uint64, val any) {
 
 	if key > f.mod {
 		f.reHash(key)
 	}
 	f.data[key] = envMapElem{
-		key:     skey,
-		keyHash: key,
-		val:     val,
+		//key: skey,
+		//keyHash: key,
+		val: val,
 	}
 }
 
-func (f *envMap) putHashOnly(key uint64, skey string, val any) {
-	f.putHash(key, skey, val)
+func (f *envMap) putHashOnly(key uint64, val any) {
+	f.putHash(key, val)
 }
 
 func (f *envMap) reHash(key uint64) {
 	old := f.data
-	f.data = make([]envMapElem, key+10)
+	f.data = make([]envMapElem, key+key*2/3)
 	f.mod = uint64(len(f.data) - 1)
 	copy(f.data, old)
 }
 
-func (f *envMap) foreach(fun func(key uint64, hk string, val any) bool) {
-	for _, e := range f.data {
-		if !fun(e.keyHash, e.key, e.val) {
+func (f *envMap) foreach(fun func(key uint64, val any) bool) {
+	for i, e := range f.data {
+		if e.val == nil {
+			continue
+		}
+		if !fun(uint64(i), e.val) {
 			return
 		}
 	}
@@ -357,13 +360,21 @@ func (f *envMap) del(key uint64) {
 func (f *envMap) clone() *envMap {
 	nm := newEnvMap(int(f.mod) + 1)
 
-	f.foreach(func(key uint64, hk string, val any) bool {
-		nm.putHash(key, hk, val)
+	f.foreach(func(key uint64, val any) bool {
+		nm.putHash(key, val)
 		return true
 	})
 	return nm
 }
 
 func (e *envMap) reset() {
-	clear(e.data)
+	d := e.data
+	if len(d) > 96 {
+		clear(d)
+	} else {
+		for i := 0; i < len(d); i++ {
+			d[i] = envMapElem{}
+		}
+	}
+
 }

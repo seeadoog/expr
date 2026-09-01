@@ -187,7 +187,8 @@ Kvs:
     |Kvs ','  { $$.kvs  = $1.kvs }
     ;
 Kv:
-    Expr ':' Expr {  $$.kv = KV{ K:$1.node, V: $3.node} }
+    STRING ':' Expr {  $$.kv = KV{ K:$1.str, V: $3.node} }
+    |IDENT ':' Expr {  $$.kv = KV{ K:$1.str, V: $3.node} }
     ;
 
 ArgListOpt:

@@ -384,6 +384,24 @@ func init() {
 		return strings.TrimSuffix(self, cutset)
 	})
 
+	DefaultEnv.RegisterFunc("str_apd", func(c *Context, args ...Val) any {
+		arrPtr := arrPool.Get().(*[]string)
+		arr := (*arrPtr)[:0]
+		for _, val := range args {
+			arr = append(arr, StringOf(val.Val(c)))
+		}
+		l := 0
+		for _, s2 := range arr {
+			l += len(s2)
+		}
+		res := make([]byte, 0, l)
+		for _, s2 := range arr {
+			res = append(res, s2...)
+		}
+		arrPool.Put(arrPtr)
+		return ToString(res)
+	}, -1)
+
 	SelfDefine2(DefaultEnv, "slice", func(ctx *Context, self []any, a, b float64) any {
 		aa := int(a)
 		bb := int(b)
@@ -572,12 +590,34 @@ func init() {
 
 	RegisterOptFuncDefine2(DefaultEnv, "equals", func(ctx *Context, a any, b any, opt *Options) bool {
 
-		switch a.(type) {
+		switch a := a.(type) {
 		case string, float64, bool, int, nil:
 			return a == b
-		default:
-			return reflect.DeepEqual(a, b)
+		case ReadOnlyMap:
+			_, ok := b.(ReadOnlyMap)
+			if ok {
+				return reflect.DeepEqual(a, b)
+			}
+			return reflect.DeepEqual(map[string]any(a), b)
+		case ReadOnlyArray:
+			_, ok := b.(ReadOnlyArray)
+			if ok {
+				return reflect.DeepEqual(a, b)
+			}
+			return reflect.DeepEqual([]any(a), b)
+		case map[string]interface{}:
+			_, ok := b.(ReadOnlyMap)
+			if ok {
+				return reflect.DeepEqual(ReadOnlyMap(a), b)
+			}
+		case []any:
+			_, ok := b.(ReadOnlyArray)
+			if ok {
+				return reflect.DeepEqual(ReadOnlyArray(a), b)
+			}
+
 		}
+		return reflect.DeepEqual(a, b)
 	})
 	//SelfDefine1("exclude", func(ctx *Context, self map[string]any, keys []any) map[string]any {
 	//	dst := make(map[string]any, len(self)-len(keys))

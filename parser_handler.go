@@ -441,15 +441,15 @@ func parseNodeSet(e *Env, n *ast.Set, isAccess bool, pc *ParserContext) (Val, er
 func parseNodeMapSet(e *Env, n *ast.MapSet, isAccess bool, pc *ParserContext) (Val, error) {
 	mapkvs := make([]mapKv, 0, len(n.Kvs))
 	for _, kv := range n.Kvs {
-		kk, err := e.ParseValueFromNode(kv.K, false, pc)
-		if err != nil {
-			return nil, fmt.Errorf("map parse key error:%w", err)
-		}
+		//kk, err := e.ParseValueFromNode(kv.K, false, pc)
+		//if err != nil {
+		//	return nil, fmt.Errorf("map parse key error:%w", err)
+		//}
 		vv, err := e.ParseValueFromNode(kv.V, false, pc)
 		if err != nil {
 			return nil, fmt.Errorf("map parse value error:%w", err)
 		}
-		mapkvs = append(mapkvs, mapKv{kk, vv})
+		mapkvs = append(mapkvs, mapKv{kv.K, vv})
 	}
 	mv := &mapDefineVal{
 		kvs: mapkvs,

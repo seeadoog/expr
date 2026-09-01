@@ -15,7 +15,7 @@ import (
 */
 
 type Context struct {
-	table                   *envMap
+	stack                   *envMap
 	returnVal               []any
 	IgnoreFuncNotFoundError bool
 	ForceType               bool // if false will disable convert struct type to vm type and improve performance
@@ -36,7 +36,7 @@ func (c *Context) Clone() *Context {
 		Env:                     c.Env,
 		//funcs:                   c.funcs,
 	}
-	ctx.table = c.table.clone()
+	ctx.stack = c.stack.clone()
 	return ctx
 }
 
@@ -45,13 +45,13 @@ func (e *Env) NewContext(table map[string]any) *Context {
 	f := newEnvMap(16)
 	if table != nil {
 		for s, a := range table {
-			f.putHash(e.calcHash(s), s, a)
+			f.putHash(e.calcHash(s), a)
 		}
 	}
 
 	return &Context{
 		Env:                     e,
-		table:                   f,
+		stack:                   f,
 		IgnoreFuncNotFoundError: false,
 		ForceType:               false,
 		NewCallEnv:              false,
@@ -60,7 +60,7 @@ func (e *Env) NewContext(table map[string]any) *Context {
 }
 
 func (c *Context) SetHash(key HashKey, value any) {
-	c.Set(key.Hash, key.Key, value)
+	c.Set(key.Hash, value)
 }
 
 func (c *Context) GetHash(key HashKey) any {
@@ -68,11 +68,11 @@ func (c *Context) GetHash(key HashKey) any {
 }
 
 func (c *Context) Get(key uint64) interface{} {
-	v := c.table.getHash(key)
+	v := c.stack.getHash(key)
 	return v
 }
 func (c *Context) GetByString(key string) interface{} {
-	v := c.table.getHash(c.Env.calcHash(key))
+	v := c.stack.getHash(c.Env.calcHash(key))
 	return v
 }
 
@@ -93,21 +93,21 @@ func (c *Context) SetByJp(key string, val any) error {
 	return nil
 }
 
-func (c *Context) Set(key uint64, skey string, value interface{}) {
-	c.table.putHashOnly(key, skey, value)
+func (c *Context) Set(key uint64, value interface{}) {
+	c.stack.putHashOnly(key, value)
 }
 func (c *Context) SetByString(skey string, value interface{}) {
-	c.table.putHash(c.Env.calcHash(skey), skey, value)
+	c.stack.putHash(c.Env.calcHash(skey), value)
 }
 
 func (c *Context) Delete(key string) {
-	c.table.del(c.Env.calcHash(key))
+	c.stack.del(c.Env.calcHash(key))
 }
 
 func (c *Context) Reset() {
 	c.returnVal = nil
 	c.stackCallNum = 0
-	c.table.reset()
+	c.stack.reset()
 }
 
 func (c *Context) GetAsString(key HashKey) string {
@@ -198,15 +198,19 @@ func (c *Context) GetReturn() []any {
 
 func (c *Context) GetTable() map[string]any {
 	dst := make(map[string]any)
-	c.table.foreach(func(key uint64, hk string, val any) bool {
-		dst[hk] = val
+	c.stack.foreach(func(key uint64, val any) bool {
+
+		dst[c.Env.hashManager.getHashString(key)] = val
 		return true
 	})
 	return dst
 }
 
 func (c *Context) Range(fn func(keyHash uint64, key string, val any) bool) {
-	c.table.foreach(fn)
+	c.stack.foreach(func(key uint64, val any) bool {
+		return fn(key, c.Env.hashManager.getHashString(key), val)
+
+	})
 }
 
 func (c *Context) SafeExecValue(v Val) (res any, err any) {
@@ -299,6 +303,7 @@ type variable struct {
 
 func (v *variable) Val(c *Context) any {
 	return c.Get(v.hash)
+
 }
 
 //	type stackVariable struct {
@@ -312,7 +317,7 @@ func (v *variable) Val(c *Context) any {
 func (v *variable) Set(c *Context, val any) {
 	//c.Set(v.varName, val)
 	//c.table[v.varName] = val
-	c.Set(v.hash, v.varName, val)
+	c.Set(v.hash, val)
 }
 
 type constraint struct {
@@ -492,8 +497,8 @@ func (f *forRange) Exec(c *Context) error {
 		}
 	case map[string]interface{}:
 		for i, a := range v {
-			c.Set(f.keyHash, f.keyName, i)
-			c.Set(f.valHash, f.valName, a)
+			c.Set(f.keyHash, i)
+			c.Set(f.valHash, a)
 			err := f.do.Exec(c)
 			if err == errBreak {
 				return nil
@@ -505,8 +510,8 @@ func (f *forRange) Exec(c *Context) error {
 		return nil
 	case ReadOnlyMap:
 		for i, a := range v {
-			c.Set(f.keyHash, f.keyName, i)
-			c.Set(f.valHash, f.valName, a)
+			c.Set(f.keyHash, i)
+			c.Set(f.valHash, a)
 			err := f.do.Exec(c)
 			if err == errBreak {
 				return nil
@@ -524,8 +529,8 @@ func (f *forRange) Exec(c *Context) error {
 
 	if valueOf != nil {
 		for i := 0; i < length; i++ {
-			c.Set(f.keyHash, f.keyName, i)
-			c.Set(f.valHash, f.valName, valueOf(i))
+			c.Set(f.keyHash, i)
+			c.Set(f.valHash, valueOf(i))
 			err := f.do.Exec(c)
 			if err == errBreak {
 				return nil

@@ -77,14 +77,14 @@ func BenchmarkEnvMap(b *testing.B) {
 	for i := 0; i < 10000; i++ {
 		ss := strconv.Itoa(i) + "xxxadsf"
 		ha := calcHash(ss)
-		m.putHash(ha, ss, i)
+		m.putHash(ha, i)
 	}
 	b.ReportAllocs()
 
 	ha := calcHash("7706xxxadsfsdf")
-	m.putHashOnly(ha, "7706xxxadsfsdf", nil)
+	m.putHashOnly(ha, nil)
 	for i := 0; i < b.N; i++ {
-		m.putHashOnly(ha, "7706xxxadsfsdf", nil)
+		m.putHashOnly(ha, nil)
 		//m.getHash(ha)
 
 	}
@@ -236,4 +236,67 @@ func getterOf(m any) func(k string) any {
 		}
 	}
 	return nil
+}
+
+func BenchmarkArrSet(b *testing.B) {
+	c := DefaultEnv.NewContext(nil)
+	c.ForceType = true
+	c.SetByString("$", map[string]any{
+		"req": map[string]any{
+			"ss":  2.0,
+			"app": "xxx",
+		},
+		"pa": map[string]any{
+			"b1": map[string]any{
+				"a": 1.0,
+				"b": 1.0,
+				"c": 1.0,
+			},
+		},
+	})
+	v, err := DefaultEnv.ParseValue(`
+
+ a = 1;b = 2 
+
+`)
+	if err != nil {
+		panic(err)
+	}
+	c.ExecValue(v)
+
+	fmt.Println(c.GetTable())
+
+	fmt.Println(DefaultEnv.NewHashKey("xxxxx"))
+	b.ReportAllocs()
+	b.ResetTimer()
+
+	for i := 0; i < b.N; i++ {
+		c.ExecValue(v)
+	}
+}
+
+var (
+	arr = make([]any, 100)
+)
+
+func set(i int, v any) {
+	arr[i] = v
+}
+func BenchmarkSet(b *testing.B) {
+	var v any = 3
+	for i := 0; i < b.N; i++ {
+		set(i%100, v)
+	}
+}
+
+func TestStringBuild(t *testing.T) {
+
+	c := DefaultEnv.NewContext(nil)
+	parseAndExec(DefaultEnv, `
+name = 'lix';
+age = 18890287457893;
+class = 6;
+desc = '${name}(${age}):${class}';
+`, c)
+	assertEqual(t, c, "desc", "lix(18890287457893):6")
 }

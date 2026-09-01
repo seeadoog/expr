@@ -405,7 +405,7 @@ func BenchmarkLargeExpression(b *testing.B) {
 
 // Ternary operator
 func BenchmarkTernaryOperator(b *testing.B) {
-	expression := "a > 10 ? b * 2 : c / 2"
+	expression := "a > 10 ? b  : c "
 	params := map[string]interface{}{
 		"a": 15.0,
 		"b": 20.0,

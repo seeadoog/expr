@@ -395,6 +395,9 @@ b = {name:2}.equals({name:2});
 bf = {name:2}.equals({name:3});
 c =  d.equals(g);
 e = (1).equals(1);
+
+ef = 345;
+gf = ef ;
 `, c)
 
 	assertEqual(t, c, "a", true)
@@ -403,6 +406,8 @@ e = (1).equals(1);
 	assertEqual(t, c, "bf", false)
 	assertEqual(t, c, "c", true)
 	assertEqual(t, c, "e", true)
+	assertEqual(t, c, "ef", 345.0)
+	assertEqual(t, c, "gf", 345.0)
 
 	c.SetByJp("name.age", 6)
 	c.SetByJp("name.ase[0]", 6)

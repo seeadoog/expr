@@ -898,7 +898,7 @@ var stringFunc ScriptFunc = func(ctx *Context, args ...Val) any {
 	if len(args) != 1 {
 		return nil
 	}
-	return StringOf(args[0].Val(ctx))
+	return stringConvert(args[0].Val(ctx))
 }
 
 var intFunc = FuncDefine1(func(ctx *Context, a float64) float64 {
@@ -916,7 +916,7 @@ var numberFunc ScriptFunc = func(ctx *Context, args ...Val) any {
 	if len(args) != 1 {
 		return nil
 	}
-	return NumberOf(args[0].Val(ctx))
+	return numberConvert(args[0].Val(ctx))
 }
 
 //var newStringBuilder ScriptFunc = func(ctx *Context, args ...Val) any {
@@ -1106,11 +1106,11 @@ func lambaCall(lm *lambda, ctx *Context, as []Val) any {
 	//	argNames = argNames[:len(as)]
 	//}
 
-	for i, name := range argNames {
+	for i, _ := range argNames {
 		if i < len(as) {
-			newC.Set(lm.leftsHash[i], name, as[i].Val(ctx))
+			newC.Set(lm.leftsHash[i], as[i].Val(ctx))
 		} else {
-			newC.Set(lm.leftsHash[i], name, nil)
+			newC.Set(lm.leftsHash[i], nil)
 		}
 
 	}
@@ -1308,7 +1308,7 @@ var funcRepeat ScriptFunc = func(ctx *Context, args ...Val) any {
 	switch a1 := args[0].(type) {
 	case *lambda:
 		for i := 0; i < end; i++ {
-			ctx.Set(a1.leftsHash[0], a1.Lefts[0], float64(i))
+			ctx.Set(a1.leftsHash[0], float64(i))
 			v := a1.Right.Val(ctx)
 			if e := convertToError(v); e != nil {
 				return e
@@ -1333,7 +1333,7 @@ var funcRepeats ScriptFunc = func(ctx *Context, args ...Val) any {
 	switch a1 := args[0].(type) {
 	case *lambda:
 		for i := 0; i < end; i++ {
-			ctx.Set(a1.leftsHash[0], a1.Lefts[0], float64(i))
+			ctx.Set(a1.leftsHash[0], float64(i))
 			v := a1.Right.Val(ctx)
 			if e := convertToError(v); e != nil {
 				return e
@@ -1488,7 +1488,7 @@ var funcSetTo ScriptFunc = func(ctx *Context, args ...Val) any {
 		keyHash = calcHash(key)
 	}
 	vv := args[0].Val(ctx)
-	ctx.Set(keyHash, key, vv)
+	ctx.Set(keyHash, vv)
 	return vv
 }
 
@@ -1561,7 +1561,9 @@ func init() {
 
 var funcShowEnv ScriptFunc = func(ctx *Context, args ...Val) any {
 
-	ctx.table.foreach(func(_ uint64, key string, val any) bool {
+	ctx.stack.foreach(func(i uint64, val any) bool {
+
+		key := ctx.Env.hashManager.getHashString(i)
 		switch v := val.(type) {
 		case *lambda:
 			fmt.Printf("%s: func(%v)\n", key, strings.Join(v.Lefts, ","))

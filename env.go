@@ -92,19 +92,6 @@ func (e *Env) ParseValueToAstNode(val string) (ast.Node, error) {
 	return lex.root, nil
 }
 
-func (e *Env) GetLibFunc(libHash uint64, funNameHash uint64) ScriptFunc {
-	l, _ := e.libs.getHash(libHash).(*Lib)
-	if l != nil {
-		fun, _ := l.funs.getHash(funNameHash).(ScriptFunc)
-		return fun
-	}
-	return nil
-}
-
-func (e *Env) AddLib(l *Lib) {
-	e.libs.putHash(calcHash(l.libName), l.libName, l)
-}
-
 func (e *Env) ParseValue(s string) (Val, error) {
 	return e.parseValueV(s)
 }
@@ -155,7 +142,7 @@ func NewLib(name string) *Lib {
 
 func (l *Lib) RegisterFunc(funName string, f ScriptFunc, argsNum int, opts ...funcOpt) {
 	fhash := calcHash(funName)
-	l.funs.putHash(fhash, funName, f)
+	l.funs.putHash(fhash, f)
 }
 
 type Register interface {
