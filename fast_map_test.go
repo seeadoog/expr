@@ -241,6 +241,7 @@ func getterOf(m any) func(k string) any {
 func BenchmarkArrSet(b *testing.B) {
 	c := DefaultEnv.NewContext(nil)
 	c.ForceType = true
+	appKey := c.Env.NewHashKey("appK")
 	c.SetByString("$", map[string]any{
 		"req": map[string]any{
 			"ss":  2.0,
@@ -253,10 +254,23 @@ func BenchmarkArrSet(b *testing.B) {
 				"c": 1.0,
 			},
 		},
+		"handlers": map[string]any{
+			"xxx": NewLambda(func(ctx *Context) any {
+				ctx.SetHash(appKey, 1)
+				return nil
+			}),
+		},
+	})
+	c.SetByString("handlers", map[string]any{
+		"xxx": NewLambda(func(ctx *Context) any {
+			ctx.SetHash(appKey, 1)
+			return nil
+		}),
 	})
 	v, err := DefaultEnv.ParseValue(`
-
- a = 1;b = 2 
+call(func()
+	_
+end);
 
 `)
 	if err != nil {
@@ -266,7 +280,7 @@ func BenchmarkArrSet(b *testing.B) {
 
 	fmt.Println(c.GetTable())
 
-	fmt.Println(DefaultEnv.NewHashKey("xxxxx"))
+	fmt.Println("hashKey:", DefaultEnv.NewHashKey("xxxxx"))
 	b.ReportAllocs()
 	b.ResetTimer()
 

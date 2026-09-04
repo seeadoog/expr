@@ -335,4 +335,5 @@ func BenchmarkDefine(b *testing.B) {
 
 	}
 	fmt.Println(uc.user, uc.rate)
+
 }

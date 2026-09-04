@@ -2,7 +2,9 @@ package expr
 
 import (
 	"fmt"
+	"strings"
 	"testing"
+	"time"
 
 	"github.com/ortuman/nuke"
 )
@@ -325,7 +327,23 @@ func BenchmarkVV(b *testing.B) {
 }
 
 func BenchmarkGET(b *testing.B) {
-	for i := 0; i < b.N; i++ {
 
+	sb := strings.Builder{}
+
+	for i := 0; i < 1; i++ {
+		sb.WriteString(" a = 1;b=2;  t = a; a = b; b = t;")
+	}
+
+	start := time.Now()
+	v, err := DefaultEnv.parseValueV(sb.String())
+	if err != nil {
+		b.Fatal(err)
+	}
+	fmt.Println(time.Now().Sub(start))
+
+	c := DefaultEnv.NewContext(nil)
+	b.ResetTimer()
+	for i := 0; i < b.N; i++ {
+		c.ExecValue(v)
 	}
 }

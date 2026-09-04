@@ -261,3 +261,10 @@ func TestExecFailed(t *testing.T) {
 	fmt.Println(c.GetTable())
 
 }
+func TestName5555(t *testing.T) {
+
+	parseAndExec(DefaultEnv, `
+a = 1 
+
+`, DefaultEnv.NewContext(nil))
+}
