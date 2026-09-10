@@ -148,18 +148,18 @@ func (e *emptyVal) Val(c *Context) any {
 type ParserContext struct {
 }
 
-func CalcKeyHash(key string) uint64 {
-	hash := calcHash(key)
-	return hash
-}
+//func CalcKeyHash(key string) uint64 {
+//	hash := calcHash(key)
+//	return hash
+//}
+//
+//func NewKeyHash(key string, env *Env) HashKey {
+//	return env.NewHashKey(key)
+//}
 
-func NewKeyHash(key string) HashKey {
-	hash := CalcKeyHash(key)
-	return HashKey{
-		Key:  key,
-		Hash: hash,
-	}
-}
+//func NewKeyHash(key string, ctx *Context) HashKey {
+//	return ctx.Env.NewHashKey(key)
+//}
 
 type HashKey struct {
 	Key  string

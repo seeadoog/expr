@@ -322,7 +322,7 @@ func BenchmarkDefine(b *testing.B) {
 	//})
 	b.ReportAllocs()
 
-	ctxKey := NewKeyHash("ctx")
+	ctxKey := DefaultEnv.NewHashKey("ctx")
 	for i := 0; i < b.N; i++ {
 		c := DefaultEnv.GetContextFromPool()
 		c.IgnoreFuncNotFoundError = true

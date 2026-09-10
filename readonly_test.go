@@ -57,7 +57,6 @@ func TestNewReadOnlyVal(t *testing.T) {
 
 	parseAndExec(DefaultEnv, `arre1 = arrdef[1]`, c)
 	assertEqual(t, c, "arre1==2", true)
-
 }
 
 func parseAndExec(env *Env, valExpr string, ctx *Context) {

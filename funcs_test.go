@@ -566,8 +566,8 @@ func BenchmarkExprWithJSON(b *testing.B) {
 		},
 		"data": 1,
 	}
-	ctxKey := NewKeyHash("ctx")
-	reqKey := NewKeyHash("req")
+	ctxKey := DefaultEnv.NewHashKey("ctx")
+	reqKey := DefaultEnv.NewHashKey("req")
 	_ = exp
 	ctx := DefaultEnv.GetContextFromPool()
 
