@@ -1,26 +1,29 @@
 package expr
 
-import "reflect"
+import (
+	"reflect"
+	"strconv"
+)
 
-type exprValue struct {
+type ExprValue struct {
 	data any
 }
 
-func ValueOf(data any) exprValue {
-	return exprValue{data: data}
+func ValueOf(data any) ExprValue {
+	return ExprValue{data: data}
 }
 
-func (e exprValue) String() string {
+func (e ExprValue) String() string {
 	return StringOf(e.data)
 }
 
-func (e exprValue) Number() float64 {
+func (e ExprValue) Number() float64 {
 	return NumberOf(e.data)
 }
-func (e exprValue) Bool() bool {
+func (e ExprValue) Bool() bool {
 	return BoolOf(e.data)
 }
-func (e exprValue) Set(ctx *Context, k string, val any) {
+func (e ExprValue) Set(ctx *Context, k string, val any) {
 	switch m := e.data.(type) {
 	case map[string]any:
 		m[k] = val
@@ -34,7 +37,7 @@ func (e exprValue) Set(ctx *Context, k string, val any) {
 	}
 }
 
-func (e exprValue) Get(ctx *Context, key string) any {
+func (e ExprValue) Get(ctx *Context, key string) any {
 	switch m := e.data.(type) {
 	case map[string]any:
 		return m[key]
@@ -49,7 +52,7 @@ func (e exprValue) Get(ctx *Context, key string) any {
 	}
 }
 
-func (e exprValue) Contains(ctx *Context, v any) bool {
+func (e ExprValue) Contains(ctx *Context, v any) bool {
 	switch m := e.data.(type) {
 	case []any:
 		for _, ev := range m {
@@ -75,7 +78,7 @@ func (e exprValue) Contains(ctx *Context, v any) bool {
 	return false
 }
 
-func (e exprValue) RangeMap(f func(k string, v any) bool) {
+func (e ExprValue) RangeMap(f func(k string, v any) bool) {
 	//v := f.target.Val(c)
 	switch m := e.data.(type) {
 	case map[string]any:
@@ -100,7 +103,7 @@ func (e exprValue) RangeMap(f func(k string, v any) bool) {
 	}
 }
 
-func (e exprValue) Len() int {
+func (e ExprValue) Len() int {
 	switch m := e.data.(type) {
 	case []any:
 		return len(m)
@@ -119,7 +122,7 @@ func (e exprValue) Len() int {
 	}
 }
 
-func (e exprValue) IndexGet(i int) any {
+func (e ExprValue) IndexGet(i int) any {
 	switch m := e.data.(type) {
 	case []any:
 		return m[i]
@@ -138,7 +141,7 @@ func (e exprValue) IndexGet(i int) any {
 	}
 }
 
-func (e exprValue) RangeArr(f func(k int, v any) bool) {
+func (e ExprValue) RangeArr(f func(k int, v any) bool) {
 	switch m := e.data.(type) {
 	case []any:
 		for i, ev := range m {
@@ -172,7 +175,7 @@ func (e exprValue) RangeArr(f func(k int, v any) bool) {
 	}
 }
 
-func (e exprValue) AnyArr() []any {
+func (e ExprValue) AnyArr() []any {
 	switch m := e.data.(type) {
 	case []any:
 		return m
@@ -196,8 +199,9 @@ func (e exprValue) AnyArr() []any {
 		return d
 	default:
 		v := reflect.ValueOf(e.data)
-		dst := make([]any, v.Len())
 		if v.Kind() == reflect.Slice {
+			dst := make([]any, v.Len())
+
 			for i := 0; i < v.Len(); i++ {
 				dst[i] = v.Index(i).Interface()
 			}
@@ -205,4 +209,106 @@ func (e exprValue) AnyArr() []any {
 		}
 		return nil
 	}
+}
+
+func (e ExprValue) F64Arr() []float64 {
+	switch m := e.data.(type) {
+	case []float64:
+		return m
+	case []any:
+		d := make([]float64, len(m))
+		for i, v := range m {
+			d[i] = NumberOf(v)
+		}
+		return d
+	case []int:
+		d := make([]float64, len(m))
+		for i, v := range m {
+			d[i] = float64(v)
+		}
+		return d
+	default:
+		v := reflect.ValueOf(e.data)
+		if v.Kind() == reflect.Slice {
+			dst := make([]float64, v.Len())
+
+			for i := 0; i < v.Len(); i++ {
+				dst[i] = NumberOf(v.Index(i).Interface())
+			}
+			return dst
+		}
+		return nil
+	}
+}
+
+func (e ExprValue) IntArr() []int {
+	switch m := e.data.(type) {
+	case []int:
+		return m
+	case []float64:
+		d := make([]int, len(m))
+		for i, v := range m {
+			d[i] = int(v)
+		}
+		return d
+	case []int64:
+		d := make([]int, len(m))
+		for i, v := range m {
+			d[i] = int(v)
+		}
+		return d
+	default:
+		v := reflect.ValueOf(e.data)
+		if v.Kind() == reflect.Slice {
+			dst := make([]int, v.Len())
+			for i := 0; i < v.Len(); i++ {
+				dst[i] = IntOf(v.Index(i).Interface())
+			}
+			return dst
+		}
+		return nil
+	}
+}
+
+func IntOf(v interface{}) int {
+	switch m := v.(type) {
+	case int:
+		return m
+	case *int:
+		return *m
+	case int64:
+		return int(m)
+	case int32:
+		return int(m)
+	case int16:
+		return int(m)
+	case int8:
+		return int(m)
+	case uint:
+		return int(m)
+	case uint64:
+		return int(m)
+	case uint32:
+		return int(m)
+	case uint16:
+		return int(m)
+	case uint8:
+		return int(m)
+	case float64:
+		return int(m)
+	case float32:
+		return int(m)
+	case bool:
+		if m {
+			return 1
+		}
+		return 0
+	case string:
+		i, err := strconv.Atoi(m)
+		if err != nil {
+			return 0
+		}
+		return i
+	}
+	return 0
 }

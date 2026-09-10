@@ -20,13 +20,13 @@ func convertExprReadOnlyVal(val Val) Val {
 func convertToReadOnlyMap(v any) any {
 	switch x := v.(type) {
 	case map[string]interface{}:
-		res := make(ReadOnlyMap, len(x))
+		res := ReadOnlyMap(x)
 		for k, v := range x {
 			res[k] = convertToReadOnlyMap(v)
 		}
 		return res
 	case []any:
-		res := make(ReadOnlyArray, len(x))
+		res := ReadOnlyArray(x)
 		for i, v := range x {
 			res[i] = convertToReadOnlyMap(v)
 		}

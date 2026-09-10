@@ -68,3 +68,43 @@ func BenchmarkExecRaw2(b *testing.B) {
 		c.ExecValue(e)
 	}
 }
+
+func BenchmarkRunBuildLambda(b *testing.B) {
+	ctx := DefaultEnv.NewContext(nil)
+	e, err := DefaultEnv.parseValueV(`
+
+o.name  == 'xiao' && o.age > 17  
+`)
+	if err != nil {
+		b.Fatal(err)
+	}
+	//lam := ctx.ExecValue(e).(*LambdaVal)
+
+	log := map[string]any{
+		"name": "xiao",
+		"age":  18.0,
+	}
+	oh := DefaultEnv.NewHashKey("o")
+	b.ReportAllocs()
+	for i := 0; i < b.N; i++ {
+
+		ctx.SetHash(oh, log)
+		ctx.ExecValue(e)
+	}
+}
+
+func BenchmarkCOntectReadMap(b *testing.B) {
+
+	b.ReportAllocs()
+	m := map[string]any{
+		"header": map[string]interface{}{
+			"app": "x",
+		},
+		"parame": map[string]interface{}{},
+		"data":   []any{1, 2, 3},
+	}
+	for i := 0; i < b.N; i++ {
+
+		convertToReadOnlyMap(m)
+	}
+}
