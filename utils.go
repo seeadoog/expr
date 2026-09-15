@@ -416,3 +416,14 @@ func ift[T any](c bool, a, b T) T {
 	}
 	return b
 }
+
+type inter struct {
+	T, D unsafe.Pointer
+}
+
+func (i *inter) Any() any {
+	return *(*any)(unsafe.Pointer(i))
+}
+func interOf(v any) *inter {
+	return (*inter)(unsafe.Pointer(&v))
+}

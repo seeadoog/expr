@@ -7,6 +7,8 @@ import (
 	"reflect"
 	"regexp"
 	"strings"
+
+	"github.com/ortuman/nuke"
 )
 
 /*
@@ -24,6 +26,8 @@ type Context struct {
 	PanicWhenError          bool // if true, will panic when error occurs
 	Env                     *Env
 	stackCallNum            int // 防止无限递归
+
+	arena nuke.Arena
 }
 
 func (c *Context) Clone() *Context {
@@ -94,7 +98,7 @@ func (c *Context) SetByJp(key string, val any) error {
 }
 
 func (c *Context) Set(key uint64, value interface{}) {
-	c.stack.putHashOnly(key, value)
+	c.stack.putHash(key, value)
 }
 func (c *Context) SetByString(skey string, value interface{}) {
 	c.stack.putHash(c.Env.calcHash(skey), value)
@@ -247,7 +251,7 @@ func (s *setValue) Val(c *Context) any {
 	//}
 	//return v
 	v := s.val.Val(c)
-	s.Set(c, v)
+	s.key.Set(c, v)
 	return v
 }
 
@@ -317,7 +321,8 @@ func (v *variable) Val(c *Context) any {
 func (v *variable) Set(c *Context, val any) {
 	//c.Set(v.varName, val)
 	//c.table[v.varName] = val
-	c.Set(v.hash, val)
+	//c.Set(v.hash, val)
+	c.stack.putHash(v.hash, val)
 }
 
 type constraint struct {

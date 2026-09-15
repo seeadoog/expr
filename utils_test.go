@@ -7,6 +7,7 @@ import (
 	"sync"
 	"testing"
 	"unicode/utf8"
+	"unsafe"
 
 	"github.com/cespare/xxhash/v2"
 )
@@ -373,4 +374,147 @@ func TestUTF(t *testing.T) {
 
 func TestFastMapClone(t *testing.T) {
 
+}
+
+func BenchmarkExprGet(b *testing.B) {
+	e, err := DefaultEnv.ParseValue(`handler = func(e) e.ret != 0 end`)
+	if err != nil {
+		b.Fatal(err)
+	}
+	spans := map[string]any{
+		"sp1": map[string]any{
+			"ret": 0.0,
+		},
+		"sp2": map[string]any{
+			"ret": 0.0,
+		},
+		"sp3": map[string]any{
+			"ret": 0.0,
+		},
+	}
+	c := DefaultEnv.NewContext(nil)
+	c.SetByString("b", 1.0)
+	c.SetByString("spans", spans)
+
+	c.ExecValue(e)
+	fmt.Println(DefaultEnv.NewHashKey("___"))
+
+	handler := c.GetByString("handler").(*LambdaVal)
+
+	RunLambda(c, handler)
+	for i := 0; i < b.N; i++ {
+		for _, sp := range spans {
+			RunLambda(c, handler, sp)
+		}
+	}
+}
+
+func BenchmarkExprGet2(b *testing.B) {
+	e, err := DefaultEnv.ParseValue(`for span in spans2 do _ end`)
+	if err != nil {
+		b.Fatal(err)
+	}
+	spans := map[string]any{
+		"sp1": map[string]any{
+			"ret": 0.0,
+		},
+		"sp2": map[string]any{
+			"ret": 0.0,
+		},
+		"sp3": map[string]any{
+			"ret": 0.0,
+		},
+	}
+	spans2 := []any{
+		map[string]any{
+			"ret": 0.0,
+		},
+		map[string]any{
+			"ret": 0.0,
+		},
+		map[string]any{
+			"ret": 0.0,
+		},
+		map[string]any{
+			"ret": 0.0,
+		},
+		map[string]any{
+			"ret": 0.0,
+		},
+		map[string]any{
+			"ret": 0.0,
+		},
+	}
+	c := DefaultEnv.NewContext(nil)
+
+	c.SetByString("b", 1.0)
+	c.SetByString("spans", spans)
+	c.SetByString("spans2", spans2)
+
+	c.ExecValue(e)
+	fmt.Println(DefaultEnv.NewHashKey("___"))
+
+	b.ReportAllocs()
+	for i := 0; i < b.N; i++ {
+		c.ExecValue(e)
+	}
+}
+
+type EV struct {
+	T unsafe.Pointer
+	V unsafe.Pointer
+}
+
+func (e *EV) Number() float64 {
+	return float64(uintptr(e.V))
+}
+
+func (e *EV) Interface() interface{} {
+
+	switch e.T {
+	case intType:
+		return int(uintptr(e.V))
+	case floatType:
+		return float64(uintptr(e.V))
+	default:
+		return *(*any)(unsafe.Pointer(e))
+	}
+}
+
+func EValueOf(v interface{}) EV {
+	switch v := v.(type) {
+	case int:
+		return EIntOf(v)
+	case float64:
+		return EFloat(v)
+	}
+	return *(*EV)(unsafe.Pointer(&v))
+}
+
+func evalueOf(v interface{}) EV {
+	return *(*EV)(unsafe.Pointer(&v))
+}
+
+var (
+	intType   = evalueOf(int(1)).T
+	floatType = evalueOf(float64(1)).T
+)
+
+func EIntOf(v int) EV {
+	ptr := EV{
+		T: intType,
+		V: unsafe.Pointer(uintptr(v)),
+	}
+	return ptr
+}
+func EFloat(v float64) EV {
+	ptr := EV{
+		T: floatType,
+		V: unsafe.Pointer(uintptr(v)),
+	}
+	return ptr
+}
+
+func Add(a, b EV) EV {
+	return EFloat(a.Number() + b.Number())
 }

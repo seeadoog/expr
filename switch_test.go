@@ -330,18 +330,23 @@ func BenchmarkGET(b *testing.B) {
 
 	sb := strings.Builder{}
 
+	b.ReportAllocs()
 	for i := 0; i < 1; i++ {
-		sb.WriteString(" a = 1;b=2;  t = a; a = b; b = t;")
+		sb.WriteString("1")
 	}
 
 	start := time.Now()
-	v, err := DefaultEnv.parseValueV(sb.String())
+	v, err := DefaultEnv.parseValueV("a++")
 	if err != nil {
 		b.Fatal(err)
 	}
 	fmt.Println(time.Now().Sub(start))
 
+	b.SetBytes(8)
+
 	c := DefaultEnv.NewContext(nil)
+	b.ReportMetric(0, "MB/s")
+	b.ReportMetric(1, "MB/s")
 	b.ResetTimer()
 	for i := 0; i < b.N; i++ {
 		c.ExecValue(v)

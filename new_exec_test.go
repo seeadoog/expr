@@ -28,3 +28,15 @@ str2 = str + 'world';
 		c.ExecValue(v)
 	}
 }
+
+var (
+	resE EV
+)
+
+func BenchmarkEString(b *testing.B) {
+	a1 := EFloat(1)
+	a2 := EFloat(1)
+	for i := 0; i < b.N; i++ {
+		resE = Add(a1, a2)
+	}
+}

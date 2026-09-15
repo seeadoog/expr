@@ -377,38 +377,7 @@ func TestAddAdd(t *testing.T) {
 
 }
 
-type inter struct {
-	d, t unsafe.Pointer
-}
-
-var (
-	nnn = 5.6
-
-	ptr = new(inter)
-)
-
 var ss string = "hello world"
-
-func BenchmarkNamesdff(b *testing.B) {
-	b.ReportAllocs()
-	for i := 0; i < b.N; i++ {
-		psss()
-	}
-}
-
-func psss() any {
-
-	var sa any = ss
-
-	sp := (*inter)(unsafe.Pointer(&sa))
-
-	ptr.t = sp.t
-	ptr.d = sp.d
-
-	pp := *(*any)(unsafe.Pointer(ptr))
-
-	return pp
-}
 
 func TestRegexp(t *testing.T) {
 	DefaultEnv := NewEnv()

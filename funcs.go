@@ -663,6 +663,10 @@ var add2Func = FuncDefine2(func(ctx *Context, a, b any) any {
 	return add2(a, b)
 })
 
+var (
+	f64Type = interOf(1.0).T
+)
+
 func add2(a, b any) any {
 
 	switch v := a.(type) {

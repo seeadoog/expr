@@ -85,7 +85,7 @@ func BenchmarkEnvMap(b *testing.B) {
 	m.putHashOnly(ha, nil)
 	for i := 0; i < b.N; i++ {
 		m.putHashOnly(ha, nil)
-		//m.getHash(ha)
+		m.getHash(ha)
 
 	}
 }
@@ -111,7 +111,7 @@ func BenchmarkEnvMap2(b *testing.B) {
 func TestExpr(t *testing.T) {
 	env := NewEnv()
 
-	exp, err := env.ParseValue(" $.a = 1")
+	exp, err := env.ParseValue("arr.foreach({k,v}=>a)")
 	if err != nil {
 		panic(err)
 	}
@@ -120,6 +120,11 @@ func TestExpr(t *testing.T) {
 
 	fmt.Println(exp.Val(c))
 	fmt.Println(c.GetByString("$"))
+	fmt.Println(env.NewHashKey("__"))
+
+	arr := []int{1, 3, 4, 5, 6, 7, 8, 9}
+	clear(arr)
+	fmt.Println(arr)
 }
 
 /*

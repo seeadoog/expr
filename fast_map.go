@@ -322,8 +322,6 @@ func (f *envMap) putHash(key uint64, val any) {
 		f.reHash(key)
 	}
 	f.data[key] = envMapElem{
-		//key: skey,
-		//keyHash: key,
 		val: val,
 	}
 }

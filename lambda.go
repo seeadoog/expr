@@ -129,8 +129,12 @@ func forRangeExec(doVal Val, ctx *Context, target any, f func(k, v any, val Val)
 }
 
 func forRangeMapExec(lv *lambda, ctx *Context, m map[string]any, f func(k, v any, val Val) any) any {
+	moreK := len(lv.leftsHash) > 1
 	for k, v := range m {
-		ka := any(k)
+		var ka any
+		if moreK {
+			ka = any(k)
+		}
 		lv.setMapKvForLambda(ctx, ka, v)
 		vv := f(ka, v, lv.Right)
 		if err := convertToError(vv); err != nil {
@@ -146,8 +150,13 @@ func forRangeMapExec(lv *lambda, ctx *Context, m map[string]any, f func(k, v any
 }
 
 func forRangeArr(lv *lambda, ctx *Context, m []any, f func(k, v any, val Val) any) any {
+	moreK := len(lv.leftsHash) > 1
 	for k, v := range m {
-		ka := any(float64(k))
+		var ka any
+		if moreK {
+			ka = any(float64(k))
+		}
+
 		lv.setMapKvForLambda(ctx, ka, v)
 		vv := f(ka, v, lv.Right)
 		if err := convertToError(vv); err != nil {
