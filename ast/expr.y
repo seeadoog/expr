@@ -8,7 +8,7 @@ import (
 
 %}
 %token IDENT NUMBER STRING BOOL NIL EQ AND OR NOTEQ GT GTE LT LTE ORR ACC IF ELSE FOR IN ACC2 CONST LAMB ADDEQ SUBEQ MULEQ DIVEQ VARIADIC AS
-%left IDENT
+%left IDENT EXIT
 %left IF ELSE END DO ELSEIF THEN FOR SWITCH CASE DEFAULT FUNCTION ANNO BREAK
 %left ';'
 %left LAMB
@@ -113,6 +113,7 @@ Expr:
 	| FUNCTION Ident '(' Idss ')' EExpr END  {  $$.node = &Set{L:$2.node, R:&Lambda{L: $4.strs , R:$6.node }} }
 	| FUNCTION '(' Idss ')' EExpr END {  $$.node = &Lambda{L: $3.strs , R:$5.node } }
 	| NUMBER '~' NUMBER { $$.node = &RangeValue{L: $1.num , R: $3.num} }
+	| EXIT Expr
 	;
 
 Elseifs:

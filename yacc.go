@@ -735,6 +735,12 @@ func (a *arrAccessVal) Val(ctx *Context) any {
 	case map[string]any:
 		idx := StringOf(rv)
 		return v[idx]
+	case Getter:
+		idx := StringOf(rv)
+		return v.GetField(ctx, idx)
+	case map[string]string:
+		idx := StringOf(rv)
+		return v[idx]
 	case nil:
 		return nil
 	default:

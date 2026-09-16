@@ -410,7 +410,10 @@ func BenchmarkExprGet(b *testing.B) {
 }
 
 func BenchmarkExprGet2(b *testing.B) {
-	e, err := DefaultEnv.ParseValue(`for span in spans2 do _ end`)
+	e, err := DefaultEnv.ParseValue(`
+for span in spans2 do 
+	
+end`)
 	if err != nil {
 		b.Fatal(err)
 	}

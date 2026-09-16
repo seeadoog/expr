@@ -87,6 +87,7 @@ func TestHttp(t *testing.T) {
 			}
 			//fmt.Println(bd)
 			writer.Header().Set("Content-Type", "application/json")
+			writer.Header().Set("X-Test", "ok")
 			writer.WriteHeader(http.StatusOK)
 			json.NewEncoder(writer).Encode(bd)
 		})
@@ -96,7 +97,9 @@ func TestHttp(t *testing.T) {
 	e, err := DefaultEnv.ParseFromJSONStr(`
 [
 "res = http_request('POST', 'http://127.0.0.1:19802/post?p1=p1',{'h1':'h1'},{name:'xn'},2000).body.to_json_obj()",
-"res2 = curl('http://127.0.0.1:19802/post?p1=p1',{body:{name:'xn'},header:{'h1':'h1'}}).body.to_json_obj()"
+"res2 = curl('http://127.0.0.1:19802/post?p1=p1',{body:{name:'xn'},header:{'h1':'h1'}}).data.body.to_json_obj()",
+"res3 = curl('http://127.0.0.1:19802/post?p1=p1',{body:{name:'xn'},header:{'h1':'h1'}}).data",
+"resh = res3.header['x-test']"
 ]
 `)
 	if err != nil {
@@ -116,6 +119,7 @@ func TestHttp(t *testing.T) {
 	assertDeepEqual(t, c, "res2.h1", "h1")
 	assertDeepEqual(t, c, "res2.p1", "p1")
 	assertDeepEqual(t, c, "res2.body.name", "xn")
+	assertDeepEqual(t, c, "resh", "ok")
 
 }
 

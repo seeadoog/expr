@@ -1875,3 +1875,17 @@ func sliceToAny[T any](ss []T) []any {
 	}
 	return res
 }
+
+func init() {
+
+	// res = curl(); if res.err then return(14003,res.err) end ;
+	//RegisterOptFuncDefine1(DefaultEnv, "throw", func(ctx *Context, a any, opt *Options) any {
+	//	switch v := a.(type) {
+	//	case *Result:
+	//		if v.Err != nil {
+	//			return newErrorfWithCtx(ctx, "throw: %v", v.Err)
+	//		}
+	//		return v.Data
+	//	}
+	//})
+}

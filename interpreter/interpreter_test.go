@@ -320,7 +320,7 @@ func TestDisassemble(t *testing.T) {
 
 func BenchmarkFFF(b *testing.B) {
 	// 测试嵌套三元运算符性能
-	node, err := expr.DefaultEnv.ParseValueToAstNode(`a?1:(false?1:(false?1:(false?1:(false?1:(false?1:4)))))`)
+	node, err := expr.DefaultEnv.ParseValueToAstNode(`a`)
 	if err != nil {
 		b.Fatal(err)
 	}
@@ -335,7 +335,10 @@ func BenchmarkFFF(b *testing.B) {
 	ctx := newMockContext()
 	ctx.Set(defaultHash("a"), false) // 设置变量 a
 
-	fmt.Println(bc.Instructions)
+	//fmt.Println(bc.Instructions)
+	for _, instruction := range bc.Instructions {
+		fmt.Println(instruction)
+	}
 	vm := interpreter.NewVM(bc, env, ctx)
 
 	b.ResetTimer() // 重置计时器，排除准备时间
@@ -345,5 +348,234 @@ func BenchmarkFFF(b *testing.B) {
 		if err != nil {
 			b.Fatal(err)
 		}
+	}
+}
+
+func TestVM(b *testing.T) {
+	// 测试嵌套三元运算符性能
+	node, err := expr.DefaultEnv.ParseValueToAstNode(`
+a=1
+`)
+	if err != nil {
+		b.Fatal(err)
+	}
+
+	compiler := interpreter.NewCompiler(defaultHash)
+	bc, err := compiler.Compile(node)
+	if err != nil {
+		b.Fatalf("compile failed: %v", err)
+	}
+
+	env := newMockEnv()
+	ctx := newMockContext()
+	ctx.Set(defaultHash("a"), false) // 设置变量 a
+
+	//fmt.Println(bc.Instructions)
+	for _, instruction := range bc.Instructions {
+		fmt.Println(instruction)
+	}
+	bc2, err := compiler.Compile(node)
+	if err != nil {
+		b.Fatalf("compile failed: %v", err)
+	}
+	for _, instruction := range bc2.Instructions {
+		fmt.Println(instruction)
+	}
+
+	vm := interpreter.NewVM(bc, env, ctx)
+	vm.Reset()
+}
+
+var funs = []func() int{
+	func() int {
+		return 1
+	},
+	func() int {
+		return 2
+	},
+	func() int {
+		return 1
+	},
+	func() int {
+		return 2
+	},
+	func() int {
+		return 1
+	},
+	func() int {
+		return 2
+	},
+	func() int {
+		return 1
+	},
+	func() int {
+		return 2
+	},
+	func() int {
+		return 1
+	},
+	func() int {
+		return 2
+	},
+	func() int {
+		return 1
+	},
+	func() int {
+		return 2
+	}, func() int {
+		return 1
+	},
+	func() int {
+		return 2
+	},
+	func() int {
+		return 1
+	},
+	func() int {
+		return 2
+	},
+	func() int {
+		return 1
+	},
+	func() int {
+		return 2
+	},
+	func() int {
+		return 1
+	},
+	func() int {
+		return 2
+	},
+	func() int {
+		return 1
+	},
+	func() int {
+		return 2
+	},
+	func() int {
+		return 1
+	},
+	func() int {
+		return 2
+	},
+	func() int {
+		return 1
+	},
+	func() int {
+		return 2
+	},
+	func() int {
+		return 1
+	},
+	func() int {
+		return 2
+	},
+	func() int {
+		return 1
+	},
+	func() int {
+		return 2
+	},
+	func() int {
+		return 1
+	},
+	func() int {
+		return 2
+	},
+	func() int {
+		return 1
+	},
+	func() int {
+		return 2
+	},
+	func() int {
+		return 1
+	},
+	func() int {
+		return 2
+	},
+}
+
+func dofunc(i int) int {
+	return funs[i]()
+}
+func getString(i int) string {
+	switch i {
+	case 0:
+		return "a"
+	case 1:
+		return "b"
+	case 2:
+		return "c"
+	case 3:
+		return "d"
+	case 4:
+		return "e"
+	case 5:
+		return "f"
+	case 6:
+		return "g"
+	case 7:
+		return "h"
+	case 8:
+		return "i"
+	case 9:
+		return "j"
+	case 10:
+		return "k"
+	case 11:
+		return "l"
+	case 12:
+		return "m"
+	case 13:
+		return "n"
+	case 14:
+		return "o"
+	case 15:
+		return "p"
+	case 16:
+		return "q"
+	case 17:
+		return "r"
+	case 18:
+		return "s"
+	case 19:
+		return "t"
+	case 20:
+		return "u"
+	case 21:
+		return "v"
+	case 22:
+		return "w"
+	case 23:
+		return "x"
+	case 24:
+		return "y"
+	case 25:
+		return "z"
+	case 26:
+		return "0"
+	case 27:
+		return "1"
+	case 28:
+		return "2"
+	case 29:
+		return "3"
+	case 30:
+		return "4"
+	}
+	return ""
+}
+
+var (
+	s string
+)
+var (
+	is int
+)
+
+func BenchmarkGetSrr(b *testing.B) {
+	for i := 0; i < b.N; i++ {
+		is = dofunc(i % 31)
 	}
 }

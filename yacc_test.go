@@ -1,75 +1,10 @@
 package expr
 
 import (
-	"fmt"
 	"strings"
 	"testing"
 )
 
-func execPost(code []binaryCode, ctx *Context, ss *stack[any]) any {
-
-	for _, b := range code {
-		if b.op == 0 {
-			ss.push(b.val.Val(ctx))
-		} else {
-			switch b.op {
-			case '&':
-				l := ss.pop()
-				r := ss.pop()
-				if !l.(bool) {
-					ss.push(false)
-					continue
-				}
-				if !r.(bool) {
-					ss.push(false)
-					continue
-				}
-				ss.push(true)
-			case '=':
-				ss.push(ss.pop() == ss.pop())
-			default:
-				panic("unreachable op:" + string(byte(b.op)))
-			}
-		}
-	}
-	return ss.pop()
-}
-
-func TestPost(t *testing.T) {
-	DefaultEnv := NewEnv()
-	e, err := DefaultEnv.ParseValue(" a==1 && b == 3")
-	if err != nil {
-		t.Fatal(err)
-	}
-	br := toPost(e)
-	//ss := stack[any]{}
-	ctx := DefaultEnv.NewContext(nil)
-	ctx.SetByString("a", 1.0)
-	ctx.SetByString("b", 3.0)
-	st := &stack[any]{}
-	fmt.Println(execPost(br, ctx, st))
-
-}
-
-func BenchmarkPost2(b *testing.B) {
-	v := strings.Repeat("1==1 &&", 0)
-	e, err := DefaultEnv.ParseValue(v + "1==0 && 1==1 && 1==1 && 1 == 1 ")
-	if err != nil {
-		b.Fatal(err)
-	}
-	br := toPost(e)
-	//ss := stack[any]{}
-	ctx := DefaultEnv.NewContext(nil)
-	ctx.SetByString("a", 1.0)
-	ctx.SetByString("b", 3.0)
-	st := &stack[any]{}
-	fmt.Println(execPost(br, ctx, st))
-
-	b.ReportAllocs()
-	for i := 0; i < b.N; i++ {
-		execPost(br, ctx, st)
-	}
-}
 func BenchmarkPost3(b *testing.B) {
 	v := strings.Repeat("1==1 && ", 0)
 	e, err := DefaultEnv.ParseValue(v + "1==1 || 1==1 || 1==1 || 1 == 1 ")

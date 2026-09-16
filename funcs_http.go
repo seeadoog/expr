@@ -9,7 +9,6 @@ import (
 	"io"
 	"net"
 	"net/http"
-	"os"
 	"strings"
 	"time"
 )
@@ -107,7 +106,7 @@ func init() {
 		return cli, nil
 	})
 
-	RegisterOptFuncDefine1(DefaultEnv, "curl", func(c *Context, url string, opt *Options) *httpResp {
+	RegisterOptFuncDefine1(DefaultEnv, "curl", func(c *Context, url string, opt *Options) *Result {
 
 		if !strings.HasPrefix(url, "http://") && !strings.HasPrefix(url, "https://") {
 			url = "http://" + url
@@ -137,13 +136,12 @@ func init() {
 		}
 		ctx, cancel := context.WithTimeout(context.Background(), timeoutMillSec)
 		defer cancel()
+		rst := new(Result)
 		res := &httpResp{}
 		req, err := http.NewRequestWithContext(ctx, method, url, bytes.NewReader(bb))
-
 		if err != nil {
-			res.Err = err.Error()
-			panic(res)
-			return res
+			rst.Err = err.Error()
+			return rst
 		}
 		headers := opt.GetAsObj("header")
 		headers.Range(func(k string, v any) bool {
@@ -155,90 +153,96 @@ func init() {
 		cli, _ := httpLib.Get(context.Background(), key{url: url, ip: ip, sslVerify: opt.GetBoolDef("ssl_verify", true)}, nil)
 		resp, err := cli.Do(req)
 		if err != nil {
-			res.Err = err.Error()
-			panic(res)
-			return res
+			rst.Err = err.Error()
+			//panic(res)
+			return rst
 		}
 
 		defer resp.Body.Close()
 		bs, err := io.ReadAll(resp.Body)
 		if err != nil {
-			res.Err = err.Error()
-			panic(res)
-			return res
+			rst.Err = err.Error()
+			return rst
 		}
 		res.Body = bs
-		hds := map[string]any{}
-		for key, val := range resp.Header {
-			if len(val) > 0 {
-				hds[key] = val[0]
-			}
-		}
-		res.Header = hds
+		res.Header = &httpHeader{resp.Header}
 		res.Status = resp.StatusCode
 		res.StatusLine = resp.Status
 		res.Proto = resp.Proto
 		if res.Status/100 != 2 {
-			res.Err = fmt.Sprintf("%s %s", resp.Status, string(bs))
+			rst.Err = fmt.Sprintf("%s %s", resp.Status, string(bs))
 			panic(res)
 		}
-		return res
+		rst.Data = res
+		return rst
 	}, Doc("curl(url) options:{method:'GET' or 'POST'(when body not nil) ,header:{},body:nil, ip:''(force_ip), timeout:60000 (ms)})"))
 
-	SelfDefine1(DefaultEnv, "log", func(ctx *Context, self *httpResp, opt any) any {
-		o := NewOptions(opt)
+	//SelfDefine1(DefaultEnv, "log", func(ctx *Context, self *httpResp, opt any) any {
+	//	o := NewOptions(opt)
+	//
+	//	if self.Err != nil {
+	//		fmt.Fprintln(os.Stderr, self.Err)
+	//		return nil
+	//	}
+	//
+	//	all := o.GetBoolDef("all", false)
+	//
+	//	if all || o.GetBoolDef("status", false) {
+	//		fmt.Println(self.Proto, self.StatusLine)
+	//	}
+	//	if all || o.GetBoolDef("header", false) {
+	//		for key, val := range self.Header {
+	//			fmt.Printf("%s: %s\n", key, StringOf(val))
+	//		}
+	//		fmt.Println()
+	//
+	//	}
+	//	if all || o.GetBoolDef("body", true) {
+	//		fmt.Printf("%s", ToString(self.Body))
+	//	}
+	//	return nil
+	//}, WithDoc("opt: {status:0,header:0,body:1}   print the status header and body, only print body by default"))
 
-		if self.Err != nil {
-			fmt.Fprintln(os.Stderr, self.Err)
-			return nil
-		}
+	//SelfDefine0(DefaultEnv, "throw", func(ctx *Context, self *httpResp) *httpResp {
+	//	if self.Err != nil {
+	//		panic(fmt.Sprintf("curl throw err:%v", self.Err))
+	//	}
+	//	if self.Status/100 != 2 {
+	//		panic(fmt.Sprintf("%s\n%v\n%s", self.StatusLine, self.Header, self.Body))
+	//	}
+	//	return self
+	//}, WithDoc(" panic when failed"))
+	//
+	//SelfDefine0(DefaultEnv, "failed", func(ctx *Context, self *httpResp) any {
+	//	if self.Err != "" {
+	//		return self.Err
+	//	}
+	//	if self.Status/100 != 2 {
+	//		return fmt.Sprintf("%s\n%s", self.StatusLine, self.Body)
+	//	}
+	//	return nil
+	//}, WithDoc(" return nil when err is nil and status is 200-299 or string of err"))
+}
 
-		all := o.GetBoolDef("all", false)
+type httpHeader struct {
+	http.Header
+}
 
-		if all || o.GetBoolDef("status", false) {
-			fmt.Println(self.Proto, self.StatusLine)
-		}
-		if all || o.GetBoolDef("header", false) {
-			for key, val := range self.Header {
-				fmt.Printf("%s: %s\n", key, StringOf(val))
-			}
-			fmt.Println()
+func (h *httpHeader) SetField(ctx *Context, name string, val any) {
+	h.Header.Set(name, StringOf(val))
+}
 
-		}
-		if all || o.GetBoolDef("body", true) {
-			fmt.Printf("%s", ToString(self.Body))
-		}
-		return nil
-	}, WithDoc("opt: {status:0,header:0,body:1}   print the status header and body, only print body by default"))
-
-	SelfDefine0(DefaultEnv, "throw", func(ctx *Context, self *httpResp) *httpResp {
-		if self.Err != nil {
-			panic(fmt.Sprintf("curl throw err:%v", self.Err))
-		}
-		if self.Status/100 != 2 {
-			panic(fmt.Sprintf("%s\n%v\n%s", self.StatusLine, self.Header, self.Body))
-		}
-		return self
-	}, WithDoc(" panic when failed"))
-
-	SelfDefine0(DefaultEnv, "failed", func(ctx *Context, self *httpResp) any {
-		if self.Err != "" {
-			return self.Err
-		}
-		if self.Status/100 != 2 {
-			return fmt.Sprintf("%s\n%s", self.StatusLine, self.Body)
-		}
-		return nil
-	}, WithDoc(" return nil when err is nil and status is 200-299 or string of err"))
+func (h *httpHeader) GetField(c *Context, key string) any {
+	return h.Header.Get(key)
 }
 
 type httpResp struct {
 	Proto      string
 	StatusLine string
-	Err        any
-	Body       []byte
-	Header     map[string]any
-	Status     int
+	//Err        any
+	Body   []byte
+	Header *httpHeader
+	Status int
 }
 
 func (h *httpResp) GetField(c *Context, key string) any {
@@ -253,8 +257,6 @@ func (h *httpResp) GetField(c *Context, key string) any {
 			return nil
 		}
 		return h.Header
-	case "err":
-		return h.Err
 	case "status":
 		return float64(h.Status)
 	default:
