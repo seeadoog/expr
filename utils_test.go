@@ -411,9 +411,14 @@ func BenchmarkExprGet(b *testing.B) {
 
 func BenchmarkExprGet2(b *testing.B) {
 	e, err := DefaultEnv.ParseValue(`
-for span in spans2 do 
-	
-end`)
+do_set = func() 
+	a = 1 ;
+    b = 2; 
+    c = 3 ;
+end;
+
+call(do_set);
+`)
 	if err != nil {
 		b.Fatal(err)
 	}
@@ -460,6 +465,7 @@ end`)
 	b.ReportAllocs()
 	for i := 0; i < b.N; i++ {
 		c.ExecValue(e)
+
 	}
 }
 

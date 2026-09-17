@@ -11,4 +11,6 @@ func TestINva(t *testing.T) {
 		t.Fatal(err)
 	}
 	fmt.Println(v)
+
+	DefaultEnv.GetContextFromPool()
 }

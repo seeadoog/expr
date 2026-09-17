@@ -242,13 +242,13 @@ func RunLambda(ctx *Context, v Val, args ...any) any {
 	ret := lm.Right.Val(ctx)
 
 	ctx.stackCallNum--
-	va, ok := ret.(*Return)
-	if ok {
-		if len(va.Var) > 0 {
-			return va.Var[0]
-		}
-		return nil
-	}
+	//va, ok := ret.(*Return)
+	//if ok {
+	//	if len(va.Var) > 0 {
+	//		return va.Var[0]
+	//	}
+	//	return nil
+	//}
 	return ret
 }
 
