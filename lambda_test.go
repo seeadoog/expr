@@ -261,10 +261,45 @@ func TestExecFailed(t *testing.T) {
 	fmt.Println(c.GetTable())
 
 }
+
+func mustParse(v string) Val {
+	vv, err := DefaultEnv.parseValueV(v)
+	if err != nil {
+		panic(err)
+	}
+	return vv
+}
 func TestName5555(t *testing.T) {
 
+	c := DefaultEnv.NewContext(map[string]any{
+		"f":  mustParse("a=1"),
+		"f2": mustParse("func() b=1 end"),
+	})
 	parseAndExec(DefaultEnv, `
-a = 1 
+call(f);
+call(f2);
 
-`, DefaultEnv.NewContext(nil))
+`, c)
+
+	assertEqual(t, c, "a", 1.0)
+	assertEqual(t, c, "b", 1.0)
+}
+
+func BenchmarkCallFF(b *testing.B) {
+	c := DefaultEnv.NewContext(map[string]any{
+		"f":  mustParse("a=1"),
+		"f2": mustParse("func() b=1 end"),
+	})
+	parseAndExec(DefaultEnv, `
+call(f);
+
+`, c)
+	v, er := DefaultEnv.parseValueV(`call(f)`)
+	if er != nil {
+		b.Fatal(er)
+	}
+	for i := 0; i < b.N; i++ {
+
+		c.ExecValue(v)
+	}
 }

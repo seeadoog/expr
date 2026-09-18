@@ -952,7 +952,8 @@ func TestString(t *testing.T) {
 "str=[1,2,'3'];d = join(str,'.')",
 "e={};foreach(mm,{k,v}=>e[k]=v)",
 "if 2 then cc = 5 end",
-"if 0 then gg = 1 end"
+"if 0 then gg = 1 end",
+"call(gggg=12)"
 ]
 `)
 	if err != nil {
@@ -978,6 +979,7 @@ func TestString(t *testing.T) {
 	})
 	assertEqual(t, c, "cc", 5.0)
 	assertEqual(t, c, "gg", nil)
+	assertEqual(t, c, "gggg", 12.0)
 
 }
 

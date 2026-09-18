@@ -275,11 +275,18 @@ func init() {
 		if len(args) == 0 {
 			return nil
 		}
-		f, ok := args[0].Val(ctx).(*LambdaVal)
-		if !ok {
-			return nil
+		//f, ok := args[0].Val(ctx).(*LambdaVal)
+		//if !ok {
+		//
+		//	return nil
+		//}
+		switch f := args[0].Val(ctx).(type) {
+		case *LambdaVal:
+			return lambaCall(f, ctx, args[1:])
+		case Val:
+			return f.Val(ctx)
 		}
-		return lambaCall(f, ctx, args[1:])
+		return nil
 	}, -1)
 }
 
