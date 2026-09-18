@@ -48,6 +48,8 @@ func BoolCond(v interface{}) bool {
 		return false
 	case string:
 		return vv != ""
+	case float64:
+		return vv > 0
 	default:
 		return true
 	}

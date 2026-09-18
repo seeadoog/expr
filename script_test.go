@@ -950,7 +950,9 @@ func TestString(t *testing.T) {
 [
 "a = str_builder();b = a.write('hello').write('world','1').string()",
 "str=[1,2,'3'];d = join(str,'.')",
-"e={};foreach(mm,{k,v}=>e[k]=v)"
+"e={};foreach(mm,{k,v}=>e[k]=v)",
+"if 2 then cc = 5 end",
+"if 0 then gg = 1 end"
 ]
 `)
 	if err != nil {
@@ -974,6 +976,8 @@ func TestString(t *testing.T) {
 		"a": "a",
 		"b": "b",
 	})
+	assertEqual(t, c, "cc", 5.0)
+	assertEqual(t, c, "gg", nil)
 
 }
 

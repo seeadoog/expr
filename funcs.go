@@ -1044,7 +1044,8 @@ var inFunc ScriptFunc = func(ctx *Context, args ...Val) any {
 			if ok {
 				return true
 			}
-
+		case nil:
+			return false
 		default:
 			if arg == tv {
 				return true

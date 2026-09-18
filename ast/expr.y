@@ -113,7 +113,7 @@ Expr:
 	| FUNCTION Ident '(' Idss ')' EExpr END  {  $$.node = &Set{L:$2.node, R:&Lambda{L: $4.strs , R:$6.node }} }
 	| FUNCTION '(' Idss ')' EExpr END {  $$.node = &Lambda{L: $3.strs , R:$5.node } }
 	| NUMBER '~' NUMBER { $$.node = &RangeValue{L: $1.num , R: $3.num} }
-	| EXIT Expr
+
 	;
 
 Elseifs:

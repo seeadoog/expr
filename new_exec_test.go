@@ -40,3 +40,15 @@ func BenchmarkEString(b *testing.B) {
 		resE = Add(a1, a2)
 	}
 }
+
+func TestReturnInLambda(t *testing.T) {
+
+	c := DefaultEnv.NewContext(nil)
+	parseAndExec(DefaultEnv, `fun  = func() 
+return(0,"err")
+end;
+call(fun);
+a = 1;
+`, c)
+	assertEqual(t, c, "a", nil)
+}
