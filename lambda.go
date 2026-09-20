@@ -276,9 +276,8 @@ func init() {
 			return nil
 		}
 		//f, ok := args[0].Val(ctx).(*LambdaVal)
-		//if !ok {
-		//
-		//	return nil
+		//if ok {
+		//	return lambaCall(f, ctx, args[1:])
 		//}
 		switch f := args[0].Val(ctx).(type) {
 		case *LambdaVal:
