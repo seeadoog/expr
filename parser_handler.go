@@ -468,7 +468,6 @@ func parseNodeArrDef(e *Env, n *ast.ArrDef, isAccess bool, pc *ParserContext) (V
 	}
 	return arrV, nil
 }
-
 func parseNodeArrAccess(e *Env, n *ast.ArrAccess, isAccess bool, pc *ParserContext) (Val, error) {
 	arrV := &arrAccessVal{}
 	lv, err := e.ParseValueFromNode(n.L, false, pc)
@@ -660,10 +659,11 @@ type forRangeVal struct {
 
 func (f *forRangeVal) Val(c *Context) any {
 
-	return forRangeExec(f.lm, c, f.val.Val(c), func(k, v any, val Val) any {
-
-		return val.Val(c)
-	})
+	//return forRangeExec(f.lm, c, f.val.Val(c), func(k, v any, val Val) any {
+	//
+	//	return val.Val(c)
+	//})
+	return forRangeExecVal(f.lm, c, f.val.Val(c), f.lm.Right)
 }
 
 func (f *forRangeVal) Set(c *Context, val any) {
@@ -708,7 +708,7 @@ func parseSwitchVar(e *Env, n *ast.Switch, isAccess bool, pc *ParserContext) (Va
 		cas := node.(*ast.Case)
 		var doval Val
 		if cas.Do != nil {
-			doval, err = e.parseValueFromNode(cas.Do, true, pc)
+			doval, err = e.parseValueFromNode(cas.Do, isAccess, pc)
 			if err != nil {
 				return nil, fmt.Errorf("parse switch case do error:%w %v", err, cas.Do)
 			}
@@ -751,7 +751,7 @@ func parseSwitchRange(e *Env, n *ast.Switch, isAccess bool, pc *ParserContext) (
 		cas := node.(*ast.Case)
 		var doval Val
 		if cas.Do != nil {
-			doval, err = e.parseValueFromNode(cas.Do, true, pc)
+			doval, err = e.parseValueFromNode(cas.Do, isAccess, pc)
 			if err != nil {
 				return nil, fmt.Errorf("parse switch case do error:%w %v", err, cas.Do)
 			}

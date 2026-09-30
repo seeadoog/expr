@@ -729,6 +729,9 @@ func init() {
 	SelfDefine0(DefaultEnv, "unix_micro", func(ctx *Context, self time.Time) float64 {
 		return float64(self.UnixMicro())
 	})
+	SelfDefine0(DefaultEnv, "unix_nano", func(ctx *Context, self time.Time) float64 {
+		return float64(self.UnixNano())
+	})
 	SelfDefine0(DefaultEnv, "minute", func(ctx *Context, self time.Time) float64 {
 		return float64(self.Minute())
 	})

@@ -294,7 +294,7 @@ func BenchmarkCallFF(b *testing.B) {
 call(f);
 
 `, c)
-	v, er := DefaultEnv.parseValueV(`call(f2)`)
+	v, er := DefaultEnv.parseValueV(`call(f)`)
 	if er != nil {
 		b.Fatal(er)
 	}

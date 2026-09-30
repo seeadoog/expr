@@ -620,6 +620,7 @@ func (a *accessVal) Val(ctx *Context) any {
 	}
 }
 
+// a.(b.(c.d))
 type Setter interface {
 	SetField(ctx *Context, name string, val any)
 }
@@ -1159,6 +1160,8 @@ func tryCompileVal(v *accessVal) Val {
 		return v
 	}
 }
+
+// (a.b).c
 
 func getTopFuncName(lv Val) string {
 	switch lv := lv.(type) {

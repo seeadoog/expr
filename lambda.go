@@ -128,6 +128,73 @@ func forRangeExec(doVal Val, ctx *Context, target any, f func(k, v any, val Val)
 	return nil
 }
 
+func forRangeExecVal(doVal Val, ctx *Context, target any, v Val) any {
+
+	//lmc, ok := doVal.(*compiledLambda)
+	//if ok {
+	//	return forRangeCompiledLambda(lmc, ctx, target, f)
+	//}
+
+	lm, ok := doVal.(*lambda)
+
+	switch vv := target.(type) {
+	case map[string]any:
+		if !ok {
+			lm = &lambda{
+				Lefts:     mapKeys,
+				Right:     doVal,
+				leftsHash: hashOfStrings(ctx.Env, mapKeys),
+			}
+
+		}
+		return forRangeMapExecVal(lm, ctx, vv, v)
+	case ReadOnlyMap:
+		if !ok {
+			lm = &lambda{
+				Lefts:     mapKeys,
+				Right:     doVal,
+				leftsHash: hashOfStrings(ctx.Env, mapKeys),
+			}
+
+		}
+		return forRangeMapExecVal(lm, ctx, vv, v)
+	case []any:
+		if !ok {
+			lm = &lambda{
+				Lefts:     arrKeys,
+				Right:     doVal,
+				leftsHash: hashOfStrings(ctx.Env, mapKeys),
+			}
+
+		}
+		return forRangeArrVal(lm, ctx, vv, v)
+	case ReadOnlyArray:
+		if !ok {
+			lm = &lambda{
+				Lefts:     arrKeys,
+				Right:     doVal,
+				leftsHash: hashOfStrings(ctx.Env, mapKeys),
+			}
+
+		}
+		return forRangeArrVal(lm, ctx, vv, v)
+	case nil:
+		return nil
+	default:
+		if !ok {
+			lm = &lambda{
+				Lefts:     mapKeys,
+				Right:     doVal,
+				leftsHash: hashOfStrings(ctx.Env, mapKeys),
+			}
+		}
+		return forRangeStruct(lm, ctx, reflect.ValueOf(vv), func(k, v any, val Val) any {
+			return val.Val(ctx)
+		})
+	}
+	return nil
+}
+
 func forRangeMapExec(lv *lambda, ctx *Context, m map[string]any, f func(k, v any, val Val) any) any {
 	moreK := len(lv.leftsHash) > 1
 	for k, v := range m {
@@ -137,6 +204,27 @@ func forRangeMapExec(lv *lambda, ctx *Context, m map[string]any, f func(k, v any
 		}
 		lv.setMapKvForLambda(ctx, ka, v)
 		vv := f(ka, v, lv.Right)
+		if err := convertToError(vv); err != nil {
+			return err
+		}
+		_, ok := vv.(*Break)
+		if ok {
+			return nil
+		}
+
+	}
+	return nil
+}
+
+func forRangeMapExecVal(lv *lambda, ctx *Context, m map[string]any, subVal Val) any {
+	moreK := len(lv.leftsHash) > 1
+	for k, v := range m {
+		var ka any
+		if moreK {
+			ka = any(k)
+		}
+		lv.setMapKvForLambda(ctx, ka, v)
+		vv := subVal.Val(ctx)
 		if err := convertToError(vv); err != nil {
 			return err
 		}
@@ -159,6 +247,27 @@ func forRangeArr(lv *lambda, ctx *Context, m []any, f func(k, v any, val Val) an
 
 		lv.setMapKvForLambda(ctx, ka, v)
 		vv := f(ka, v, lv.Right)
+		if err := convertToError(vv); err != nil {
+			return err
+		}
+		_, ok := vv.(*Break)
+		if ok {
+			return nil
+		}
+	}
+	return nil
+}
+
+func forRangeArrVal(lv *lambda, ctx *Context, m []any, subVal Val) any {
+	moreK := len(lv.leftsHash) > 1
+	for k, v := range m {
+		var ka any
+		if moreK {
+			ka = any(float64(k))
+		}
+
+		lv.setMapKvForLambda(ctx, ka, v)
+		vv := subVal.Val(ctx)
 		if err := convertToError(vv); err != nil {
 			return err
 		}

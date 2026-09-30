@@ -116,6 +116,7 @@ func (bc *ByteCode) Disassemble() string {
 	sb.WriteString("=== Bytecode Disassembly ===\n")
 
 	sb.WriteString("Constants:\n")
+
 	for i, c := range bc.Constants {
 		fmt.Fprintf(&sb, "  [%d] %#v\n", i, c)
 	}

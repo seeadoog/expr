@@ -171,7 +171,8 @@ func init() {
 		res.Proto = resp.Proto
 		if res.Status/100 != 2 {
 			rst.Err = fmt.Sprintf("%s %s", resp.Status, string(bs))
-			panic(res)
+			//panic(res)
+			return rst
 		}
 		rst.Data = res
 		return rst
