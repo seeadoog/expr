@@ -63,7 +63,7 @@ func BenchmarkFuncObj(b *testing.B) {
 	SelfDefine0(DefaultEnv, "gg", func(ctx *Context, self *ssr) any {
 		return self
 	})
-	e, err := DefaultEnv.ParseValue(`ssr.gg()`)
+	e, err := DefaultEnv.ParseValue(`number("123")`)
 	if err != nil {
 		b.Fatal(err)
 	}
@@ -149,12 +149,23 @@ end;
 // call()
 func BenchmarkForRange(b *testing.B) {
 	e := mustParse(`
-for span in  const [{code:0,kvs:[{k:'aa',v:1}]},{code:0},{code:0},{code:0},{code:0}] do 
-	for e in span.kvs do 
-		switch e.k 
-		case 'aa':
-			return (e.v)
-		end
+for span in  const [
+{code:0},
+{code:0},
+{code:0},
+{code:0},
+{code:0},
+{code:0},
+{code:0},
+{code:0},
+{code:0},
+{code:0},
+{code:0},
+{code:0},
+
+] do 
+	if span.code > 0 then
+		return(1)
 	end
 end;
 `)
@@ -167,6 +178,42 @@ end;
 
 	for i := 0; i < b.N; i++ {
 		c.ExecValue(e)
+	}
+}
+func filter(arr []any, fn func(any) bool) any {
+	for _, a := range arr {
+		if !fn(a) {
+			return a
+		}
+	}
+	return nil
+}
+func BenchmarkForRangeGo(b *testing.B) {
+	mm := []any{
+		map[string]any{"code": 0.0},
+		map[string]any{"code": 0.0},
+		map[string]any{"code": 0.0},
+		map[string]any{"code": 0.0},
+		map[string]any{"code": 0.0},
+		map[string]any{"code": 0.0},
+		map[string]any{"code": 0.0},
+		map[string]any{"code": 0.0},
+		map[string]any{"code": 0.0},
+		map[string]any{"code": 0.0},
+		map[string]any{"code": 0.0},
+		map[string]any{"code": 0.0},
+		map[string]any{"code": 0.0},
+		map[string]any{"code": 0.0},
+	}
+	b.ReportAllocs()
+	for i := 0; i < b.N; i++ {
+
+		filter(mm, func(a any) bool {
+			if NumberOf(a.(map[string]any)["code"]) > 0.0 {
+				return false
+			}
+			return true
+		})
 	}
 }
 

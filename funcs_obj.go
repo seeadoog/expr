@@ -802,7 +802,7 @@ func init() {
 			return nil
 		})
 		return dst
-	}, 1, "all(cond)[]any")
+	}, 1, "filter(cond)[]any")
 
 	//RegisterObjFunc[[]any]("for", func(ctx *Context, self any, args ...Val) any {
 	//

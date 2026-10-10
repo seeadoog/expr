@@ -258,8 +258,8 @@ func parseNodeUnary(e *Env, n *ast.Unary, isAccess bool, pc *ParserContext) (Val
 		}), nil
 	case "-":
 		return newUnaryValue("-", val, func(ctx *Context, a Val) any {
-			v, _ := val.Val(ctx).(float64)
-			return -v
+			//v, _ := val.Val(ctx).(float64)
+			return -NumberOf(val.Val(ctx))
 		}), nil
 	case "...":
 		return &VariadicVal{val}, nil
@@ -351,11 +351,11 @@ func parseNodeBinary(e *Env, n *ast.Binary, isAccess bool, pc *ParserContext) (V
 
 	case "|":
 		return newBinaryValue("|", lv, rv, func(ctx *Context, a, b Val) any {
-			return float64(int(NumberOf(a.Val(ctx))) | int(NumberOf(b.Val(ctx))))
+			return float64(IntOf(a.Val(ctx)) | IntOf(b.Val(ctx)))
 		}), nil
 	case "&":
 		return newBinaryValue("&", lv, rv, func(ctx *Context, a, b Val) any {
-			return float64(int(NumberOf(a.Val(ctx))) & int(NumberOf(b.Val(ctx))))
+			return float64(IntOf(a.Val(ctx)) & IntOf(b.Val(ctx)))
 		}), nil
 	case "+=":
 		return &setValue{

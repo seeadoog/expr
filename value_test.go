@@ -8,6 +8,8 @@ func BenchmarkValueOf(b *testing.B) {
 	v := ValueOf(make([]int, 128))
 	//arr := v.AnyArr()
 	for i := 0; i < b.N; i++ {
-		v.AnyArr()
+		v.RangeArr(func(k int, v any) bool {
+			return true
+		})
 	}
 }

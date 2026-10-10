@@ -93,7 +93,7 @@ o.name  == 'xiao' && o.age > 17
 	}
 }
 
-func BenchmarkCOntectReadMap(b *testing.B) {
+func BenchmarkConvertReadMap(b *testing.B) {
 
 	b.ReportAllocs()
 	m := map[string]any{

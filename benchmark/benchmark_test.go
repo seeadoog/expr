@@ -174,12 +174,24 @@ func BenchmarkNestedConditions(b *testing.B) {
 	}
 
 	b.Run("seeadoog/expr", func(b *testing.B) {
+		params := map[string]interface{}{
+			"a": 15.0,
+			"b": 25.0,
+			"c": 35.0,
+			"d": 35.0,
+		}
+
+		expression := "$.a > 10 && ($.b < 20 || ($.c >= 30 && $.d <= 40))"
+
+		//
 		env := expr.NewEnv()
 		compiled, err := env.ParseValue(expression)
 		if err != nil {
 			b.Fatal(err)
 		}
-		ctx := env.NewContext(params)
+		ctx := env.NewContext(map[string]any{
+			"$": params,
+		})
 
 		b.ResetTimer()
 		b.ReportAllocs()
@@ -290,7 +302,7 @@ func BenchmarkLambda(b *testing.B) {
 
 	b.Run("seeadoog/expr", func(b *testing.B) {
 		env := expr.NewEnv()
-		compiled, err := env.ParseValue("nums.filter(x => x > 5)")
+		compiled, err := env.ParseValue("nums.all(x => x > 0)")
 		if err != nil {
 			b.Fatal(err)
 		}

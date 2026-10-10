@@ -442,61 +442,6 @@ var joinFunc ScriptFunc = func(ctx *Context, args ...Val) any {
 	return sb.String()
 }
 
-var eqFunc ScriptFunc = func(ctx *Context, args ...Val) any {
-	if len(args) != 2 {
-		return false
-	}
-	return args[0].Val(ctx) == args[1].Val(ctx)
-}
-var eqsFunc ScriptFunc = func(ctx *Context, args ...Val) any {
-	if len(args) != 2 {
-		return false
-	}
-	a0 := args[0].Val(ctx)
-	a1 := args[1].Val(ctx)
-	if a0 == a1 {
-		return true
-	}
-	return StringOf(a0) == StringOf(a1)
-}
-
-var orFunc ScriptFunc = func(ctx *Context, args ...Val) any {
-	for _, arg := range args {
-		v := arg.Val(ctx)
-		if v != nil {
-			switch vb := v.(type) {
-			case bool:
-				if vb {
-					return true
-				}
-				continue
-			case float64:
-				if vb == 0 {
-					continue
-				}
-			case int:
-				if vb == 0 {
-					continue
-				}
-			case string:
-				if vb == "" {
-					continue
-				}
-			}
-
-			return v
-		}
-	}
-	return nil
-}
-
-var orrFunc = FuncDefine2(func(ctx *Context, a any, b any) any {
-	if a != nil {
-		return a
-	}
-	return b
-})
-
 var andFunc ScriptFunc = func(ctx *Context, args ...Val) any {
 	for _, arg := range args {
 		if !BoolCond(arg.Val(ctx)) {
@@ -674,6 +619,8 @@ func add2(a, b any) any {
 		return v + NumberOf(b)
 	case string:
 		return v + StringOf(b)
+	case int:
+		return v + IntOf(b)
 	default:
 		return newErrorf("cannot add type '%v' '+' '%v'", reflect.TypeOf(a), reflect.TypeOf(b))
 	case nil:
@@ -905,8 +852,8 @@ var stringFunc ScriptFunc = func(ctx *Context, args ...Val) any {
 	return stringConvert(args[0].Val(ctx))
 }
 
-var intFunc = FuncDefine1(func(ctx *Context, a float64) float64 {
-	return float64(int(a))
+var intFunc = FuncDefine1(func(ctx *Context, a any) int {
+	return IntOf(a)
 })
 
 var boolFunc ScriptFunc = func(ctx *Context, args ...Val) any {
@@ -991,6 +938,28 @@ var hmacSha266Func = FuncDefine2(func(ctx *Context, a any, b any) []byte {
 	h.Write(BytesOf(a))
 	return h.Sum(nil)
 })
+
+//var lenFunc = FuncDefine1(func(ctx *Context, a any) int {
+//	switch a := a.(type) {
+//	case string:
+//		return (len(a))
+//	case []byte:
+//		return (len(a))
+//	case []any:
+//		return (len(a))
+//	case map[string]interface{}:
+//		return (len(a))
+//	case []string:
+//		return (len(a))
+//	case nil:
+//		return 0
+//	case ReadOnlyArray:
+//		return (len(a))
+//	default:
+//		return int((lenOfStruct(reflect.ValueOf(a))))
+//	}
+//})
+
 var lenFunc = FuncDefine1(func(ctx *Context, a any) float64 {
 	switch a := a.(type) {
 	case string:
@@ -1466,17 +1435,17 @@ var (
 	_randLock = sync.Mutex{}
 )
 
-var funcRand = FuncDefine1(func(ctx *Context, a float64) []byte {
+var funcRand = FuncDefine1(func(ctx *Context, a any) []byte {
 	_randLock.Lock()
 	defer _randLock.Unlock()
-	bs := make([]byte, int(a))
+	bs := make([]byte, IntOf(a))
 	_randseed.Read(bs)
 	return bs
 })
 
-var funcRandN = FuncDefine1(func(ctx *Context, a float64) float64 {
+var funcRandN = FuncDefine1(func(ctx *Context, a any) float64 {
 
-	return float64(rand.Intn(int(a)))
+	return float64(rand.Intn(IntOf(a)))
 
 })
 

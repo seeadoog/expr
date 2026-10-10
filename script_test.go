@@ -754,6 +754,7 @@ func TestMath(t *testing.T) {
 	assertEqual(t, c, "k", (-12)+a*b/2+1.2)
 	assertEqual(t, c, "j", float64(int(a)&int(b)))
 	assertEqual(t, c, "l", float64(int(a)|int(b)))
+
 }
 
 func TestAccess(t *testing.T) {

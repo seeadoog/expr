@@ -13,6 +13,9 @@ func ValueOf(data any) ExprValue {
 	return ExprValue{data: data}
 }
 
+func (e ExprValue) Any() any {
+	return e.data
+}
 func (e ExprValue) String() string {
 	return StringOf(e.data)
 }
@@ -23,6 +26,9 @@ func (e ExprValue) Number() float64 {
 func (e ExprValue) Bool() bool {
 	return BoolOf(e.data)
 }
+func (e ExprValue) Int() int {
+	return IntOf(e.data)
+}
 func (e ExprValue) Set(ctx *Context, k string, val any) {
 	switch m := e.data.(type) {
 	case map[string]any:
@@ -30,6 +36,7 @@ func (e ExprValue) Set(ctx *Context, k string, val any) {
 	case map[string]string:
 		m[k] = StringOf(val)
 	case ReadOnlyMap:
+
 	case Setter:
 		m.SetField(ctx, k, val)
 	default:
@@ -172,12 +179,24 @@ func (e ExprValue) RangeArr(f func(k int, v any) bool) {
 				return
 			}
 		}
+	default:
+		v := reflect.ValueOf(e.data)
+		if v.Kind() != reflect.Slice {
+			return
+		}
+		for i := 0; i < v.Len(); i++ {
+			if !f(i, v.Index(i).Interface()) {
+				return
+			}
+		}
 	}
 }
 
 func (e ExprValue) AnyArr() []any {
 	switch m := e.data.(type) {
 	case []any:
+		return m
+	case ReadOnlyArray:
 		return m
 	case []float64:
 		d := make([]any, len(m))
@@ -211,11 +230,46 @@ func (e ExprValue) AnyArr() []any {
 	}
 }
 
+func (e ExprValue) StringArray() []string {
+	switch m := e.data.(type) {
+	case []any:
+		s := make([]string, len(m))
+		for i, v := range m {
+			s[i] = StringOf(v)
+		}
+		return s
+	case []string:
+		return m
+	case []float64:
+		s := make([]string, len(m))
+		for i, v := range m {
+			s[i] = strconv.FormatFloat(v, 'f', -1, 64)
+		}
+		return s
+	default:
+		v := reflect.ValueOf(e.data)
+		if v.Kind() == reflect.Slice {
+			s := make([]string, v.Len())
+			for i := 0; i < v.Len(); i++ {
+				s[i] = StringOf(v.Index(i).Interface())
+			}
+			return s
+		}
+		return nil
+	}
+}
+
 func (e ExprValue) F64Arr() []float64 {
 	switch m := e.data.(type) {
 	case []float64:
 		return m
 	case []any:
+		d := make([]float64, len(m))
+		for i, v := range m {
+			d[i] = NumberOf(v)
+		}
+		return d
+	case ReadOnlyArray:
 		d := make([]float64, len(m))
 		for i, v := range m {
 			d[i] = NumberOf(v)
@@ -245,6 +299,18 @@ func (e ExprValue) IntArr() []int {
 	switch m := e.data.(type) {
 	case []int:
 		return m
+	case []any:
+		d := make([]int, len(m))
+		for i, v := range m {
+			d[i] = IntOf(v)
+		}
+		return d
+	case ReadOnlyArray:
+		d := make([]int, len(m))
+		for i, v := range m {
+			d[i] = IntOf(v)
+		}
+		return d
 	case []float64:
 		d := make([]int, len(m))
 		for i, v := range m {
@@ -274,6 +340,8 @@ func IntOf(v interface{}) int {
 	switch m := v.(type) {
 	case int:
 		return m
+	case float64:
+		return int(m)
 	case *int:
 		return *m
 	case int64:
@@ -294,8 +362,7 @@ func IntOf(v interface{}) int {
 		return int(m)
 	case uint8:
 		return int(m)
-	case float64:
-		return int(m)
+
 	case float32:
 		return int(m)
 	case bool:

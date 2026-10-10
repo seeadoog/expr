@@ -215,6 +215,7 @@ func BenchmarkCutter(b *testing.B) {
 		getterOf(m)("ss")
 	}
 }
+
 func BenchmarkCutter2(b *testing.B) {
 	arr := []any{1, 2, 3}
 

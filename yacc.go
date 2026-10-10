@@ -629,13 +629,13 @@ type Getter interface {
 	GetField(c *Context, key string) any
 }
 
-type IndexGet interface {
-	IndexGet(c *Context, key float64) any
-}
-
-type IndexSet interface {
-	GetIndSet(ctx *Context, key float64, val any)
-}
+//type IndexGet interface {
+//	IndexGet(c *Context, key float64) any
+//}
+//
+//type IndexSet interface {
+//	GetIndSet(ctx *Context, key float64, val any)
+//}
 
 type parentValueSetter interface {
 	Set(c *Context, val any)

@@ -622,3 +622,14 @@ func TestClone(t *testing.T) {
 	assertDeepEqual(t, c, "a1.clone()", []any{1, 2, 3})
 	assertDeepEqual(t, c, "m1.clone()", map[string]any{"na": 1})
 }
+
+func BenchmarkLen(b *testing.B) {
+
+	e := mustParse("len(arr)")
+	c := DefaultEnv.NewContext(nil)
+	c.SetByString("arr", []any{1, 2, 3})
+	b.ReportAllocs()
+	for i := 0; i < b.N; i++ {
+		c.ExecValue(e)
+	}
+}
