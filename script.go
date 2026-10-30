@@ -8,7 +8,7 @@ import (
 	"regexp"
 	"strings"
 
-	"github.com/ortuman/nuke"
+	arena2 "github.com/seeadoog/expr/arena"
 )
 
 /*
@@ -27,7 +27,7 @@ type Context struct {
 	Env                     *Env
 	stackCallNum            int // 防止无限递归
 
-	arena nuke.Arena
+	arena *arena2.Arena
 }
 
 func (c *Context) Clone() *Context {
@@ -65,6 +65,12 @@ func (e *Env) NewContext(table map[string]any) *Context {
 
 func (c *Context) SetHash(key HashKey, value any) {
 	c.Set(key.Hash, value)
+}
+
+// SetArena 后，Arena.Reset 一定要比c.Reset 后执行。
+// Arena.Reset 执行后，丛Context 获取的变量的引用不应该再被外部持有。
+func (c *Context) SetArena(arena *arena2.Arena) {
+	c.arena = arena
 }
 
 func (c *Context) GetHash(key HashKey) any {
@@ -111,6 +117,7 @@ func (c *Context) Delete(key string) {
 func (c *Context) Reset() {
 	c.returnVal = nil
 	c.stackCallNum = 0
+	c.arena = nil
 	c.stack.reset()
 }
 

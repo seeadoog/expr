@@ -58,7 +58,7 @@ func BenchmarkExecRaw(b *testing.B) {
 }
 
 func BenchmarkExecRaw2(b *testing.B) {
-	e, err := DefaultEnv.parseValueV(`a=1`)
+	e, err := DefaultEnv.parseValueV(`if a then b else c end`)
 	if err != nil {
 		b.Fatal(err)
 	}

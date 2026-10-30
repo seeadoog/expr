@@ -605,20 +605,20 @@ var deleteFunc = FuncDefine2(func(ctx *Context, m map[string]any, b string) any 
 })
 
 var add2Func = FuncDefine2(func(ctx *Context, a, b any) any {
-	return add2(a, b)
+	return add2(ctx, a, b)
 })
 
 var (
 	f64Type = interOf(1.0).T
 )
 
-func add2(a, b any) any {
+func add2(ctx *Context, a, b any) any {
 
 	switch v := a.(type) {
 	case float64:
-		return v + NumberOf(b)
+		return ctx.arena.Float64ToAny(v + NumberOf(b))
 	case string:
-		return v + StringOf(b)
+		return ctx.arena.StringToAny(v + StringOf(b))
 	case int:
 		return v + IntOf(b)
 	default:
@@ -633,16 +633,17 @@ func add2(a, b any) any {
 }
 
 var subFunc = FuncDefine2(func(ctx *Context, a, b float64) any {
-	return a - b
+	return ctx.arena.Float64ToAny(a - b)
 })
+
 var divFunc = FuncDefine2(func(ctx *Context, a, b float64) any {
-	return a / b
+	return ctx.arena.Float64ToAny(a / b)
 })
 var mulFunc = FuncDefine2(func(ctx *Context, a, b float64) any {
-	return a * b
+	return ctx.arena.Float64ToAny(a * b)
 })
 var modFunc = FuncDefine2(func(ctx *Context, a, b float64) any {
-	return float64(int(a) % int(b))
+	return ctx.arena.Float64ToAny(float64(int(a) % int(b)))
 })
 var hasPrefixFunc = FuncDefine2(func(ctx *Context, a, b string) any {
 	return strings.HasPrefix(a, b)

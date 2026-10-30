@@ -2,9 +2,10 @@ package main
 
 import (
 	"fmt"
-	"github.com/seeadoog/expr"
 	"math"
 	"sync"
+
+	"github.com/seeadoog/expr"
 )
 
 type HandlerContext struct {
@@ -71,3 +72,5 @@ math_log(4) / math_log(2)`)
 	fmt.Println(hc.Args)
 
 }
+
+//

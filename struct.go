@@ -16,6 +16,10 @@ func getFieldOfStruct(forceType bool, rv reflect.Value, name string) any {
 			}
 			return nil
 		}
+
+		if fv.Kind() == reflect.Struct {
+			return fv.Addr().Interface()
+		}
 		return structValueToVm(forceType, fv.Interface())
 	case reflect.Ptr:
 		if !rv.IsNil() {
@@ -62,6 +66,7 @@ func setValStruct(ctx *Context, fv reflect.Value, val any) {
 	default:
 		v, ok := structValConvert(ctx, fv.Type(), val)
 		if ok {
+
 			fv.Set(v)
 		} else {
 			panic(fmt.Sprintf("cannot set val '%v':%s to type %s", val, reflect.TypeOf(val).String(), fv.Type().String()))
@@ -92,22 +97,37 @@ func structValConvert(ctx *Context, t reflect.Type, v any) (vv reflect.Value, ok
 	switch t.Kind() {
 	case reflect.String:
 		tv.SetString(StringOf(v))
+		if isPtr {
+			return tv.Addr(), true
+		}
 		return tv, true
 		//return reflect.ValueOf(StringOf(v)), true
 	case reflect.Int, reflect.Int8, reflect.Int64, reflect.Int32, reflect.Int16:
 		tv.SetInt(int64(NumberOf(v)))
+		if isPtr {
+			return tv.Addr(), true
+		}
 		return tv, true
 	case reflect.Uint, reflect.Uint64, reflect.Uint32, reflect.Uint16, reflect.Uint8:
 		tv.SetUint(uint64(NumberOf(v)))
+		if isPtr {
+			return tv.Addr(), true
+		}
 		return tv, true
 	case reflect.Float32, reflect.Float64:
 		tv.SetFloat(NumberOf(v))
+		if isPtr {
+			return tv.Addr(), true
+		}
 		return tv, true
 		//return reflect.ValueOf(float32(NumberOf(v))), true
 	//case reflect.Float64:
 	//	return reflect.ValueOf(float64(NumberOf(v))), true
 	case reflect.Bool:
 		tv.SetBool(BoolOf(v))
+		if isPtr {
+			return tv.Addr(), true
+		}
 		return tv, true
 	//return reflect.ValueOf(BoolOf(v)), true
 	case reflect.Struct:
@@ -253,6 +273,12 @@ func structValueToVm(force bool, vv any) any {
 		return float64(v)
 	case float32:
 		return float64(v)
+	case *string:
+		return *v
+	case *int:
+		return float64(*v)
+	case *int8:
+		return float64(*v)
 	default:
 		return v
 	}

@@ -577,3 +577,90 @@ func BenchmarkValInter(b *testing.B) {
 
 	}
 }
+
+func TestStrucChange(t *testing.T) {
+	type Req struct {
+		Name string `json:"name"`
+		Age  int
+		Sms  *Req `json:"sms"`
+		Sm2  struct {
+			AA int `json:"aa"`
+		}
+		Fun func()
+	}
+
+	req := &Req{}
+	//req.Sms = &Req{}
+	req.Fun = func() {
+		fmt.Println("ff cc")
+	}
+	e, err := DefaultEnv.ParseValue(` $.Name = 'hello';
+$.Age = 44;
+$.Sms = {};
+$.Sms.Age  = 1;
+sm2 = $.Sm2;
+sm2.AA =  4;
+ff = $.Fun ;
+$.Fun = func()  
+	call(ff);
+	print('fun called')
+end;
+`)
+	if err != nil {
+		t.Fatal(err)
+	}
+	c := DefaultEnv.NewContext(map[string]interface{}{
+		"$": req,
+	})
+	c.ExecValue(e)
+
+	req.Fun()
+	fmt.Println(req)
+	fmt.Println(req.Sms.Age)
+}
+
+func TestStructSet(t *testing.T) {
+	type SS struct {
+		Sub struct {
+			Name string
+		}
+		Fun func(string2 string) string
+		PI  *int
+
+		Ptr *string
+	}
+	s := &SS{}
+
+	pr := "ptr"
+	s.Ptr = &pr
+
+	s.Fun = func(a string) string {
+		return a + "fun called"
+	}
+	c := DefaultEnv.NewContext(map[string]interface{}{
+		"$": s,
+	})
+	parseAndExec(DefaultEnv, "$.Sub.Name = 'hello'", c)
+
+	if s.Sub.Name != "hello" {
+		t.Error("s.sub.Name", "want", "hello", "got", s.Sub.Name)
+	}
+
+	parseAndExec(DefaultEnv, "fr = call($.Fun,'a')", c)
+	if c.GetByString("fr") != "afun called" {
+		t.Errorf("fr want: afunc called, got: %v", c.GetByString("fr"))
+	}
+
+	parseAndExec(DefaultEnv, `
+$.PI = 23;
+ptr = string($.Ptr)
+
+`, c)
+
+	if *s.PI != 23 {
+		t.Error("s.PI", "want", 23, "got", *s.PI)
+	}
+	if c.GetByString("ptr") != "ptr" {
+		t.Error("ptr", "want", "ptr", "got", c.GetByString("ptr"))
+	}
+}

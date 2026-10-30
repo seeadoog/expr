@@ -1327,8 +1327,9 @@ type addAddVal struct {
 func (v *addAddVal) Val(c *Context) any {
 
 	n := NumberOf(v.v.Val(c))
-	v.v.Set(c, n+1)
-	return n + 1
+	n1 := any(n + 1)
+	v.v.Set(c, n1)
+	return n1
 }
 
 func (v *addAddVal) Set(c *Context, val any) {
@@ -1342,8 +1343,9 @@ type subSubVal struct {
 func (v *subSubVal) Val(c *Context) any {
 
 	n := NumberOf(v.v.Val(c))
-	v.v.Set(c, n-1)
-	return n - 1
+	n1 := any(n - 1)
+	v.v.Set(c, n1)
+	return n1
 }
 
 func (v *subSubVal) Set(c *Context, val any) {

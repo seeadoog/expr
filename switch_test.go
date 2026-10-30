@@ -7,6 +7,7 @@ import (
 	"time"
 
 	"github.com/ortuman/nuke"
+	"github.com/seeadoog/expr/arena"
 )
 
 func TestSwitchCases(t *testing.T) {
@@ -350,5 +351,21 @@ func BenchmarkGET(b *testing.B) {
 	b.ResetTimer()
 	for i := 0; i < b.N; i++ {
 		c.ExecValue(v)
+	}
+}
+
+func BenchmarkExprs(b *testing.B) {
+	e := mustParse(`
+ a = 5;
+ c = a + 5;
+`)
+	c := DefaultEnv.NewContext(nil)
+	a := arena.NewArena(1024)
+	b.ReportAllocs()
+	c.SetArena(a)
+
+	for i := 0; i < b.N; i++ {
+		c.ExecValue(e)
+		a.Reset()
 	}
 }

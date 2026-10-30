@@ -393,6 +393,13 @@ func init() {
 			return lambaCall(f, ctx, args[1:])
 		case Val:
 			return f.Val(ctx)
+		default:
+			v := reflect.ValueOf(f)
+			if v.Kind() == reflect.Func {
+				return callFunc(ctx, v, args[1:])
+			}
+		case nil:
+			return nil
 		}
 		return nil
 	}, -1)

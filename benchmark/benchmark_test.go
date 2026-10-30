@@ -6,6 +6,7 @@ import (
 	"github.com/Knetic/govaluate"
 	antonmedv "github.com/antonmedv/expr"
 	"github.com/seeadoog/expr"
+	"github.com/seeadoog/expr/arena"
 )
 
 // Simple arithmetic expression
@@ -26,11 +27,13 @@ func BenchmarkSimpleArithmetic(b *testing.B) {
 			b.Fatal(err)
 		}
 		ctx := env.NewContext(params)
-
+		a := arena.NewArena(1024)
+		ctx.SetArena(a)
 		b.ResetTimer()
 		b.ReportAllocs()
 		for i := 0; i < b.N; i++ {
 			_ = compiled.Val(ctx)
+			a.Reset()
 		}
 	})
 

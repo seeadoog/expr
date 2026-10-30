@@ -1,0 +1,11 @@
+
+
+
+
+
+
+obj = ctx.parse_body_to_obj();
+if obj.param.req_route == 'x54' then
+    return(403,{message: 'invalid request parame'}) ;
+end;
+curl('http://xapx.xfyun.cn',{})

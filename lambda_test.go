@@ -248,6 +248,7 @@ func BenchmarkRand(b *testing.B) {
 		l.Unlock()
 	}
 }
+
 func TestExecFailed(t *testing.T) {
 	e, err := DefaultEnv.ParseFromJSONStr(`["ctx.abc();","s3=1"]`)
 	if err != nil {

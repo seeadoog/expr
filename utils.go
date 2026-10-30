@@ -18,6 +18,8 @@ func BoolOf(v interface{}) bool {
 	switch vv := v.(type) {
 	case bool:
 		return vv
+	case *bool:
+		return *vv
 	case float64:
 		return vv != 0
 	case int:
@@ -163,12 +165,21 @@ func NumberOf(v interface{}) float64 {
 		return *vv
 	case int:
 		return float64(vv)
+	case *int:
+		return float64(*vv)
 	case int64:
 		return float64(vv)
+	case *int64:
+		return float64(*vv)
 	case uint64:
 		return float64(vv)
+	case *uint64:
+		return float64(*vv)
+
 	case uint:
 		return float64(vv)
+	case *uint:
+		return float64(*vv)
 	case int32:
 		return float64(vv)
 	case uint32:

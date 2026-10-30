@@ -1,7 +1,10 @@
 package expr
 
 import (
+	"fmt"
 	"testing"
+
+	"github.com/seeadoog/expr/arena"
 )
 
 // TestAddEq tests += operator
@@ -415,4 +418,40 @@ gf = ef ;
 	assertEqual(t, c, "name.age", 6)
 	assertEqual(t, c, "name.ase[0]", 6)
 	// name:"router.zh_cn_en","566"
+}
+
+func BenchmarkADDAelf(b *testing.B) {
+	e := mustParse(`
+i ++ ;
+`)
+	b.ReportAllocs()
+	c := DefaultEnv.NewContext(nil)
+	a := arena.NewArena(1024)
+	c.SetArena(a)
+	for i := 0; i < b.N; i++ {
+		c.ExecValue(e)
+		a.Reset()
+	}
+}
+
+func TestRnv(t *testing.T) {
+	e := mustParse(`
+service_funcs = const {
+'234': func() 
+	return(23)
+end,
+'456': func() 
+	if $.code > 1000 || $.ret != 0 then 
+		c = 1
+	end;
+end,
+};
+
+call(service_funcs['234']);
+
+
+`)
+	c := DefaultEnv.NewContext(nil)
+
+	fmt.Println(c.ExecValue(e))
 }

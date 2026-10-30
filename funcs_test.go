@@ -5,10 +5,8 @@ import (
 	"fmt"
 	"io"
 	"net/http"
-	"os"
 	"testing"
 	"time"
-	"unsafe"
 )
 
 func TestStr(t *testing.T) {
@@ -169,33 +167,6 @@ func BenchmarkMaps(b *testing.B) {
 		_ = maps[k]
 	}
 	//println(d)
-}
-
-type iface struct {
-	t, d uintptr
-}
-
-func typf(i any) uintptr {
-	p := (*iface)(unsafe.Pointer(&i))
-	return p.d
-}
-
-func TestName(t *testing.T) {
-	os.Setenv("1", "22")
-	a := typf(2)
-	b := typf(len(os.Getenv("1")))
-	fmt.Println(a)
-	fmt.Println(b)
-	fmt.Println(len(os.Getenv("1")))
-
-}
-
-func BenchmarkI(b *testing.B) {
-	var a uintptr
-	for i := 0; i < b.N; i++ {
-		a = typf(i)
-	}
-	fmt.Println(a)
 }
 
 // SELECT table_name FROM information_schema.tables  WHERE table_schema = 'public'  ORDER BY table_name;

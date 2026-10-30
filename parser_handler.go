@@ -361,7 +361,7 @@ func parseNodeBinary(e *Env, n *ast.Binary, isAccess bool, pc *ParserContext) (V
 		return &setValue{
 			key: lv,
 			val: newBinaryValue("+=", lv, rv, func(ctx *Context, a, b Val) any {
-				return add2(a.Val(ctx), b.Val(ctx))
+				return add2(ctx, a.Val(ctx), b.Val(ctx))
 			}),
 		}, nil
 	case "-=":

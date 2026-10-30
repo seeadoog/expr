@@ -201,7 +201,7 @@ func (t *tokenizer) statStart(r rune) error {
 	case '#':
 		t.next = func(c rune) error {
 			switch c {
-			case '\n', '\r':
+			case '\n':
 				t.next = t.statStart
 			}
 			return nil
@@ -225,7 +225,10 @@ func (t *tokenizer) statStart(r rune) error {
 		t.next = t.statStringStartWith('"')
 	case ',':
 		t.appendToken(',', ",")
-	case ' ', '\t', '\n', '\r':
+	case '\r':
+	case '\n':
+		t.appendId()
+	case ' ', '\t':
 		t.appendId()
 
 	case '+':
