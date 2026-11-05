@@ -587,6 +587,8 @@ func TestStrucChange(t *testing.T) {
 			AA int `json:"aa"`
 		}
 		Fun func()
+
+		Add func(int, int) *int
 	}
 
 	req := &Req{}
@@ -605,6 +607,10 @@ $.Fun = func()
 	call(ff);
 	print('fun called')
 end;
+$.Add = func(a,b) 
+	print("args:",a,b);
+	a + b
+end;
 `)
 	if err != nil {
 		t.Fatal(err)
@@ -617,6 +623,7 @@ end;
 	req.Fun()
 	fmt.Println(req)
 	fmt.Println(req.Sms.Age)
+	fmt.Println("add:", req.Add(2, 3))
 }
 
 func TestStructSet(t *testing.T) {
@@ -638,6 +645,17 @@ func TestStructSet(t *testing.T) {
 		Sub1 Sub
 		Sub2 *Sub
 		Sub3 []Sub
+
+		Pss *string
+
+		SubA Sub
+		SubB Sub
+
+		SubC Sub
+		SubD *Sub
+
+		SubC1 Sub
+		SubD1 *Sub
 	}
 	s := &SS{}
 	s.Sbs = []Sub{{Name: "a"}, {Name: "b"}}
@@ -645,6 +663,10 @@ func TestStructSet(t *testing.T) {
 	s.Ptr = &pr
 
 	s.Sub1 = Sub{Name: "sub1"}
+	s.Pss = new(string)
+	s.SubC = Sub{Name: "subc"}
+	s.SubD1 = &Sub{Name: "subd1"}
+	*s.Pss = "pss"
 	s.Fun = func(a string) string {
 		return a + "fun called"
 	}
@@ -666,6 +688,7 @@ func TestStructSet(t *testing.T) {
 $.PI = 23;
 ptr = string($.Ptr);
 $.Sub3 = append($.Sub3, {Name: "sub3"});
+$.Sub3 = append($.Sub3, {Name: "sub3.1"});
 
 `, c)
 
@@ -681,7 +704,11 @@ $.Sbs[0].Name = 'sbs';
 
 $.Sub2 = $.Sub1;
 
+pss = string($.Pss);
 
+$.SubA = $.SubB;
+$.SubD = $.SubC;
+$.SubC1 = $.SubD1;
 `, c)
 
 	if s.Sbs[0].Name != "sbs" {
@@ -692,6 +719,18 @@ $.Sub2 = $.Sub1;
 	}
 	if s.Sub3[0].Name != "sub3" {
 		t.Error("sub3[0].Name", "want", "sub3", "got", s.Sub3[0].Name)
+	}
+	if s.Sub3[1].Name != "sub3.1" {
+		t.Error("sub3[1].Name", "want", "sub3.1", "got", s.Sub3[1].Name)
+	}
+	if c.GetByString("pss") != "pss" {
+		t.Error("pss", "want", "pss", "got", c.GetByString("pss"))
+	}
+	if s.SubD.Name != "subc" {
+		t.Error("SubD.Name", "want", "subc", "got", s.SubD.Name)
+	}
+	if s.SubC1.Name != "subd1" {
+		t.Error("SubC1.Name", "want", "subd1", "got", s.SubC1.Name)
 	}
 
 }

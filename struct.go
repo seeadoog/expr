@@ -66,7 +66,6 @@ func setValStruct(ctx *Context, fv reflect.Value, val any) {
 	default:
 		v, ok := structValConvert(ctx, fv.Type(), val)
 		if ok {
-
 			fv.Set(v)
 		} else {
 			panic(fmt.Sprintf("cannot set val '%v':%s to type %s", val, reflect.TypeOf(val).String(), fv.Type().String()))
@@ -74,9 +73,23 @@ func setValStruct(ctx *Context, fv reflect.Value, val any) {
 	}
 }
 
+// 将any 类型的v 根据t 转成t 对应的val
 func structValConvert(ctx *Context, t reflect.Type, v any) (vv reflect.Value, ok bool) {
-	if reflect.TypeOf(v) == t {
+	vt := reflect.TypeOf(v)
+	if vt == t {
 		return reflect.ValueOf(v), true
+	}
+	if vt == nil {
+		//if t.Kind() == reflect.Ptr {
+		//	return reflect.ValueOf(nil), false
+		//}
+		return reflect.Zero(t), true
+
+	}
+	if vt.Kind() == reflect.Ptr {
+		if vt.Elem() == t {
+			return reflect.ValueOf(v).Elem(), true
+		}
 	}
 	if t.Kind() == reflect.Interface && v != nil {
 		return reflect.ValueOf(v), true
@@ -84,6 +97,10 @@ func structValConvert(ctx *Context, t reflect.Type, v any) (vv reflect.Value, ok
 	var tv reflect.Value
 	isPtr := false
 	if t.Kind() == reflect.Ptr {
+		if t.Elem() == vt {
+			return reflect.ValueOf(v).Addr(), true
+		}
+
 		tv = reflect.New(t.Elem()).Elem()
 		t = t.Elem()
 		isPtr = true
@@ -104,7 +121,7 @@ func structValConvert(ctx *Context, t reflect.Type, v any) (vv reflect.Value, ok
 		//return reflect.ValueOf(StringOf(v)), true
 	case reflect.Int, reflect.Int8, reflect.Int64, reflect.Int32, reflect.Int16:
 		tv.SetInt(int64(NumberOf(v)))
-		if isPtr {
+		if isPtr && tv.CanAddr() {
 			return tv.Addr(), true
 		}
 		return tv, true
