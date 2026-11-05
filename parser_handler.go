@@ -63,6 +63,7 @@ func parseNodeString(e *Env, n *ast.String, isAccess bool, pc *ParserContext) (V
 }
 
 func parseNodeNumber(e *Env, n *ast.Number, isAccess bool, pc *ParserContext) (Val, error) {
+
 	return &constraint{
 		value: n.Val,
 	}, nil

@@ -381,12 +381,53 @@ var appendFunc ScriptFunc = func(ctx *Context, args ...Val) any {
 
 		}
 		return a1
+	case []string:
+		for _, v := range args[1:] {
+			vad, ok := v.(*VariadicVal)
+			if ok {
+				for _, e := range vad.ArrVal(ctx) {
+					a1 = append(a1, StringOf(e))
+				}
+			} else {
+				a1 = append(a1, StringOf(v.Val(ctx)))
+
+			}
+
+		}
+		return a1
 	case nil:
 		a := make([]any, 0, len(args)-1)
 		for _, v := range args[1:] {
 			a = append(a, v.Val(ctx))
 		}
 		return a
+	default:
+		a1t := reflect.TypeOf(a1)
+		a1v := reflect.ValueOf(a1)
+		if a1t.Kind() == reflect.Slice {
+			et := a1t.Elem()
+
+			for _, v := range args[1:] {
+				vad, ok := v.(*VariadicVal)
+				if ok {
+					for _, e := range vad.ArrVal(ctx) {
+						v, ok := structValConvert(ctx, et, e)
+						if ok {
+							a1v = reflect.Append(a1v, v)
+						}
+
+					}
+				} else {
+					vv, ok := structValConvert(ctx, et, v.Val(ctx))
+					if ok {
+						a1v = reflect.Append(a1v, vv)
+					}
+				}
+
+			}
+			return a1v.Interface()
+		}
+		return a1
 
 	}
 

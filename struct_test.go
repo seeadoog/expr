@@ -620,6 +620,10 @@ end;
 }
 
 func TestStructSet(t *testing.T) {
+
+	type Sub struct {
+		Name string
+	}
 	type SS struct {
 		Sub struct {
 			Name string
@@ -628,12 +632,19 @@ func TestStructSet(t *testing.T) {
 		PI  *int
 
 		Ptr *string
+
+		Sbs []Sub
+
+		Sub1 Sub
+		Sub2 *Sub
+		Sub3 []Sub
 	}
 	s := &SS{}
-
+	s.Sbs = []Sub{{Name: "a"}, {Name: "b"}}
 	pr := "ptr"
 	s.Ptr = &pr
 
+	s.Sub1 = Sub{Name: "sub1"}
 	s.Fun = func(a string) string {
 		return a + "fun called"
 	}
@@ -653,7 +664,8 @@ func TestStructSet(t *testing.T) {
 
 	parseAndExec(DefaultEnv, `
 $.PI = 23;
-ptr = string($.Ptr)
+ptr = string($.Ptr);
+$.Sub3 = append($.Sub3, {Name: "sub3"});
 
 `, c)
 
@@ -663,4 +675,45 @@ ptr = string($.Ptr)
 	if c.GetByString("ptr") != "ptr" {
 		t.Error("ptr", "want", "ptr", "got", c.GetByString("ptr"))
 	}
+
+	parseAndExec(DefaultEnv, `
+$.Sbs[0].Name = 'sbs';
+
+$.Sub2 = $.Sub1;
+
+
+`, c)
+
+	if s.Sbs[0].Name != "sbs" {
+		t.Error("sbs[0].Name", "want", "sbs", "got", s.Sbs[0].Name)
+	}
+	if s.Sub2.Name != "sub1" {
+		t.Error("sub2.Name", "want", "sub1", "got", s.Sub2.Name)
+	}
+	if s.Sub3[0].Name != "sub3" {
+		t.Error("sub3[0].Name", "want", "sub3", "got", s.Sub3[0].Name)
+	}
+
+}
+
+func BenchmarkStruct(b *testing.B) {
+
+	type Req struct {
+		Name   string `json:"name"`
+		SubReq *Req   `json:"subReq"`
+		Strs   []string
+	}
+	e := mustParse(`
+$.Name == ""?$.Name = 'hello':_;
+$.SubReq = {Name:'sub',SubReq:{Name:'892'}};
+`)
+	req := &Req{}
+	c := DefaultEnv.NewContext(map[string]interface{}{
+		"$": req,
+	})
+	for i := 0; i < b.N; i++ {
+		c.ExecValue(e)
+	}
+	fmt.Println(req.SubReq.SubReq.Name)
+	fmt.Println(req.Strs)
 }

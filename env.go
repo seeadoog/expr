@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"sync"
 
+	"github.com/ortuman/nuke"
 	"github.com/seeadoog/expr/ast"
 )
 
@@ -19,6 +20,8 @@ type Env struct {
 	libs *envMap
 
 	hashManager *hashManager
+
+	arena nuke.Arena
 }
 
 func (e *Env) calcHash(s string) uint64 {
@@ -62,6 +65,7 @@ func NewEnv() *Env {
 		isDefault:    false,
 		libs:         newEnvMap(1024 * 4),
 		hashManager:  &hashManager{},
+		arena:        nuke.NewConcurrentArena(nuke.NewMonotonicArena(1024*1024*8, 4)),
 	}
 	for key, val := range DefaultEnv.funtables {
 		env.funtables[key] = val

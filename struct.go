@@ -322,7 +322,11 @@ func getIndexOfSlice(ctx *Context, forceType bool, rv reflect.Value, v any) any 
 		if idx >= rv.Len() {
 			return nil
 		}
-		return structValueToVm(forceType, rv.Index(idx).Interface())
+		v := rv.Index(idx)
+		if v.Kind() == reflect.Struct {
+			return v.Addr().Interface()
+		}
+		return structValueToVm(forceType, v.Interface())
 	case reflect.Map:
 		keyType := rv.Type().Key()
 
