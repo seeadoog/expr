@@ -144,6 +144,190 @@ func setValStruct(ctx *Context, fv reflect.Value, val any) {
 	}
 }
 
+// 将any 类型的v 根据t 转成t 对应的val
+func _structValConvert_(ctx *Context, t reflect.Type, v any) (vv reflect.Value, ok bool) {
+	vt := reflect.TypeOf(v)
+	if vt == t {
+		return reflect.ValueOf(v), true
+	}
+	if vt == nil {
+		//if t.Kind() == reflect.Ptr {
+		//	return reflect.ValueOf(nil), false
+		//}
+		return reflect.Zero(t), true
+
+	}
+	if vt.Kind() == reflect.Ptr {
+		if vt.Elem() == t {
+			return reflect.ValueOf(v).Elem(), true
+		}
+	}
+	if t.Kind() == reflect.Interface && v != nil {
+		return reflect.ValueOf(v), true
+	}
+	var tv reflect.Value
+	isPtr := false
+	if t.Kind() == reflect.Ptr {
+		if t.Elem() == vt {
+			return reflect.ValueOf(v).Addr(), true
+		}
+
+		tv = reflect.New(t.Elem()).Elem()
+		t = t.Elem()
+		isPtr = true
+	} else {
+		tv = reflect.New(t).Elem()
+	}
+	if v == nil {
+		return tv, true
+	}
+
+	switch t.Kind() {
+	case reflect.String:
+		tv.SetString(StringOf(v))
+		if isPtr {
+			return tv.Addr(), true
+		}
+		return tv, true
+		//return reflect.ValueOf(StringOf(v)), true
+	case reflect.Int, reflect.Int8, reflect.Int64, reflect.Int32, reflect.Int16:
+		tv.SetInt(int64(NumberOf(v)))
+		if isPtr && tv.CanAddr() {
+			return tv.Addr(), true
+		}
+		return tv, true
+	case reflect.Uint, reflect.Uint64, reflect.Uint32, reflect.Uint16, reflect.Uint8:
+		tv.SetUint(uint64(NumberOf(v)))
+		if isPtr {
+			return tv.Addr(), true
+		}
+		return tv, true
+	case reflect.Float32, reflect.Float64:
+		tv.SetFloat(NumberOf(v))
+		if isPtr {
+			return tv.Addr(), true
+		}
+		return tv, true
+		//return reflect.ValueOf(float32(NumberOf(v))), true
+	//case reflect.Float64:
+	//	return reflect.ValueOf(float64(NumberOf(v))), true
+	case reflect.Bool:
+		tv.SetBool(BoolOf(v))
+		if isPtr {
+			return tv.Addr(), true
+		}
+		return tv, true
+	//return reflect.ValueOf(BoolOf(v)), true
+	case reflect.Struct:
+		obj, ok := v.(map[string]any)
+		if !ok {
+			return vv, false
+		}
+		for i := 0; i < t.NumField(); i++ {
+			fi := t.Field(i)
+
+			if !fi.IsExported() {
+				continue
+			}
+			fieldV := obj[fi.Name]
+			if fieldV == nil {
+				continue
+			}
+
+			fv := tv.Field(i)
+			ftv, ok := structValConvert(ctx, fi.Type, fieldV)
+			if !ok {
+				return vv, false
+			}
+			fv.Set(ftv)
+		}
+		if isPtr {
+			return tv.Addr(), true
+		}
+		return tv, true
+	case reflect.Slice:
+		if t.Elem().Kind() == reflect.Uint8 {
+			tv.SetBytes(ToBytes(StringOf(v)))
+			return tv, true
+		}
+
+		obj, ok := v.([]any)
+		if !ok {
+			return vv, false
+		}
+		tvp := tv
+		for _, a := range obj {
+			ftv, ok := structValConvert(ctx, t.Elem(), a)
+			if !ok {
+				return vv, false
+			}
+			tvp = reflect.Append(tvp, ftv)
+		}
+		//tv.Set(tvp)
+		return tvp, true
+	case reflect.Map:
+		obj, ok := v.(map[string]any)
+		if !ok {
+			return vv, false
+		}
+		tvp := reflect.MakeMap(t)
+
+		for key, val := range obj {
+			mk, ok := structValConvert(ctx, t.Key(), key)
+			if !ok {
+				return vv, false
+			}
+			nv, ok := structValConvert(ctx, t.Elem(), val)
+			if !ok {
+				return vv, false
+			}
+			tvp.SetMapIndex(mk, nv)
+		}
+		return tvp, true
+
+	case reflect.Interface:
+		return reflect.ValueOf(v), true
+
+	case reflect.Func:
+		val, ok := v.(Val)
+		if !ok {
+			return vv, false
+		}
+		return reflect.MakeFunc(t, func(args []reflect.Value) []reflect.Value {
+			argvs := make([]any, len(args))
+			for i, arg := range args {
+				argvs[i] = arg.Interface()
+			}
+			res := RunLambda(ctx, val, argvs...)
+			switch t.NumOut() {
+			case 0:
+				return nil
+			case 1:
+				data, _ := structValConvert(ctx, t.Out(0), res)
+				return []reflect.Value{data}
+			default:
+				rr := make([]reflect.Value, t.NumOut())
+				arr, _ := res.([]any)
+
+				for i := 0; i < t.NumOut(); i++ {
+					var vvv any
+					if i < len(arr) {
+						vvv = arr[i]
+					} else {
+					}
+					data, _ := structValConvert(ctx, t.Out(i), vvv)
+					rr[i] = data
+				}
+				return rr
+			}
+
+		}), true
+	default:
+
+		return vv, false
+	}
+}
+
 // 将 any 类型的 v 根据 t 转成 t 对应的 reflect.Value。
 // 支持：精确类型、可赋值/可转换类型、指针自动取址与解引用、接口、
 // 基础类型互转、struct(map 填充)、slice/array、map、func(lambda)。

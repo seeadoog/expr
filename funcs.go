@@ -673,18 +673,18 @@ func add2(ctx *Context, a, b any) any {
 	}
 }
 
-var subFunc = FuncDefine2(func(ctx *Context, a, b float64) any {
-	return ctx.arena.Float64ToAny(a - b)
+var subFunc = FuncDefine2(func(ctx *Context, a, b any) any {
+	return ctx.arena.Float64ToAny(NumberOf(a) - NumberOf(b))
 })
 
-var divFunc = FuncDefine2(func(ctx *Context, a, b float64) any {
-	return ctx.arena.Float64ToAny(a / b)
+var divFunc = FuncDefine2(func(ctx *Context, a, b any) any {
+	return ctx.arena.Float64ToAny(NumberOf(a) / NumberOf(b))
 })
-var mulFunc = FuncDefine2(func(ctx *Context, a, b float64) any {
-	return ctx.arena.Float64ToAny(a * b)
+var mulFunc = FuncDefine2(func(ctx *Context, a, b any) any {
+	return ctx.arena.Float64ToAny(NumberOf(a) * NumberOf(b))
 })
-var modFunc = FuncDefine2(func(ctx *Context, a, b float64) any {
-	return ctx.arena.Float64ToAny(float64(int(a) % int(b)))
+var modFunc = FuncDefine2(func(ctx *Context, a, b any) any {
+	return ctx.arena.Float64ToAny(float64(int(NumberOf(a)) % int(NumberOf(b))))
 })
 var hasPrefixFunc = FuncDefine2(func(ctx *Context, a, b string) any {
 	return strings.HasPrefix(a, b)

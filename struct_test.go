@@ -588,7 +588,7 @@ func TestStrucChange(t *testing.T) {
 		}
 		Fun func()
 
-		Add func(int, int) *int
+		Add func(int, int) int
 	}
 
 	req := &Req{}
@@ -607,9 +607,8 @@ $.Fun = func()
 	call(ff);
 	print('fun called')
 end;
-$.Add = func(a,b) 
-	print("args:",a,b);
-	a + b
+$.Add = func(a,b)
+	a*2 + b + 7
 end;
 `)
 	if err != nil {
@@ -624,6 +623,7 @@ end;
 	fmt.Println(req)
 	fmt.Println(req.Sms.Age)
 	fmt.Println("add:", req.Add(2, 3))
+	fmt.Println(c.GetTable())
 }
 
 func TestStructSet(t *testing.T) {
