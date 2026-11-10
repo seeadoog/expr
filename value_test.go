@@ -1,6 +1,9 @@
 package expr
 
-import "testing"
+import (
+	"fmt"
+	"testing"
+)
 
 func BenchmarkValueOf(b *testing.B) {
 
@@ -12,4 +15,23 @@ func BenchmarkValueOf(b *testing.B) {
 			return true
 		})
 	}
+}
+
+//v0.2.0-rc11
+func TestSwitchRangeReturn(t *testing.T) {
+	e := mustParse(`
+
+switch 11
+case 0 ~ 10:
+	return(1)
+case 10 ~ 20:
+	return(2)
+end;
+return(10);
+`)
+	c := DefaultEnv.NewContext(nil)
+
+	res := c.ExecValue(e)
+	fmt.Println(res)
+
 }

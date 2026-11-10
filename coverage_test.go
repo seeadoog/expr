@@ -276,9 +276,6 @@ func TestStringInterpolation(t *testing.T) {
 	}
 }
 
-func TestDefine(t *testing.T) {
-}
-
 // TestParseErrors 覆盖解析期的错误返回路径。
 func TestParseErrors(t *testing.T) {
 	bad := []string{

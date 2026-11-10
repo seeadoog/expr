@@ -276,7 +276,7 @@ func (m *mapDefineVal) Set(c *Context, v any) {
 }
 
 func (m *mapDefineVal) Val(c *Context) any {
-	mm := make(map[string]any)
+	mm := make(map[string]any, len(m.kvs))
 	for _, kv := range m.kvs {
 		key := kv.k
 

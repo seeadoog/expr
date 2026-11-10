@@ -18,10 +18,6 @@ if a == 1 then b = 1 end;
 a= 1;
 if a == 1 then b = 1 end ;
 str = 'hello';
-
-str2 = str + 'world';
-str2 = str + 'world';
-str2 = str + 'world';
 `)
 	if err != nil {
 		b.Fatal(err)
@@ -165,8 +161,8 @@ for span in  const [
 
 ] do 
 	if span.code > 0 then
-		return(1)
-	end
+		return(1);
+	end;
 end;
 `)
 	c := DefaultEnv.NewContext(nil)
@@ -218,3 +214,31 @@ func BenchmarkForRangeGo(b *testing.B) {
 }
 
 //15
+
+func BenchmarkSetVal(b *testing.B) {
+
+	//e := mustParse(`
+	//$.parameter = para;
+	//para.name = 1;
+	//para.age = 3;
+	//para.sss = 3;
+	//para.a = 3;
+	//para.b = 3;
+	//`)
+	e := mustParse(`
+
+	
+	`)
+	c := DefaultEnv.NewContext(nil)
+	h := DefaultEnv.NewHashKey("$").Hash
+
+	b.ResetTimer()
+	b.ReportAllocs()
+	m := make(map[string]any)
+	for i := 0; i < b.N; i++ {
+		c.Set(h, m)
+		//e.Set(c, 1)
+		e.Val(c)
+	}
+	fmt.Println(m)
+}

@@ -1682,7 +1682,6 @@ func (s *switchRange) Val(c *Context) any {
 	for _, e := range s.cases {
 
 		rv := e.cond.(*rangeValue)
-
 		if rv.l <= v && v < rv.r {
 			if e.Do != nil {
 				return e.Do.Val(c)
