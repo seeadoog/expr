@@ -59,3 +59,18 @@ func BenchmarkSw(b *testing.B) {
 		DefaultEnv.PutContext2Pool(ctx)
 	}
 }
+
+/*
+model_map = const {
+	"m1":{
+		"a1":{
+
+		}
+	},
+	"m2": "x456"
+};
+
+if model_map[model].type() == "object" then
+	
+end;
+*/

@@ -121,13 +121,13 @@ func (c *Context) Reset() {
 	c.stack.reset()
 }
 
-func (c *Context) GetAsString(key HashKey) string {
-	res, _ := c.GetHash(key).(string)
+func (c *Context) GetAsString(keyHash uint64) string {
+	res, _ := c.Get(keyHash).(string)
 	return res
 }
 
-func (c *Context) GetAsArray(key HashKey) []any {
-	switch val := c.GetHash(key).(type) {
+func (c *Context) GetAsArray(keyHash uint64) []any {
+	switch val := c.Get(keyHash).(type) {
 	case []any:
 		return val
 	case ReadOnlyArray:
@@ -137,16 +137,16 @@ func (c *Context) GetAsArray(key HashKey) []any {
 	}
 }
 
-func (c *Context) GetAsNumber(key HashKey) float64 {
-	return NumberOf(c.GetHash(key))
+func (c *Context) GetAsNumber(keyHash uint64) float64 {
+	return NumberOf(c.Get(keyHash))
 }
 
-func (c *Context) GetAsBool(key HashKey) bool {
-	return BoolOf(c.GetHash(key))
+func (c *Context) GetAsBool(keyHash uint64) bool {
+	return BoolOf(c.Get(keyHash))
 }
 
-func (c *Context) GetAsObject(key HashKey) map[string]interface{} {
-	switch val := c.GetHash(key).(type) {
+func (c *Context) GetAsObject(keyHash uint64) map[string]interface{} {
+	switch val := c.Get(keyHash).(type) {
 	case map[string]interface{}:
 		return val
 	case ReadOnlyMap:
