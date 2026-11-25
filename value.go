@@ -58,7 +58,9 @@ func (e ExprValue) Get(ctx *Context, key string) any {
 		return getFieldOfStruct(ctx.ForceType, reflect.ValueOf(e.data), key)
 	}
 }
-
+func (e ExprValue) GetV(ctx *Context, key string) ExprValue {
+	return ExprValue{e.Get(ctx, key)}
+}
 func (e ExprValue) Contains(ctx *Context, v any) bool {
 	switch m := e.data.(type) {
 	case []any:

@@ -1,6 +1,7 @@
 package benchmark
 
 import (
+	"fmt"
 	"testing"
 
 	"github.com/Knetic/govaluate"
@@ -66,24 +67,44 @@ func BenchmarkSimpleArithmetic(b *testing.B) {
 
 // Complex boolean logic
 func BenchmarkComplexBoolean(b *testing.B) {
-	expression := "(a > 5 && b < 100) || (c == 'test' && d != nil)"
+	expression := "((a > 5 && b < 100) || (c == 'test' )) && ((a > 5 && b < 100) || (c == 'test' ))&& ((a > 5 && b < 100) || (c == 'test'  ))"
 	params := map[string]interface{}{
 		"a": 10.0,
-		"b": 50.0,
+		"b": 511.0,
 		"c": "test",
 		"d": "value",
 	}
 
+	b.Run("golang", func(b *testing.B) {
+
+		f := func() bool {
+			return (params["a"].(float64) > 5 && params["b"].(float64) < 100 || params["c"].(string) == "test") &&
+				params["a"].(float64) > 5 && params["b"].(float64) < 100 || params["c"].(string) == "test" &&
+				params["a"].(float64) > 5 && params["b"].(float64) < 100 || params["c"].(string) == "test"
+		}
+		fmt.Println(f())
+		for i := 0; i < b.N; i++ {
+			f()
+		}
+	})
+
 	b.Run("seeadoog/expr", func(b *testing.B) {
 		env := expr.NewEnv()
+		expression := "(($.a > 5 && $.b < 100) || ($.c == 'test' )) && (($.a > 5 && $.b < 100) || ($.c == 'test' ))&& (($.a > 5 && $.b < 100) || ($.c == 'test'  ))"
 		compiled, err := env.ParseValue(expression)
 		if err != nil {
 			b.Fatal(err)
 		}
-		ctx := env.NewContext(params)
+
+		ctx := env.NewContext(nil)
+		ctx.SetByString("$", params)
 
 		b.ResetTimer()
 		b.ReportAllocs()
+
+		if compiled.Val(ctx) == false {
+			b.Fatal("unexpected result")
+		}
 		for i := 0; i < b.N; i++ {
 			_ = compiled.Val(ctx)
 		}
@@ -100,6 +121,7 @@ func BenchmarkComplexBoolean(b *testing.B) {
 		for i := 0; i < b.N; i++ {
 			_, _ = antonmedv.Run(program, params)
 		}
+
 	})
 
 	b.Run("govaluate", func(b *testing.B) {
@@ -113,6 +135,7 @@ func BenchmarkComplexBoolean(b *testing.B) {
 		for i := 0; i < b.N; i++ {
 			_, _ = compiled.Evaluate(params)
 		}
+
 	})
 }
 

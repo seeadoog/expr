@@ -110,8 +110,8 @@ func (c *Context) SetByString(skey string, value interface{}) {
 	c.stack.putHash(c.Env.calcHash(skey), value)
 }
 
-func (c *Context) Delete(key string) {
-	c.stack.del(c.Env.calcHash(key))
+func (c *Context) Delete(keyHash uint64) {
+	c.stack.del(keyHash)
 }
 
 func (c *Context) Reset() {
@@ -304,6 +304,13 @@ func (v *ValExpr) Exec(c *Context) error {
 type Val interface {
 	Val(c *Context) any
 	parentValueSetter
+}
+type Getter interface {
+	GetField(c *Context, key string) any
+}
+
+type parentValueSetter interface {
+	Set(c *Context, val any)
 }
 
 type variable struct {

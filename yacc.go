@@ -625,22 +625,6 @@ type Setter interface {
 	SetField(ctx *Context, name string, val any)
 }
 
-type Getter interface {
-	GetField(c *Context, key string) any
-}
-
-//type IndexGet interface {
-//	IndexGet(c *Context, key float64) any
-//}
-//
-//type IndexSet interface {
-//	GetIndSet(ctx *Context, key float64, val any)
-//}
-
-type parentValueSetter interface {
-	Set(c *Context, val any)
-}
-
 //// a.b.c
 //func (a *accessVal) SetSelf(ctx *Context, v any) {
 //	lv := a.left.Val(ctx)

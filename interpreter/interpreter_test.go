@@ -320,7 +320,7 @@ func TestDisassemble(t *testing.T) {
 
 func BenchmarkFFF(b *testing.B) {
 	// 测试嵌套三元运算符性能
-	node, err := expr.DefaultEnv.ParseValueToAstNode(`a ==1 || b == 2`)
+	node, err := expr.DefaultEnv.ParseValueToAstNode(`a=1;b=2`)
 	if err != nil {
 		b.Fatal(err)
 	}
@@ -367,7 +367,6 @@ a=1
 		b.Fatalf("compile failed: %v", err)
 	}
 
-	env := newMockEnv()
 	ctx := newMockContext()
 	ctx.Set(defaultHash("a"), false) // 设置变量 a
 
@@ -375,14 +374,5 @@ a=1
 	for _, instruction := range bc.Instructions {
 		fmt.Println(instruction)
 	}
-	bc2, err := compiler.Compile(node)
-	if err != nil {
-		b.Fatalf("compile failed: %v", err)
-	}
-	for _, instruction := range bc2.Instructions {
-		fmt.Println(instruction)
-	}
 
-	vm := interpreter.NewVM(bc, env, ctx)
-	vm.Reset()
 }

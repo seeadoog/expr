@@ -741,10 +741,12 @@ func BenchmarkStruct(b *testing.B) {
 		Name   string `json:"name"`
 		SubReq *Req   `json:"subReq"`
 		Strs   []string
+		Head   struct {
+			Name string `json:"name"`
+		}
 	}
 	e := mustParse(`
-$.Name == ""?$.Name = 'hello':_;
-$.SubReq = {Name:'sub',SubReq:{Name:'892'}};
+"aa"+ "bb"
 `)
 	req := &Req{}
 	c := DefaultEnv.NewContext(map[string]interface{}{
@@ -753,6 +755,5 @@ $.SubReq = {Name:'sub',SubReq:{Name:'892'}};
 	for i := 0; i < b.N; i++ {
 		c.ExecValue(e)
 	}
-	fmt.Println(req.SubReq.SubReq.Name)
-	fmt.Println(req.Strs)
+	fmt.Println(req.Head.Name)
 }

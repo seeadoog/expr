@@ -320,3 +320,23 @@ desc = '${name}(${age}):${class}';
 `, c)
 	assertEqual(t, c, "desc", "lix(18890287457893):6")
 }
+
+func BenchmarkFunCal(b *testing.B) {
+	e := mustParse("$.call().call().call()")
+
+	type req struct{}
+
+	SelfDefine0(DefaultEnv, "call", func(ctx *Context, self *req) any {
+		return self
+	})
+
+	c := DefaultEnv.NewContext(nil)
+	c.SetByString("$", &req{})
+	for i := 0; i < b.N; i++ {
+
+		c.ExecValue(e)
+
+		TypeOf(req{})
+
+	}
+}

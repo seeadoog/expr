@@ -71,6 +71,6 @@ model_map = const {
 };
 
 if model_map[model].type() == "object" then
-	
+
 end;
 */
